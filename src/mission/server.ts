@@ -2,6 +2,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { readFileSync } from "node:fs";
 import { OnyxApplication, errorResponse, type ApiResponse } from "../api/application.ts";
 import { OnyxError } from "../contracts/errors.ts";
+import { jsonLineLogger, resolveRequestId } from "../infrastructure/observability/logger.ts";
+import { uuidV7 } from "../shared/identifiers.ts";
 
 const host = process.env.ONYX_HOST ?? "127.0.0.1";
 const port = Number(process.env.ONYX_PORT ?? "3000");
@@ -13,6 +15,16 @@ const auth = authMode === "required" ? {
   issuer: requiredEnvironment("ONYX_AUTH_ISSUER"),
   audience: requiredEnvironment("ONYX_AUTH_AUDIENCE"),
 } : undefined;
+const requestLogger = jsonLineLogger();
+const logInternalError = (error: unknown): void => {
+  const errorName = error instanceof Error ? error.name : "UnknownError";
+  process.stderr.write(`${JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: "error",
+    event: "application.error",
+    error_name: errorName,
+  })}\n`);
+};
 
 const application = new OnyxApplication({
   ...(process.env.ONYX_DB_PATH ? {databasePath: process.env.ONYX_DB_PATH} : {}),
@@ -22,6 +34,8 @@ const application = new OnyxApplication({
     ...(process.env.ONYX_TIMELINE_REPLICA_ID ? {timeline: process.env.ONYX_TIMELINE_REPLICA_ID} : {}),
     ...(process.env.ONYX_REPORTING_REPLICA_ID ? {reportingEvidence: process.env.ONYX_REPORTING_REPLICA_ID} : {}),
   },
+  logger: requestLogger,
+  logError: logInternalError,
   ...(auth ? {auth} : {}),
 });
 
@@ -47,16 +61,32 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
 }
 
 export const server = createServer(async (request, response) => {
+  const startedAt = performance.now();
+  const requestIdHeader = request.headers["x-request-id"];
+  const requestId = resolveRequestId(Array.isArray(requestIdHeader) ? undefined : requestIdHeader, () => uuidV7());
   try {
     const body = request.method === "POST" ? await readJson(request) : undefined;
     respond(response, await application.handle({
       method: request.method ?? "GET",
       path: request.url ?? "/",
       body,
-      headers: {authorization: request.headers.authorization},
+      headers: {authorization: request.headers.authorization, "x-request-id": requestId},
     }));
   } catch (error) {
-    respond(response, errorResponse(error));
+    const result = errorResponse(error, logInternalError);
+    respond(response, {...result, headers: {...result.headers, "x-request-id": requestId}});
+    requestLogger({
+      timestamp: new Date().toISOString(),
+      level: result.status >= 500 ? "error" : "warn",
+      event: "http.request.completed",
+      request_id: requestId,
+      method: request.method ?? "GET",
+      path: new URL(request.url ?? "/", "http://onyx.local").pathname,
+      status: result.status,
+      duration_ms: Math.max(0, Math.round((performance.now() - startedAt) * 1_000) / 1_000),
+      error_code: (result.body as {code: string}).code,
+      ...(error instanceof Error ? {error_name: error.name} : {}),
+    });
   }
 });
 

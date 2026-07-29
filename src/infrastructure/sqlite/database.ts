@@ -71,6 +71,23 @@ export type InboxClaim =
   | {status: "duplicate"; receipt: InboxReceipt}
   | {status: "busy"; receipt: InboxReceipt};
 
+export interface MessagingSnapshot {
+  outbox: {
+    pending: number;
+    ready: number;
+    leased: number;
+    delivered: number;
+    deadLettered: number;
+    oldestPendingAt?: string;
+  };
+  inbox: {
+    processing: number;
+    retryable: number;
+    completed: number;
+    failed: number;
+  };
+}
+
 export class SqliteDatabase {
   readonly #database: DatabaseSync;
 
@@ -145,6 +162,52 @@ export class SqliteDatabase {
       WHERE consumer_name = ? AND event_id = ?
     `).get(consumerName, eventId) as InboxRow | undefined;
     return row && toInboxReceipt(row);
+  }
+
+  readiness(now: Date): MessagingSnapshot {
+    this.#database.prepare("SELECT 1").get();
+    const instant = now.toISOString();
+    const outbox = this.#database.prepare(`
+      SELECT
+        COUNT(*) FILTER (WHERE delivered_at IS NULL AND dead_lettered_at IS NULL) AS pending,
+        COUNT(*) FILTER (
+          WHERE delivered_at IS NULL AND dead_lettered_at IS NULL
+            AND available_at <= ? AND (lease_expires_at IS NULL OR lease_expires_at <= ?)
+        ) AS ready,
+        COUNT(*) FILTER (
+          WHERE delivered_at IS NULL AND dead_lettered_at IS NULL AND lease_expires_at > ?
+        ) AS leased,
+        COUNT(*) FILTER (WHERE delivered_at IS NOT NULL) AS delivered,
+        COUNT(*) FILTER (WHERE dead_lettered_at IS NOT NULL) AS dead_lettered,
+        MIN(CASE WHEN delivered_at IS NULL AND dead_lettered_at IS NULL THEN available_at END) AS oldest_pending_at
+      FROM onyx_outbox
+    `).get(instant, instant, instant) as unknown as MessagingOutboxRow;
+    const inbox = this.#database.prepare(`
+      SELECT
+        COUNT(*) FILTER (WHERE completed_at IS NULL AND lease_expires_at > ?) AS processing,
+        COUNT(*) FILTER (
+          WHERE completed_at IS NULL AND (lease_expires_at IS NULL OR lease_expires_at <= ?)
+        ) AS retryable,
+        COUNT(*) FILTER (WHERE completed_at IS NOT NULL) AS completed,
+        COUNT(*) FILTER (WHERE completed_at IS NULL AND last_error IS NOT NULL) AS failed
+      FROM onyx_inbox
+    `).get(instant, instant) as unknown as MessagingInboxRow;
+    return {
+      outbox: {
+        pending: outbox.pending,
+        ready: outbox.ready,
+        leased: outbox.leased,
+        delivered: outbox.delivered,
+        deadLettered: outbox.dead_lettered,
+        ...(outbox.oldest_pending_at !== null ? {oldestPendingAt: outbox.oldest_pending_at} : {}),
+      },
+      inbox: {
+        processing: inbox.processing,
+        retryable: inbox.retryable,
+        completed: inbox.completed,
+        failed: inbox.failed,
+      },
+    };
   }
 
   claimInbox(options: ClaimInboxOptions): InboxClaim {
@@ -525,6 +588,22 @@ interface InboxRow {
   lease_expires_at: string | null;
   completed_at: string | null;
   last_error: string | null;
+}
+
+interface MessagingOutboxRow {
+  pending: number;
+  ready: number;
+  leased: number;
+  delivered: number;
+  dead_lettered: number;
+  oldest_pending_at: string | null;
+}
+
+interface MessagingInboxRow {
+  processing: number;
+  retryable: number;
+  completed: number;
+  failed: number;
 }
 
 function toOutboxMessage<TEvent>(row: OutboxRow): OutboxMessage<TEvent> {

@@ -195,6 +195,23 @@ paths["/healthz"] = {
   },
 };
 
+paths["/readyz"] = {
+  get: {
+    operationId: "getReadiness",
+    tags: ["operations"],
+    responses: {
+      "200": {
+        description: "Persistence and messaging readiness",
+        content: jsonContent({type: "object"}),
+      },
+      "503": {
+        description: "A required dependency is unavailable",
+        content: jsonContent({type: "object"}),
+      },
+    },
+  },
+};
+
 paths["/openapi.json"] = {
   get: {
     operationId: "getOpenApi",

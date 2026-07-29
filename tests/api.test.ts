@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { OnyxApplication, type ApiResponse } from "../src/api/application.ts";
+import type { RequestLogRecord } from "../src/infrastructure/observability/logger.ts";
 import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
@@ -23,7 +24,7 @@ describe("OnyxApplication", () => {
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");
-      assert.equal(Object.keys(body(openapi).paths as object).length, 25);
+      assert.equal(Object.keys(body(openapi).paths as object).length, 26);
       body(openapi).info.title = "mutated by caller";
       const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");
@@ -67,10 +68,9 @@ describe("OnyxApplication", () => {
 
       assert.deepEqual([mission.status, task.status, timeline.status, report.status], [202, 202, 202, 202]);
       assert.equal(body(report).event_type, "ReportCreated");
-      assert.deepEqual(
-        await application.handle({method: "POST", path: "/v1/reporting-evidence/commands/CreateReport", body: reportCommand}),
-        report,
-      );
+      const replay = await application.handle({method: "POST", path: "/v1/reporting-evidence/commands/CreateReport", body: reportCommand});
+      assert.equal(replay.status, report.status);
+      assert.deepEqual(replay.body, report.body);
 
       const fetched = await application.handle({
         method: "GET",
@@ -149,6 +149,52 @@ describe("OnyxApplication", () => {
       assert.equal(body(restored).mission_id, testId(14));
       second.close();
     } finally {
+      await rm(directory, {recursive: true, force: true});
+    }
+  });
+
+  it("reports readiness, messaging backlog, request IDs, and structured request logs", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "onyx-api-observability-"));
+    const databasePath = join(directory, "onyx.db");
+    const records: RequestLogRecord[] = [];
+    let monotonic = 10;
+    const application = new OnyxApplication({
+      databasePath,
+      now,
+      monotonicNow: () => monotonic++,
+      logger: (record) => records.push(record),
+    });
+    try {
+      const created = await application.handle({
+        method: "POST",
+        path: "/v1/mission/commands/CreateMission?secret=must-not-be-logged",
+        body: createMissionCommand(),
+        headers: {"x-request-id": "request:test-1", authorization: "Bearer must-not-be-logged"},
+      });
+      assert.equal(created.headers?.["x-request-id"], "request:test-1");
+
+      const readiness = await application.handle({method: "GET", path: "/readyz"});
+      assert.equal(readiness.status, 200);
+      assert.equal(body(readiness).persistence.mode, "sqlite");
+      assert.equal(body(readiness).messaging.outbox.pending, 1);
+      assert.equal(body(readiness).messaging.outbox.ready, 1);
+      assert.equal(body(readiness).messaging.inbox.completed, 0);
+      assert.match(readiness.headers?.["x-request-id"] ?? "", /^[0-9a-f-]{36}$/);
+
+      assert.equal(records.length, 2);
+      assert.deepEqual(records[0], {
+        timestamp: now().toISOString(),
+        level: "info",
+        event: "http.request.completed",
+        request_id: "request:test-1",
+        method: "POST",
+        path: "/v1/mission/commands/CreateMission",
+        status: 202,
+        duration_ms: 1,
+      });
+      assert.doesNotMatch(JSON.stringify(records), /must-not-be-logged/);
+    } finally {
+      application.close();
       await rm(directory, {recursive: true, force: true});
     }
   });

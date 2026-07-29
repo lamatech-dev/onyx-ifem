@@ -32,6 +32,7 @@ describe("consumer inbox", () => {
     const receipt = database.getInboxReceipt("projection-a", event.event_id);
     assert.equal(receipt?.attemptCount, 1);
     assert.equal(receipt?.completedAt, initialTime.toISOString());
+    assert.deepEqual(database.readiness(initialTime).inbox, {processing: 0, retryable: 0, completed: 1, failed: 0});
     database.close();
   });
 

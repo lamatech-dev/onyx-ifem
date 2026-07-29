@@ -118,6 +118,7 @@ describe("transactional outbox", () => {
     const poisoned = database.getOutboxMessage(event.event_id);
     assert.equal(poisoned?.attemptCount, 2);
     assert.equal(poisoned?.deadLetteredAt, clock.toISOString());
+    assert.equal(database.readiness(clock).outbox.deadLettered, 1);
     database.close();
   });
 
@@ -143,6 +144,13 @@ describe("transactional outbox", () => {
     assert.deepEqual(await dispatcher.runOnce(), {claimed: 2, delivered: 2, retried: 0, deadLettered: 0});
     assert.deepEqual(published, [first.event_id, second.event_id]);
     assert.deepEqual(await dispatcher.runOnce(), {claimed: 0, delivered: 0, retried: 0, deadLettered: 0});
+    assert.deepEqual(database.readiness(dispatchTime).outbox, {
+      pending: 0,
+      ready: 0,
+      leased: 0,
+      delivered: 2,
+      deadLettered: 0,
+    });
     database.close();
   });
 

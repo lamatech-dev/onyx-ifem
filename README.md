@@ -46,6 +46,8 @@ The server listens on `127.0.0.1:3000` by default. Configure `ONYX_HOST`, `ONYX_
 
 Authentication is disabled for local development. Production deployments can require Ed25519-signed bearer tokens with `ONYX_AUTH_MODE=required`; see [Authentication and authorization](docs/authentication.md).
 
+Every response carries an `x-request-id`; the server emits redaction-safe structured JSON logs. Use `/healthz` for liveness and `/readyz` for persistence plus messaging readiness. See [Observability](docs/observability.md).
+
 The application dispatcher is independent of the Node HTTP transport, so route workflows can run without opening sockets. See [HTTP application architecture](docs/http-architecture.md).
 
 A self-contained OpenAPI 3.1.2 document is available at `GET /openapi.json` or through `npm run openapi`. See [OpenAPI description](docs/openapi.md).
@@ -63,6 +65,7 @@ Every durable event is written to a transactional outbox in the same commit as i
 Available endpoints:
 
 - `GET /healthz`
+- `GET /readyz`
 - `GET /openapi.json`
 - `POST /v1/mission/commands/{CommandType}`
 - `GET /v1/missions?organization_id={id}`

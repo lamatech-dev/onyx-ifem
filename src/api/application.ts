@@ -1,6 +1,7 @@
 import { OnyxError } from "../contracts/errors.ts";
 import { JwtVerifier, type AccessTokenClaims, type JwtVerifierOptions } from "../auth/jwt.ts";
 import { SqliteDatabase } from "../infrastructure/sqlite/database.ts";
+import { type StructuredLogger, resolveRequestId } from "../infrastructure/observability/logger.ts";
 import { InMemoryMissionRepository } from "../mission/repository.ts";
 import { MissionService } from "../mission/service.ts";
 import { SqliteMissionRepository } from "../mission/sqlite-repository.ts";
@@ -14,6 +15,7 @@ import { InMemoryWorkRepository } from "../work/repository.ts";
 import { WorkService } from "../work/service.ts";
 import { SqliteWorkRepository } from "../work/sqlite-repository.ts";
 import { OPENAPI_DOCUMENT } from "./openapi.ts";
+import { uuidV7 } from "../shared/identifiers.ts";
 
 export interface ApiRequest {
   method: string;
@@ -33,6 +35,8 @@ export interface OnyxApplicationOptions {
   now?: () => Date;
   replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence", string>>;
   logError?: (error: unknown) => void;
+  logger?: StructuredLogger;
+  monotonicNow?: () => number;
   auth?: JwtVerifierOptions;
 }
 
@@ -47,12 +51,18 @@ export class OnyxApplication {
   readonly #commands: ReadonlyMap<string, (body: unknown) => Promise<unknown>>;
   readonly #resources: ReadonlyMap<string, ResourceRoutes>;
   readonly #logError: (error: unknown) => void;
+  readonly #logger: StructuredLogger;
+  readonly #now: () => Date;
+  readonly #monotonicNow: () => number;
   readonly #auth: JwtVerifier | undefined;
   #closed = false;
 
   constructor(options: OnyxApplicationOptions = {}) {
     this.#database = options.databasePath ? new SqliteDatabase(options.databasePath) : undefined;
     this.#logError = options.logError ?? console.error;
+    this.#logger = options.logger ?? (() => undefined);
+    this.#now = options.now ?? (() => new Date());
+    this.#monotonicNow = options.monotonicNow ?? (() => performance.now());
     this.#auth = options.auth
       ? new JwtVerifier({...options.auth, ...(!options.auth.now && options.now ? {now: options.now} : {})})
       : undefined;
@@ -123,12 +133,20 @@ export class OnyxApplication {
   }
 
   async handle(request: ApiRequest): Promise<ApiResponse> {
+    const startedAt = this.#monotonicNow();
+    const requestId = resolveRequestId(request.headers?.["x-request-id"], () => uuidV7(this.#now()));
+    let failure: unknown;
+    let response: ApiResponse;
     try {
       if (this.#closed) throw new Error("application is closed");
-      return await this.#dispatch(request);
+      response = await this.#dispatch(request);
     } catch (error) {
-      return errorResponse(error, this.#logError);
+      failure = error;
+      response = errorResponse(error, this.#logError);
     }
+    const completed = withRequestId(response, requestId);
+    this.#writeRequestLog(request, completed, requestId, startedAt, failure);
+    return completed;
   }
 
   close(): void {
@@ -141,6 +159,24 @@ export class OnyxApplication {
     const url = new URL(request.path, "http://onyx.local");
     if (request.method === "GET" && url.pathname === "/healthz") {
       return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence"]}};
+    }
+    if (request.method === "GET" && url.pathname === "/readyz") {
+      if (!this.#database) {
+        return {status: 200, body: {status: "ready", persistence: {mode: "memory", durable: false}, messaging: {enabled: false}}};
+      }
+      try {
+        return {
+          status: 200,
+          body: {
+            status: "ready",
+            persistence: {mode: "sqlite", durable: true},
+            messaging: {enabled: true, ...this.#database.readiness(this.#now())},
+          },
+        };
+      } catch (error) {
+        this.#logError(error);
+        return {status: 503, body: {status: "not_ready", persistence: {mode: "sqlite", durable: true}}};
+      }
     }
     if (request.method === "GET" && url.pathname === "/openapi.json") {
       return {status: 200, body: structuredClone(OPENAPI_DOCUMENT)};
@@ -220,6 +256,31 @@ export class OnyxApplication {
       throw new OnyxError("AUTHORITY_PROOF_INVALID", `${requiredScope[resource]} authority is missing`);
     }
   }
+
+  #writeRequestLog(request: ApiRequest, response: ApiResponse, requestId: string, startedAt: number, failure: unknown): void {
+    const body = response.body as {code?: unknown};
+    const record = {
+      timestamp: this.#now().toISOString(),
+      level: response.status >= 500 ? "error" as const : response.status >= 400 ? "warn" as const : "info" as const,
+      event: "http.request.completed" as const,
+      request_id: requestId,
+      method: request.method,
+      path: new URL(request.path, "http://onyx.local").pathname,
+      status: response.status,
+      duration_ms: Math.max(0, Math.round((this.#monotonicNow() - startedAt) * 1_000) / 1_000),
+      ...(typeof body?.code === "string" ? {error_code: body.code} : {}),
+      ...(failure instanceof Error ? {error_name: failure.name} : {}),
+    };
+    try {
+      this.#logger(record);
+    } catch (error) {
+      this.#logError(error);
+    }
+  }
+}
+
+function withRequestId(response: ApiResponse, requestId: string): ApiResponse {
+  return {...response, headers: {...response.headers, "x-request-id": requestId}};
 }
 
 function notFound(): ApiResponse {

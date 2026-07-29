@@ -26,10 +26,10 @@ The document currently describes:
 
 - 11 command operations with their exact frozen request and emitted-event schemas;
 - Mission, Task, Timeline, and Report collection, item, and history queries;
-- health and OpenAPI discovery endpoints;
+- liveness, readiness, and OpenAPI discovery endpoints;
 - reusable identifiers, query parameters, views, and canonical error responses.
 
-Protected operations declare the `BearerAuth` security scheme and document 401 and 403 responses. Health and OpenAPI discovery remain public.
+Protected operations declare the `BearerAuth` security scheme and document 401 and 403 responses. Liveness, readiness, and OpenAPI discovery remain public.
 
 ## Drift validation
 
