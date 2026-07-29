@@ -27,7 +27,7 @@ Authentication is intentionally required in the image. For isolated local evalua
 
 ## Continuous verification
 
-Every pull request and push to `main` runs the contract and OpenAPI validators, strict type checking, the complete test suite, `npm audit`, CycloneDX generation, and a production container build. The container job also verifies the non-root user and image health check. Dependency updates for npm, GitHub Actions, and the Node base image are proposed weekly by Dependabot.
+Every pull request and push to `main` runs the contract and OpenAPI validators, strict type checking, the complete test suite, `npm audit`, CycloneDX generation, and a production container build. A black-box test starts the real Node entrypoint over TCP, checks durable SQLite readiness, metrics, parser limits, request correlation, and graceful `SIGTERM` shutdown. The container job additionally starts the built image and probes its liveness, durable readiness, and metrics endpoints. Dependency updates for npm, GitHub Actions, and the Node base image are proposed weekly by Dependabot.
 
 ## Create a release
 

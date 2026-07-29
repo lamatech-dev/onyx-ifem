@@ -52,6 +52,23 @@ jobs:
           test "$(docker image inspect onyx-ifem:ci --format '{{.Config.User}}')" = "node"
           docker image inspect onyx-ifem:ci --format '{{json .Config.Healthcheck.Test}}' | grep -q healthz
           docker run --rm --entrypoint test onyx-ifem:ci -f /app/tools/database-recovery.ts
+      - name: Smoke test the production image
+        run: |
+          set -euo pipefail
+          container_id="$(docker run --detach --rm --publish 127.0.0.1:3000:3000 --env ONYX_AUTH_MODE=disabled onyx-ifem:ci)"
+          cleanup() { docker stop "$container_id" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/healthz >/dev/null; then break; fi
+            if [ "$attempt" = 30 ]; then docker logs "$container_id"; exit 1; fi
+            sleep 1
+          done
+          curl --fail --silent --output /tmp/onyx-ready.json http://127.0.0.1:3000/readyz
+          grep -q '"durable":true' /tmp/onyx-ready.json
+          curl --fail --silent --output /tmp/onyx-metrics.txt http://127.0.0.1:3000/metrics
+          grep -q 'onyx_persistence_durable 1' /tmp/onyx-metrics.txt
+          cleanup
+          trap - EXIT
       - name: Render the Kubernetes deployment
         run: |
           docker run --rm --volume "$PWD:/work:ro" --workdir /work registry.k8s.io/kubectl:v1.35.6 kustomize deploy/kubernetes > /tmp/onyx-kubernetes.yaml

@@ -34,7 +34,7 @@ npm ci
 npm run check
 ```
 
-The check pipeline validates the imported contracts, performs a strict no-emit TypeScript compilation, and runs the complete test suite. See [Type safety](docs/type-safety.md).
+The check pipeline validates the imported contracts, performs a strict no-emit TypeScript compilation, and runs the complete test suite, including a black-box real-socket process and graceful-shutdown test. See [Type safety](docs/type-safety.md).
 
 ## Run the API
 
