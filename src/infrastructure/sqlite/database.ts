@@ -25,6 +25,7 @@ export interface OutboxMessage<TEvent = unknown> {
   eventId: string;
   context: string;
   aggregateId: string;
+  aggregateVersion: number;
   organizationId: string;
   eventType: string;
   event: TEvent;
@@ -43,6 +44,32 @@ export interface ClaimOutboxOptions {
   leaseDurationMs: number;
   limit: number;
 }
+
+export interface InboxReceipt {
+  consumerName: string;
+  eventId: string;
+  fingerprint: string;
+  attemptCount: number;
+  receivedAt: string;
+  leaseOwner?: string;
+  leaseExpiresAt?: string;
+  completedAt?: string;
+  lastError?: string;
+}
+
+export interface ClaimInboxOptions {
+  consumerName: string;
+  eventId: string;
+  fingerprint: string;
+  workerId: string;
+  now: Date;
+  leaseDurationMs: number;
+}
+
+export type InboxClaim =
+  | {status: "acquired"; receipt: InboxReceipt}
+  | {status: "duplicate"; receipt: InboxReceipt}
+  | {status: "busy"; receipt: InboxReceipt};
 
 export class SqliteDatabase {
   readonly #database: DatabaseSync;
@@ -102,12 +129,107 @@ export class SqliteDatabase {
   getOutboxMessage<TEvent>(eventId: string): OutboxMessage<TEvent> | undefined {
     const row = this.#database.prepare(`
       SELECT event_id, context, aggregate_id, organization_id, event_type, event_json,
-             attempt_count, available_at, lease_owner, lease_expires_at,
+             aggregate_version, attempt_count, available_at, lease_owner, lease_expires_at,
              delivered_at, dead_lettered_at, last_error
       FROM onyx_outbox
       WHERE event_id = ?
     `).get(eventId) as OutboxRow | undefined;
     return row && toOutboxMessage<TEvent>(row);
+  }
+
+  getInboxReceipt(consumerName: string, eventId: string): InboxReceipt | undefined {
+    const row = this.#database.prepare(`
+      SELECT consumer_name, event_id, fingerprint, attempt_count, received_at,
+             lease_owner, lease_expires_at, completed_at, last_error
+      FROM onyx_inbox
+      WHERE consumer_name = ? AND event_id = ?
+    `).get(consumerName, eventId) as InboxRow | undefined;
+    return row && toInboxReceipt(row);
+  }
+
+  claimInbox(options: ClaimInboxOptions): InboxClaim {
+    if (!options.consumerName || !options.eventId || !options.fingerprint || !options.workerId) {
+      throw new Error("inbox consumer, event, fingerprint, and worker identifiers are required");
+    }
+    if (!Number.isInteger(options.leaseDurationMs) || options.leaseDurationMs < 1) {
+      throw new Error("inbox lease duration must be a positive integer");
+    }
+    const now = options.now.toISOString();
+    const leaseExpiresAt = new Date(options.now.getTime() + options.leaseDurationMs).toISOString();
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const existing = this.#database.prepare(`
+        SELECT consumer_name, event_id, fingerprint, attempt_count, received_at,
+               lease_owner, lease_expires_at, completed_at, last_error
+        FROM onyx_inbox
+        WHERE consumer_name = ? AND event_id = ?
+      `).get(options.consumerName, options.eventId) as InboxRow | undefined;
+      if (existing) {
+        if (existing.fingerprint !== options.fingerprint) {
+          throw new Error("inbox event fingerprint mismatch");
+        }
+        if (existing.completed_at !== null) {
+          this.#database.exec("COMMIT");
+          return {status: "duplicate", receipt: toInboxReceipt(existing)};
+        }
+        if (existing.lease_expires_at !== null && existing.lease_expires_at > now) {
+          this.#database.exec("COMMIT");
+          return {status: "busy", receipt: toInboxReceipt(existing)};
+        }
+        this.#database.prepare(`
+          UPDATE onyx_inbox
+          SET lease_owner = ?, lease_expires_at = ?, attempt_count = attempt_count + 1
+          WHERE consumer_name = ? AND event_id = ?
+        `).run(options.workerId, leaseExpiresAt, options.consumerName, options.eventId);
+        this.#database.exec("COMMIT");
+        return {status: "acquired", receipt: toInboxReceipt({
+          ...existing,
+          attempt_count: existing.attempt_count + 1,
+          lease_owner: options.workerId,
+          lease_expires_at: leaseExpiresAt,
+        })};
+      }
+      this.#database.prepare(`
+        INSERT INTO onyx_inbox(
+          consumer_name, event_id, fingerprint, attempt_count, received_at,
+          lease_owner, lease_expires_at
+        ) VALUES (?, ?, ?, 1, ?, ?, ?)
+      `).run(options.consumerName, options.eventId, options.fingerprint, now, options.workerId, leaseExpiresAt);
+      this.#database.exec("COMMIT");
+      return {
+        status: "acquired",
+        receipt: {
+          consumerName: options.consumerName,
+          eventId: options.eventId,
+          fingerprint: options.fingerprint,
+          attemptCount: 1,
+          receivedAt: now,
+          leaseOwner: options.workerId,
+          leaseExpiresAt,
+        },
+      };
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  completeInbox(consumerName: string, eventId: string, workerId: string, completedAt: Date): void {
+    const result = this.#database.prepare(`
+      UPDATE onyx_inbox
+      SET completed_at = ?, lease_owner = NULL, lease_expires_at = NULL, last_error = NULL
+      WHERE consumer_name = ? AND event_id = ? AND lease_owner = ? AND completed_at IS NULL
+    `).run(completedAt.toISOString(), consumerName, eventId, workerId);
+    if (result.changes !== 1) throw new Error("inbox event is not leased by this worker");
+  }
+
+  releaseInbox(consumerName: string, eventId: string, workerId: string, error: string): void {
+    const result = this.#database.prepare(`
+      UPDATE onyx_inbox
+      SET lease_owner = NULL, lease_expires_at = NULL, last_error = ?
+      WHERE consumer_name = ? AND event_id = ? AND lease_owner = ? AND completed_at IS NULL
+    `).run(error.slice(0, 2_048), consumerName, eventId, workerId);
+    if (result.changes !== 1) throw new Error("inbox event is not leased by this worker");
   }
 
   claimOutbox<TEvent>(options: ClaimOutboxOptions): OutboxMessage<TEvent>[] {
@@ -123,14 +245,14 @@ export class SqliteDatabase {
     try {
       const rows = this.#database.prepare(`
         SELECT event_id, context, aggregate_id, organization_id, event_type, event_json,
-               attempt_count, available_at, lease_owner, lease_expires_at,
+               aggregate_version, attempt_count, available_at, lease_owner, lease_expires_at,
                delivered_at, dead_lettered_at, last_error
         FROM onyx_outbox
         WHERE delivered_at IS NULL
           AND dead_lettered_at IS NULL
           AND available_at <= ?
           AND (lease_expires_at IS NULL OR lease_expires_at <= ?)
-        ORDER BY created_at, event_id
+        ORDER BY available_at, context, aggregate_id, aggregate_version, event_id
         LIMIT ?
       `).all(now, now, options.limit) as unknown as OutboxRow[];
       const claim = this.#database.prepare(`
@@ -240,12 +362,14 @@ export class SqliteDatabase {
       const event = record.event as Record<string, unknown>;
       this.#database.prepare(`
         INSERT INTO onyx_outbox(
-          event_id, context, aggregate_id, organization_id, event_type, event_json, available_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          event_id, context, aggregate_id, aggregate_version, organization_id,
+          event_type, event_json, available_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         record.eventId,
         record.context,
         record.aggregateId,
+        record.eventVersion,
         record.organizationId,
         typeof event.event_type === "string" ? event.event_type : "UnknownEvent",
         eventJson,
@@ -304,6 +428,7 @@ export class SqliteDatabase {
         event_id TEXT PRIMARY KEY,
         context TEXT NOT NULL,
         aggregate_id TEXT NOT NULL,
+        aggregate_version INTEGER NOT NULL CHECK(aggregate_version >= 1),
         organization_id TEXT NOT NULL,
         event_type TEXT NOT NULL,
         event_json TEXT NOT NULL CHECK(json_valid(event_json)),
@@ -323,8 +448,52 @@ export class SqliteDatabase {
       CREATE INDEX IF NOT EXISTS onyx_outbox_ready
         ON onyx_outbox(delivered_at, dead_lettered_at, available_at, lease_expires_at);
 
+      CREATE TABLE IF NOT EXISTS onyx_inbox (
+        consumer_name TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        fingerprint TEXT NOT NULL,
+        attempt_count INTEGER NOT NULL DEFAULT 0 CHECK(attempt_count >= 0),
+        received_at TEXT NOT NULL,
+        lease_owner TEXT,
+        lease_expires_at TEXT,
+        completed_at TEXT,
+        last_error TEXT,
+        PRIMARY KEY(consumer_name, event_id),
+        CHECK((lease_owner IS NULL) = (lease_expires_at IS NULL))
+      );
+
+      CREATE INDEX IF NOT EXISTS onyx_inbox_active
+        ON onyx_inbox(consumer_name, completed_at, lease_expires_at);
+
       INSERT OR IGNORE INTO onyx_schema_migrations(version) VALUES (1);
       INSERT OR IGNORE INTO onyx_schema_migrations(version) VALUES (2);
+      INSERT OR IGNORE INTO onyx_schema_migrations(version) VALUES (3);
+    `);
+    this.#migrateOutboxAggregateVersion();
+  }
+
+  #migrateOutboxAggregateVersion(): void {
+    const columns = this.#database.prepare("PRAGMA table_info(onyx_outbox)").all() as Array<{name: string}>;
+    if (!columns.some((column) => column.name === "aggregate_version")) {
+      this.#database.exec("BEGIN IMMEDIATE");
+      try {
+        this.#database.exec("ALTER TABLE onyx_outbox ADD COLUMN aggregate_version INTEGER NOT NULL DEFAULT 0");
+        this.#database.exec(`
+          UPDATE onyx_outbox
+          SET aggregate_version = (
+            SELECT aggregate_version FROM onyx_events WHERE onyx_events.event_id = onyx_outbox.event_id
+          )
+        `);
+        this.#database.exec("COMMIT");
+      } catch (error) {
+        this.#database.exec("ROLLBACK");
+        throw error;
+      }
+    }
+    this.#database.exec(`
+      CREATE INDEX IF NOT EXISTS onyx_outbox_aggregate_order
+        ON onyx_outbox(available_at, context, aggregate_id, aggregate_version, event_id);
+      INSERT OR IGNORE INTO onyx_schema_migrations(version) VALUES (4);
     `);
   }
 }
@@ -333,6 +502,7 @@ interface OutboxRow {
   event_id: string;
   context: string;
   aggregate_id: string;
+  aggregate_version: number;
   organization_id: string;
   event_type: string;
   event_json: string;
@@ -345,11 +515,24 @@ interface OutboxRow {
   last_error: string | null;
 }
 
+interface InboxRow {
+  consumer_name: string;
+  event_id: string;
+  fingerprint: string;
+  attempt_count: number;
+  received_at: string;
+  lease_owner: string | null;
+  lease_expires_at: string | null;
+  completed_at: string | null;
+  last_error: string | null;
+}
+
 function toOutboxMessage<TEvent>(row: OutboxRow): OutboxMessage<TEvent> {
   return {
     eventId: row.event_id,
     context: row.context,
     aggregateId: row.aggregate_id,
+    aggregateVersion: row.aggregate_version,
     organizationId: row.organization_id,
     eventType: row.event_type,
     event: JSON.parse(row.event_json) as TEvent,
@@ -359,6 +542,20 @@ function toOutboxMessage<TEvent>(row: OutboxRow): OutboxMessage<TEvent> {
     ...(row.lease_expires_at !== null ? {leaseExpiresAt: row.lease_expires_at} : {}),
     ...(row.delivered_at !== null ? {deliveredAt: row.delivered_at} : {}),
     ...(row.dead_lettered_at !== null ? {deadLetteredAt: row.dead_lettered_at} : {}),
+    ...(row.last_error !== null ? {lastError: row.last_error} : {}),
+  };
+}
+
+function toInboxReceipt(row: InboxRow): InboxReceipt {
+  return {
+    consumerName: row.consumer_name,
+    eventId: row.event_id,
+    fingerprint: row.fingerprint,
+    attemptCount: row.attempt_count,
+    receivedAt: row.received_at,
+    ...(row.lease_owner !== null ? {leaseOwner: row.lease_owner} : {}),
+    ...(row.lease_expires_at !== null ? {leaseExpiresAt: row.lease_expires_at} : {}),
+    ...(row.completed_at !== null ? {completedAt: row.completed_at} : {}),
     ...(row.last_error !== null ? {lastError: row.last_error} : {}),
   };
 }

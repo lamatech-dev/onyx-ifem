@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { describe, it } from "node:test";
 import { OutboxDispatcher } from "../src/infrastructure/outbox/dispatcher.ts";
 import { SqliteDatabase } from "../src/infrastructure/sqlite/database.ts";
@@ -24,6 +25,7 @@ describe("transactional outbox", () => {
     assert.equal(message?.context, "mission");
     assert.equal(message?.organizationId, command.organization_id);
     assert.equal(message?.aggregateId, command.payload.mission_id);
+    assert.equal(message?.aggregateVersion, 1);
     assert.equal(message?.eventType, "MissionCreated");
     assert.deepEqual(message?.event, event);
     assert.equal(message?.attemptCount, 0);
@@ -142,5 +144,47 @@ describe("transactional outbox", () => {
     assert.deepEqual(published, [first.event_id, second.event_id]);
     assert.deepEqual(await dispatcher.runOnce(), {claimed: 0, delivered: 0, retried: 0, deadLettered: 0});
     database.close();
+  });
+
+  it("backfills aggregate ordering when opening a version-2 outbox", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "onyx-outbox-migration-"));
+    const path = join(directory, "onyx.db");
+    try {
+      const legacy = new DatabaseSync(path);
+      legacy.exec(`
+        CREATE TABLE onyx_aggregates (
+          context TEXT NOT NULL, aggregate_id TEXT NOT NULL, organization_id TEXT NOT NULL,
+          version INTEGER NOT NULL, state_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY(context, aggregate_id)
+        );
+        CREATE TABLE onyx_events (
+          context TEXT NOT NULL, aggregate_id TEXT NOT NULL, aggregate_version INTEGER NOT NULL,
+          event_id TEXT NOT NULL UNIQUE, event_json TEXT NOT NULL, recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY(context, aggregate_id, aggregate_version)
+        );
+        CREATE TABLE onyx_outbox (
+          event_id TEXT PRIMARY KEY, context TEXT NOT NULL, aggregate_id TEXT NOT NULL,
+          organization_id TEXT NOT NULL, event_type TEXT NOT NULL, event_json TEXT NOT NULL,
+          attempt_count INTEGER NOT NULL DEFAULT 0, available_at TEXT NOT NULL,
+          lease_owner TEXT, lease_expires_at TEXT, delivered_at TEXT, dead_lettered_at TEXT,
+          last_error TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      const eventId = testId(930);
+      const eventJson = JSON.stringify({event_id: eventId, event_type: "LegacyRecorded"});
+      legacy.prepare("INSERT INTO onyx_aggregates(context, aggregate_id, organization_id, version, state_json) VALUES (?, ?, ?, ?, ?)")
+        .run("legacy", "aggregate-1", "organization-1", 1, "{}");
+      legacy.prepare("INSERT INTO onyx_events(context, aggregate_id, aggregate_version, event_id, event_json) VALUES (?, ?, ?, ?, ?)")
+        .run("legacy", "aggregate-1", 7, eventId, eventJson);
+      legacy.prepare("INSERT INTO onyx_outbox(event_id, context, aggregate_id, organization_id, event_type, event_json, available_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
+        .run(eventId, "legacy", "aggregate-1", "organization-1", "LegacyRecorded", eventJson, eventTime().toISOString());
+      legacy.close();
+
+      const migrated = new SqliteDatabase(path);
+      assert.equal(migrated.getOutboxMessage(eventId)?.aggregateVersion, 7);
+      migrated.close();
+    } finally {
+      await rm(directory, {recursive: true, force: true});
+    }
   });
 });

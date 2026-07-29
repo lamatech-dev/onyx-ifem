@@ -18,6 +18,7 @@ The initial migration creates:
 - `onyx_events` for immutable ordered aggregate events;
 - `onyx_operations` for idempotency fingerprints and original results;
 - `onyx_outbox` for reliable asynchronous event delivery;
+- `onyx_inbox` for per-consumer event deduplication and processing leases;
 - `onyx_schema_migrations` for migration history.
 
 Every key includes a bounded-context identifier. Mission, Work, Timeline, and Reporting-Evidence therefore cannot overwrite each other's aggregate or operation identifiers.
@@ -53,3 +54,11 @@ The implementation currently uses Node's built-in `node:sqlite` module. Node 24 
 Delivery is **at least once**. A publisher may complete immediately before its acknowledgement is interrupted, so downstream consumers must deduplicate using the stable `event_id`. Lease expiry allows another worker to recover messages from a crashed process, while owner-checked acknowledgement prevents a stale worker from completing a newer worker's lease.
 
 The dispatcher deliberately performs one bounded pass. Production runtimes should invoke it from their existing worker loop or scheduler, provide the broker-specific `publish` callback, and stop scheduling new passes during graceful shutdown. Broker credentials and transport policy therefore remain outside the domain and persistence layers.
+
+## Inbox processing
+
+`InboxProcessor.process()` stores receipts under the compound identity `(consumer_name, event_id)`. Completed receipts permanently suppress redelivery for that consumer, while another consumer remains free to process the same event. A SHA-256 fingerprint rejects reuse of an event identifier with changed content.
+
+An expiring lease prevents two workers for the same consumer from concurrently handling an event. Failed handlers release the lease and preserve a bounded diagnostic message; a crashed worker's lease can be recovered after expiry. Completion is owner-checked so a stale worker cannot overwrite a recovered receipt.
+
+The inbox closes the normal duplicate-redelivery path, but an arbitrary external side effect and the receipt cannot form one atomic transaction. Handlers must therefore be naturally idempotent, or persist their side effect and receipt in the same transactional resource when exactly-once local state changes are required.

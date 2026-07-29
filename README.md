@@ -58,7 +58,7 @@ ONYX_DB_PATH=./data/onyx.db npm start
 
 Mission, Work, Timeline, and Reporting-Evidence keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
 
-Every durable event is written to a transactional outbox in the same commit as its aggregate state. The bounded dispatcher supports exclusive leases, retry backoff, dead-lettering, and at-least-once delivery with stable event identifiers.
+Every durable event is written to a transactional outbox in the same commit as its aggregate state. The bounded dispatcher supports exclusive leases, retry backoff, dead-lettering, and at-least-once delivery with stable event identifiers. A persistent consumer inbox adds per-consumer deduplication, tamper detection, and crash-recoverable processing leases.
 
 Available endpoints:
 
