@@ -53,7 +53,7 @@ The implementation currently uses Node's built-in `node:sqlite` module. Node 24 
 
 Delivery is **at least once**. A publisher may complete immediately before its acknowledgement is interrupted, so downstream consumers must deduplicate using the stable `event_id`. Lease expiry allows another worker to recover messages from a crashed process, while owner-checked acknowledgement prevents a stale worker from completing a newer worker's lease.
 
-The dispatcher deliberately performs one bounded pass. Production runtimes should invoke it from their existing worker loop or scheduler, provide the broker-specific `publish` callback, and stop scheduling new passes during graceful shutdown. Broker credentials and transport policy therefore remain outside the domain and persistence layers.
+The dispatcher deliberately performs one bounded pass. `OutboxWorker` runs those passes without overlap, continues immediately while a backlog exists, delays after infrastructure errors, and interrupts idle waits during shutdown. The built-in production adapter posts canonical events to a credential-free HTTPS URL with redirects disabled; see [Production deployment](deployment.md).
 
 ## Inbox processing
 

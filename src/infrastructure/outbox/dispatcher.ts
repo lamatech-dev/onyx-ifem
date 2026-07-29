@@ -34,8 +34,8 @@ export class OutboxDispatcher<TEvent = unknown> {
     this.#workerId = options.workerId;
     this.#publish = options.publish;
     this.#now = options.now ?? (() => new Date());
-    this.#batchSize = positiveInteger(options.batchSize ?? 100, "batchSize", 1_000);
-    this.#leaseDurationMs = positiveInteger(options.leaseDurationMs ?? 30_000, "leaseDurationMs");
+    this.#batchSize = positiveInteger(options.batchSize ?? 10, "batchSize", 1_000);
+    this.#leaseDurationMs = positiveInteger(options.leaseDurationMs ?? 120_000, "leaseDurationMs");
     this.#maxAttempts = positiveInteger(options.maxAttempts ?? 10, "maxAttempts");
     this.#retryDelayMs = options.retryDelayMs ?? ((attempt) => Math.min(60_000, 1_000 * 2 ** (attempt - 1)));
   }

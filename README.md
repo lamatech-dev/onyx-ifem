@@ -48,6 +48,8 @@ Authentication is disabled for local development. Production deployments can req
 
 Every response carries an `x-request-id`; the server emits redaction-safe structured JSON logs. Use `/healthz` for liveness and `/readyz` for persistence plus messaging readiness. See [Observability](docs/observability.md).
 
+Set `ONYX_OUTBOX_WEBHOOK_URL` to run the crash-recoverable outbox publisher. Production configuration, HTTPS delivery headers, lease sizing, and graceful shutdown behavior are documented in [Production deployment](docs/deployment.md).
+
 The application dispatcher is independent of the Node HTTP transport, so route workflows can run without opening sockets. See [HTTP application architecture](docs/http-architecture.md).
 
 A self-contained OpenAPI 3.1.2 document is available at `GET /openapi.json` or through `npm run openapi`. See [OpenAPI description](docs/openapi.md).

@@ -1,8 +1,13 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFileSync } from "node:fs";
+import { hostname } from "node:os";
 import { OnyxApplication, errorResponse, type ApiResponse } from "../api/application.ts";
 import { OnyxError } from "../contracts/errors.ts";
 import { jsonLineLogger, resolveRequestId } from "../infrastructure/observability/logger.ts";
+import { createHttpEventPublisher } from "../infrastructure/outbox/http-publisher.ts";
+import { OutboxDispatcher } from "../infrastructure/outbox/dispatcher.ts";
+import { OutboxWorker } from "../infrastructure/outbox/worker.ts";
+import { SqliteDatabase } from "../infrastructure/sqlite/database.ts";
 import { uuidV7 } from "../shared/identifiers.ts";
 
 const host = process.env.ONYX_HOST ?? "127.0.0.1";
@@ -15,6 +20,7 @@ const auth = authMode === "required" ? {
   issuer: requiredEnvironment("ONYX_AUTH_ISSUER"),
   audience: requiredEnvironment("ONYX_AUTH_AUDIENCE"),
 } : undefined;
+const databasePath = process.env.ONYX_DB_PATH;
 const requestLogger = jsonLineLogger();
 const logInternalError = (error: unknown): void => {
   const errorName = error instanceof Error ? error.name : "UnknownError";
@@ -27,7 +33,7 @@ const logInternalError = (error: unknown): void => {
 };
 
 const application = new OnyxApplication({
-  ...(process.env.ONYX_DB_PATH ? {databasePath: process.env.ONYX_DB_PATH} : {}),
+  ...(databasePath ? {databasePath} : {}),
   replicaIds: {
     ...(process.env.ONYX_REPLICA_ID ? {mission: process.env.ONYX_REPLICA_ID} : {}),
     ...(process.env.ONYX_WORK_REPLICA_ID ? {work: process.env.ONYX_WORK_REPLICA_ID} : {}),
@@ -96,13 +102,85 @@ function requiredEnvironment(name: string): string {
   return value;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  server.listen(port, host, () => console.log(`ONYX API listening on http://${host}:${port}`));
+function optionalInteger(name: string, fallback: number, minimum: number, maximum: number): number {
+  const value = Number(process.env[name] ?? String(fallback));
+  if (!Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new Error(`${name} must be an integer from ${minimum} through ${maximum}`);
+  }
+  return value;
+}
 
+function workerLog(level: "info" | "error", event: string, fields: Record<string, unknown>): void {
+  const stream = level === "error" ? process.stderr : process.stdout;
+  stream.write(`${JSON.stringify({timestamp: new Date().toISOString(), level, event, ...fields})}\n`);
+}
+
+function createOutboxRuntime(): {worker: OutboxWorker; database: SqliteDatabase} | undefined {
+  const url = process.env.ONYX_OUTBOX_WEBHOOK_URL;
+  if (!url) return undefined;
+  if (!databasePath || databasePath === ":memory:") {
+    throw new Error("ONYX_DB_PATH must be a file-backed database when the outbox worker is enabled");
+  }
+  const batchSize = optionalInteger("ONYX_OUTBOX_BATCH_SIZE", 10, 1, 1_000);
+  const timeoutMs = optionalInteger("ONYX_OUTBOX_TIMEOUT_MS", 10_000, 100, 120_000);
+  const leaseDurationMs = optionalInteger("ONYX_OUTBOX_LEASE_MS", 120_000, 1_000, 3_600_000);
+  if (leaseDurationMs <= batchSize * timeoutMs) {
+    throw new Error("ONYX_OUTBOX_LEASE_MS must exceed ONYX_OUTBOX_BATCH_SIZE multiplied by ONYX_OUTBOX_TIMEOUT_MS");
+  }
+  const database = new SqliteDatabase(databasePath);
+  const workerId = process.env.ONYX_OUTBOX_WORKER_ID ?? `${hostname()}:${process.pid}`;
+  const dispatcher = new OutboxDispatcher({
+    database,
+    workerId,
+    batchSize,
+    leaseDurationMs,
+    maxAttempts: optionalInteger("ONYX_OUTBOX_MAX_ATTEMPTS", 10, 1, 1_000),
+    publish: createHttpEventPublisher({
+      url,
+      timeoutMs,
+      ...(process.env.ONYX_OUTBOX_BEARER_TOKEN ? {bearerToken: process.env.ONYX_OUTBOX_BEARER_TOKEN} : {}),
+    }),
+  });
+  return {
+    database,
+    worker: new OutboxWorker({
+      dispatcher,
+      pollIntervalMs: optionalInteger("ONYX_OUTBOX_POLL_MS", 1_000, 10, 60_000),
+      errorDelayMs: optionalInteger("ONYX_OUTBOX_ERROR_DELAY_MS", 5_000, 100, 300_000),
+      onBatch: (result) => {
+        if (result.claimed > 0) workerLog("info", "outbox.batch.completed", {worker_id: workerId, ...result});
+      },
+      onError: (error) => workerLog("error", "outbox.worker.error", {
+        worker_id: workerId,
+        error_name: error instanceof Error ? error.name : "UnknownError",
+      }),
+    }),
+  };
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const outbox = createOutboxRuntime();
+  server.listen(port, host, () => {
+    workerLog("info", "http.server.started", {host, port, outbox_worker_enabled: outbox !== undefined});
+    outbox?.worker.start();
+  });
+
+  let shuttingDown = false;
   const shutdown = (): void => {
-    server.close(() => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    workerLog("info", "application.shutdown.started", {});
+    const closeServer = new Promise<void>((resolve, reject) => {
+      server.close((error) => error ? reject(error) : resolve());
+    });
+    void Promise.all([closeServer, outbox?.worker.stop()]).then(() => {
+      outbox?.database.close();
       application.close();
+      workerLog("info", "application.shutdown.completed", {});
       process.exit(0);
+    }).catch((error: unknown) => {
+      logInternalError(error);
+      process.exit(1);
     });
   };
   process.once("SIGINT", shutdown);
