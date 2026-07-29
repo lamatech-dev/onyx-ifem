@@ -24,6 +24,7 @@ const headersTimeoutMs = optionalInteger("ONYX_HEADERS_TIMEOUT_MS", 5_000, 1_000
 if (headersTimeoutMs > requestTimeoutMs) throw new Error("ONYX_HEADERS_TIMEOUT_MS must not exceed ONYX_REQUEST_TIMEOUT_MS");
 const keepAliveTimeoutMs = optionalInteger("ONYX_KEEP_ALIVE_TIMEOUT_MS", 5_000, 100, 60_000);
 const socketTimeoutMs = optionalInteger("ONYX_SOCKET_TIMEOUT_MS", 30_000, 1_000, 600_000);
+const shutdownTimeoutMs = optionalInteger("ONYX_SHUTDOWN_TIMEOUT_MS", 120_000, 100, 600_000);
 const maxHeaderSize = optionalInteger("ONYX_MAX_HEADER_BYTES", 16_384, 1_024, 65_536);
 const maxHeadersCount = optionalInteger("ONYX_MAX_HEADERS_COUNT", 100, 10, 1_000);
 const maxRequestsPerSocket = optionalInteger("ONYX_MAX_REQUESTS_PER_SOCKET", 1_000, 1, 100_000);
@@ -293,15 +294,22 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     if (shuttingDown) return;
     shuttingDown = true;
     workerLog("info", "application.shutdown.started", {});
+    const deadline = setTimeout(() => {
+      workerLog("error", "application.shutdown.forced", {timeout_ms: shutdownTimeoutMs});
+      server.closeAllConnections();
+      process.exit(1);
+    }, shutdownTimeoutMs);
     const closeServer = new Promise<void>((resolve, reject) => {
       server.close((error) => error ? reject(error) : resolve());
     });
     void Promise.all([closeServer, outbox?.worker.stop()]).then(() => {
+      clearTimeout(deadline);
       outbox?.database.close();
       application.close();
       workerLog("info", "application.shutdown.completed", {});
       process.exit(0);
     }).catch((error: unknown) => {
+      clearTimeout(deadline);
       logInternalError(error);
       process.exit(1);
     });

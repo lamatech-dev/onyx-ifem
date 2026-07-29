@@ -61,7 +61,7 @@ TLS still terminates at a trusted ingress, gateway, or service mesh. The Cluster
 
 ## Probes and shutdown
 
-The startup and liveness probes use `/healthz`; readiness uses `/readyz`, which checks SQLite and removes the Pod from Service endpoints on persistence failure. The 150-second termination grace period exceeds the default worst-case sequential outbox batch time of 100 seconds and leaves time for HTTP drain.
+The startup and liveness probes use `/healthz`; readiness uses `/readyz`, which checks SQLite and removes the Pod from Service endpoints on persistence failure. ONYX bounds its own drain with `ONYX_SHUTDOWN_TIMEOUT_MS=120000`. The 150-second termination grace period leaves 30 seconds for signal delivery, forced connection cleanup, and kubelet process termination.
 
 Do not add a liveness dependency on the external event receiver. A receiver outage should trigger outbox retry and readiness observability, not restart a healthy process.
 

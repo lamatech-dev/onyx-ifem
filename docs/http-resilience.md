@@ -33,6 +33,7 @@ Defaults are intentionally finite:
 | `ONYX_REQUEST_TIMEOUT_MS` | 15000 | Receive the complete request |
 | `ONYX_HEADERS_TIMEOUT_MS` | 5000 | Receive complete headers |
 | `ONYX_SOCKET_TIMEOUT_MS` | 30000 | Bound socket inactivity |
+| `ONYX_SHUTDOWN_TIMEOUT_MS` | 120000 | Bound graceful process shutdown |
 | `ONYX_KEEP_ALIVE_TIMEOUT_MS` | 5000 | Retain an idle keep-alive connection |
 | `ONYX_MAX_HEADER_BYTES` | 16384 | Bound total parsed header bytes |
 | `ONYX_MAX_HEADERS_COUNT` | 100 | Bound incoming header count |

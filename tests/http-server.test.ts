@@ -181,6 +181,59 @@ describe("HTTP executable", () => {
       }
     }
   });
+
+  it("forces shutdown after the configured drain deadline", {timeout: 10_000}, async () => {
+    const port = await availablePort();
+    let stdout = "";
+    let stderr = "";
+    const child = spawn(process.execPath, ["--experimental-strip-types", "src/mission/server.ts"], {
+      cwd: new URL("..", import.meta.url),
+      env: cleanEnvironment({
+        ONYX_AUTH_MODE: "disabled",
+        ONYX_HOST: "127.0.0.1",
+        ONYX_PORT: String(port),
+        ONYX_REQUEST_TIMEOUT_MS: "300000",
+        ONYX_SHUTDOWN_TIMEOUT_MS: "200",
+        ONYX_SOCKET_TIMEOUT_MS: "300000",
+      }),
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk: string) => { stdout += chunk; });
+    child.stderr.on("data", (chunk: string) => { stderr += chunk; });
+    let held: ReturnType<typeof createConnection> | undefined;
+
+    try {
+      await waitForOutput(child, () => `${stdout}\n${stderr}`, '"event":"http.server.started"');
+      held = createConnection({host: "127.0.0.1", port});
+      await once(held, "connect");
+      held.write([
+        "POST /v1/mission/commands/CreateMission HTTP/1.1",
+        `Host: 127.0.0.1:${port}`,
+        "Content-Type: application/json",
+        "Content-Length: 100",
+        "Connection: close",
+        "",
+        "{",
+      ].join("\r\n"));
+      await new Promise((resolve) => setTimeout(resolve, 25));
+
+      child.kill("SIGTERM");
+      const [code, signal] = await waitForExit(child);
+      assert.equal(code, 1);
+      assert.equal(signal, null);
+      assert.match(stdout, /"event":"application.shutdown.started"/);
+      assert.match(stderr, /"event":"application.shutdown.forced","timeout_ms":200/);
+      assert.doesNotMatch(stdout, /"event":"application.shutdown.completed"/);
+    } finally {
+      held?.destroy();
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill("SIGKILL");
+        await once(child, "exit");
+      }
+    }
+  });
 });
 
 function cleanEnvironment(onyx: Record<string, string>): NodeJS.ProcessEnv {

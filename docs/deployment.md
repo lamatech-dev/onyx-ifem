@@ -55,7 +55,7 @@ On `SIGTERM` or `SIGINT`, ONYX:
 4. closes the worker and application database connections;
 5. exits successfully.
 
-The publisher timeout bounds how long a single event can delay shutdown. The process supervisor's termination grace period must exceed the configured timeout multiplied by the batch size, plus normal HTTP request drain time.
+`ONYX_SHUTDOWN_TIMEOUT_MS` bounds the entire drain (120 seconds by default). If active HTTP requests or the current publication batch do not finish before that deadline, ONYX logs `application.shutdown.forced`, closes HTTP connections, and exits unsuccessfully so the supervisor can report the failed drain. The publisher timeout still bounds how long a single event can delay shutdown. The process supervisor's termination grace period must exceed the shutdown timeout and leave time for signal delivery and forced process cleanup.
 
 ## Operational checks
 
