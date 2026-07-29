@@ -1,71 +1,24 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { OnyxApplication, errorResponse, type ApiResponse } from "../api/application.ts";
 import { OnyxError } from "../contracts/errors.ts";
-import { InMemoryMissionRepository } from "./repository.ts";
-import { MissionService } from "./service.ts";
-import { InMemoryWorkRepository } from "../work/repository.ts";
-import { WorkService } from "../work/service.ts";
-import { SqliteDatabase } from "../infrastructure/sqlite/database.ts";
-import { SqliteMissionRepository } from "./sqlite-repository.ts";
-import { SqliteWorkRepository } from "../work/sqlite-repository.ts";
-import { InMemoryTimelineRepository } from "../timeline/repository.ts";
-import { TimelineService } from "../timeline/service.ts";
-import { SqliteTimelineRepository } from "../timeline/sqlite-repository.ts";
-import { InMemoryReportingRepository } from "../reporting-evidence/repository.ts";
-import { ReportingService } from "../reporting-evidence/service.ts";
-import { SqliteReportingRepository } from "../reporting-evidence/sqlite-repository.ts";
 
 const host = process.env.ONYX_HOST ?? "127.0.0.1";
 const port = Number(process.env.ONYX_PORT ?? "3000");
-const database = process.env.ONYX_DB_PATH ? new SqliteDatabase(process.env.ONYX_DB_PATH) : undefined;
-const service = new MissionService({
-  repository: database ? new SqliteMissionRepository(database) : new InMemoryMissionRepository(),
-  replicaId: process.env.ONYX_REPLICA_ID ?? "mission-api",
-});
-const workService = new WorkService({
-  repository: database ? new SqliteWorkRepository(database) : new InMemoryWorkRepository(),
-  replicaId: process.env.ONYX_WORK_REPLICA_ID ?? "work-api",
-  requireMission: async (organizationId, missionId) => {
-    await service.getMission(organizationId, missionId);
-  },
-});
-const timelineService = new TimelineService({
-  repository: database ? new SqliteTimelineRepository(database) : new InMemoryTimelineRepository(),
-  replicaId: process.env.ONYX_TIMELINE_REPLICA_ID ?? "timeline-api",
-  requireSubject: async (organizationId, subject) => {
-    if (subject.aggregate_type === "Mission") {
-      await service.getMission(organizationId, subject.object_id);
-      return;
-    }
-    if (subject.aggregate_type === "Task") {
-      await workService.getTask(organizationId, subject.object_id);
-      return;
-    }
-    throw new OnyxError("INVALID_ARGUMENT", `unsupported timeline subject type: ${subject.aggregate_type}`);
-  },
-});
-const reportingService = new ReportingService({
-  repository: database ? new SqliteReportingRepository(database) : new InMemoryReportingRepository(),
-  replicaId: process.env.ONYX_REPORTING_REPLICA_ID ?? "reporting-evidence-api",
-  requireSubject: async (organizationId, subject) => {
-    if (subject.aggregate_type === "Mission") {
-      await service.getMission(organizationId, subject.object_id);
-      return;
-    }
-    if (subject.aggregate_type === "Task") {
-      await workService.getTask(organizationId, subject.object_id);
-      return;
-    }
-    if (subject.aggregate_type === "Timeline") {
-      await timelineService.getTimeline(organizationId, subject.object_id);
-      return;
-    }
-    throw new OnyxError("INVALID_ARGUMENT", `unsupported report subject type: ${subject.aggregate_type}`);
+if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new Error("ONYX_PORT must be an integer from 1 to 65535");
+
+const application = new OnyxApplication({
+  databasePath: process.env.ONYX_DB_PATH,
+  replicaIds: {
+    mission: process.env.ONYX_REPLICA_ID,
+    work: process.env.ONYX_WORK_REPLICA_ID,
+    timeline: process.env.ONYX_TIMELINE_REPLICA_ID,
+    reportingEvidence: process.env.ONYX_REPORTING_REPLICA_ID,
   },
 });
 
-function respond(response: ServerResponse, status: number, body: unknown): void {
-  response.writeHead(status, {"content-type": "application/json; charset=utf-8"});
-  response.end(JSON.stringify(body));
+function respond(response: ServerResponse, result: ApiResponse): void {
+  response.writeHead(result.status, {"content-type": "application/json; charset=utf-8"});
+  response.end(JSON.stringify(result.body));
 }
 
 async function readJson(request: IncomingMessage): Promise<unknown> {
@@ -86,129 +39,10 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
 
 export const server = createServer(async (request, response) => {
   try {
-    if (request.method === "GET" && request.url === "/healthz") {
-      return respond(response, 200, {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence"]});
-    }
-    if (request.method === "POST" && request.url?.startsWith("/v1/mission/commands/")) {
-      const command = await readJson(request);
-      const routeType = request.url.slice("/v1/mission/commands/".length);
-      if ((command as {command_type?: string})?.command_type !== routeType) {
-        throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
-      }
-      const event = await service.execute(command);
-      return respond(response, 202, event);
-    }
-    if (request.method === "POST" && request.url?.startsWith("/v1/work/commands/")) {
-      const command = await readJson(request);
-      const routeType = request.url.slice("/v1/work/commands/".length);
-      if ((command as {command_type?: string})?.command_type !== routeType) {
-        throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
-      }
-      const event = await workService.execute(command);
-      return respond(response, 202, event);
-    }
-    if (request.method === "POST" && request.url?.startsWith("/v1/timeline/commands/")) {
-      const command = await readJson(request);
-      const routeType = request.url.slice("/v1/timeline/commands/".length);
-      if ((command as {command_type?: string})?.command_type !== routeType) {
-        throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
-      }
-      const event = await timelineService.execute(command);
-      return respond(response, 202, event);
-    }
-    if (request.method === "POST" && request.url?.startsWith("/v1/reporting-evidence/commands/")) {
-      const command = await readJson(request);
-      const routeType = request.url.slice("/v1/reporting-evidence/commands/".length);
-      if ((command as {command_type?: string})?.command_type !== routeType) {
-        throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
-      }
-      const event = await reportingService.execute(command);
-      return respond(response, 202, event);
-    }
-    const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
-    if (request.method === "GET" && url.pathname === "/v1/missions") {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      return respond(response, 200, {items: await service.listMissions(organizationId)});
-    }
-    const historyMatch = url.pathname.match(/^\/v1\/missions\/([^/]+)\/history$/);
-    if (request.method === "GET" && historyMatch) {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
-      const limit = Number(url.searchParams.get("limit") ?? "100");
-      return respond(response, 200, {items: await service.getHistory(organizationId, historyMatch[1], afterVersion, limit)});
-    }
-    const missionMatch = url.pathname.match(/^\/v1\/missions\/([^/]+)$/);
-    if (request.method === "GET" && missionMatch) {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      return respond(response, 200, await service.getMission(organizationId, missionMatch[1]));
-    }
-    if (request.method === "GET" && url.pathname === "/v1/tasks") {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      return respond(response, 200, {items: await workService.listTasks(organizationId)});
-    }
-    const taskHistoryMatch = url.pathname.match(/^\/v1\/tasks\/([^/]+)\/history$/);
-    if (request.method === "GET" && taskHistoryMatch) {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
-      const limit = Number(url.searchParams.get("limit") ?? "100");
-      return respond(response, 200, {items: await workService.getHistory(organizationId, taskHistoryMatch[1], afterVersion, limit)});
-    }
-    const taskMatch = url.pathname.match(/^\/v1\/tasks\/([^/]+)$/);
-    if (request.method === "GET" && taskMatch) {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      return respond(response, 200, await workService.getTask(organizationId, taskMatch[1]));
-    }
-    if (request.method === "GET" && url.pathname === "/v1/timelines") {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      return respond(response, 200, {items: await timelineService.listTimelines(organizationId)});
-    }
-    const timelineHistoryMatch = url.pathname.match(/^\/v1\/timelines\/([^/]+)\/history$/);
-    if (request.method === "GET" && timelineHistoryMatch) {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
-      const limit = Number(url.searchParams.get("limit") ?? "100");
-      return respond(response, 200, {items: await timelineService.getHistory(organizationId, timelineHistoryMatch[1], afterVersion, limit)});
-    }
-    const timelineMatch = url.pathname.match(/^\/v1\/timelines\/([^/]+)$/);
-    if (request.method === "GET" && timelineMatch) {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      return respond(response, 200, await timelineService.getTimeline(organizationId, timelineMatch[1]));
-    }
-    if (request.method === "GET" && url.pathname === "/v1/reports") {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      return respond(response, 200, {items: await reportingService.listReports(organizationId)});
-    }
-    const reportHistoryMatch = url.pathname.match(/^\/v1\/reports\/([^/]+)\/history$/);
-    if (request.method === "GET" && reportHistoryMatch) {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
-      const limit = Number(url.searchParams.get("limit") ?? "100");
-      return respond(response, 200, {items: await reportingService.getHistory(organizationId, reportHistoryMatch[1], afterVersion, limit)});
-    }
-    const reportMatch = url.pathname.match(/^\/v1\/reports\/([^/]+)$/);
-    if (request.method === "GET" && reportMatch) {
-      const organizationId = url.searchParams.get("organization_id");
-      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-      return respond(response, 200, await reportingService.getReport(organizationId, reportMatch[1]));
-    }
-    return respond(response, 404, {code: "NOT_FOUND", message: "route not found"});
+    const body = request.method === "POST" ? await readJson(request) : undefined;
+    respond(response, await application.handle({method: request.method ?? "GET", path: request.url ?? "/", body}));
   } catch (error) {
-    if (error instanceof OnyxError) {
-      return respond(response, error.httpStatus, {code: error.code, message: error.message, details: error.details});
-    }
-    console.error(error);
-    return respond(response, 500, {code: "INTERNAL_ERROR", message: "unexpected failure"});
+    respond(response, errorResponse(error));
   }
 });
 
@@ -217,7 +51,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const shutdown = (): void => {
     server.close(() => {
-      database?.close();
+      application.close();
       process.exit(0);
     });
   };

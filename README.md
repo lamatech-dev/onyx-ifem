@@ -8,6 +8,7 @@ The executable baseline includes the Mission, Work, Timeline, and Reporting-Evid
 
 ```text
 contracts/v2.0/       Versioned machine-readable contract baseline
+src/api/              Service composition and port-free request dispatcher
 src/contracts/        Canonical envelope and shared runtime types
 src/mission/          Mission domain and application service
 src/work/             Work/Task domain and application service
@@ -30,13 +31,15 @@ No third-party runtime or test dependencies are required for the initial slice.
 npm run check
 ```
 
-## Run the Mission API
+## Run the API
 
 ```bash
 npm start
 ```
 
 The server listens on `127.0.0.1:3000` by default. Configure `ONYX_HOST`, `ONYX_PORT`, and replica identifiers when needed.
+
+The application dispatcher is independent of the Node HTTP transport, so route workflows can run without opening sockets. See [HTTP application architecture](docs/http-architecture.md).
 
 State is in-memory unless `ONYX_DB_PATH` is set. Enable durable SQLite persistence with:
 
@@ -87,7 +90,7 @@ The Timeline context implements `CreateTimeline`. A timeline may currently targe
 
 The Reporting-Evidence context implements `CreateReport`. A report may currently target an existing Mission, Task, or Timeline inside the same organization boundary. See [Reporting-Evidence context](docs/reporting-evidence-context.md).
 
-The HTTP adapter intentionally starts with one complete vertical slice. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
+The HTTP adapter exposes every currently executable context. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
 
 ## Contract maturity
 
