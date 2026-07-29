@@ -48,7 +48,7 @@ The context service still enforces the command-specific scope and proof expirati
 - `timeline:read`
 - `reporting-evidence:read`
 
-The query organization must equal the token organization. `/healthz` and `/openapi.json` remain public for operations and API discovery.
+The query organization must equal the token organization. `/healthz`, `/readyz`, `/metrics`, and `/openapi.json` remain public for infrastructure operations and API discovery. Keep `/metrics` and `/readyz` off public ingress routes.
 
 ## Deployment requirements
 

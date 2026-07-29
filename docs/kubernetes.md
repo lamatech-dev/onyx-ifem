@@ -46,6 +46,8 @@ The base requests 5 GiB from the cluster's default StorageClass. Set `storageCla
 
 The default NetworkPolicy accepts port 3000 only from client Pods labeled `onyx-ifem.io/client=true` in namespaces labeled `onyx-ifem.io/access=true`. Label the trusted ingress controller namespace and its Pods, or adapt the selectors to an equivalent identity controlled by the cluster operator.
 
+Apply the same labels to the Prometheus namespace and scraper Pod. The Service advertises `/metrics` through conventional scrape annotations, but monitoring discovery remains cluster-specific; see [Observability](observability.md).
+
 Outbound traffic is limited to TCP 443 for the optional HTTPS outbox and DNS in `kube-system`. Clusters using node-local DNS or nonstandard DNS labels must adapt the DNS rule before deployment. Confirm that kubelet HTTP probes are permitted by the installed CNI.
 
 TLS still terminates at a trusted ingress, gateway, or service mesh. The ClusterIP Service does not expose ONYX outside the cluster.

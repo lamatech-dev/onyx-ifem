@@ -14,6 +14,24 @@ ONYX exposes separate liveness and readiness signals and emits one structured co
 
 In-memory development mode is ready but explicitly reports `durable: false` and `messaging.enabled: false`. Both probe endpoints are public so infrastructure health checks do not require bearer-token rotation.
 
+## Prometheus metrics
+
+`GET /metrics` returns Prometheus text format 0.0.4 with the required content type and a final newline. It is public to infrastructure and exempt from local rate/concurrency admission so overload remains observable. Do not publish this route through an internet-facing ingress; restrict it to the monitoring network.
+
+Exported series include:
+
+- `onyx_http_requests_total` by normalized method, route template, and status code;
+- `onyx_http_request_duration_seconds` as a cumulative histogram;
+- `onyx_http_requests_in_flight` and admission rejection counters;
+- durable-persistence state, outbox state, oldest pending age, and inbox state;
+- process uptime.
+
+Route labels are fixed templates. Raw URLs, command names, organization IDs, aggregate IDs, request IDs, actors, and payload fields never become labels. This bounds cardinality and prevents tenant data from entering the monitoring system.
+
+The Kubernetes Service carries conventional Prometheus scrape annotations. The default NetworkPolicy still requires the Prometheus Pod to have `onyx-ifem.io/client=true` and its namespace to have `onyx-ifem.io/access=true`. Prometheus Operator users can select the Service with a separately managed `ServiceMonitor` instead of relying on annotations.
+
+Suggested initial alerts are sustained nonzero `onyx_outbox_messages{state="dead_lettered"}`, increasing `onyx_outbox_oldest_pending_age_seconds`, elevated admission rejection rate, and high latency quantiles calculated from the histogram. Tune thresholds from measured traffic and objectives rather than copying development values.
+
 ## Request correlation
 
 Every response includes `x-request-id`. A caller-provided identifier is preserved only when it contains 1–128 ASCII letters, digits, dots, underscores, colons, or hyphens; otherwise the application generates a UUIDv7. Services should forward this header across synchronous calls and include it in broker metadata when publishing events.

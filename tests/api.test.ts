@@ -24,10 +24,15 @@ describe("OnyxApplication", () => {
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");
-      assert.equal(Object.keys(body(openapi).paths as object).length, 26);
+      assert.equal(Object.keys(body(openapi).paths as object).length, 27);
       body(openapi).info.title = "mutated by caller";
       const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");
+
+      const metrics = await application.handle({method: "GET", path: "/metrics"});
+      assert.equal(metrics.status, 200);
+      assert.equal(metrics.headers?.["content-type"], "text/plain; version=0.0.4; charset=utf-8");
+      assert.match(String(metrics.body), /onyx_persistence_durable 0/);
 
       const missing = await application.handle({method: "GET", path: "/v1/unknown"});
       assert.equal(missing.status, 404);
@@ -181,7 +186,12 @@ describe("OnyxApplication", () => {
       assert.equal(body(readiness).messaging.inbox.completed, 0);
       assert.match(readiness.headers?.["x-request-id"] ?? "", /^[0-9a-f-]{36}$/);
 
-      assert.equal(records.length, 2);
+      const metrics = await application.handle({method: "GET", path: "/metrics"});
+      assert.match(String(metrics.body), /onyx_persistence_durable 1/);
+      assert.match(String(metrics.body), /onyx_outbox_messages\{state="pending"\} 1/);
+      assert.doesNotMatch(String(metrics.body), new RegExp(testId(13)));
+
+      assert.equal(records.length, 3);
       assert.deepEqual(records[0], {
         timestamp: now().toISOString(),
         level: "info",

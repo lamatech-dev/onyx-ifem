@@ -2,6 +2,7 @@ import { OnyxError } from "../contracts/errors.ts";
 import { JwtVerifier, type AccessTokenClaims, type JwtVerifierOptions } from "../auth/jwt.ts";
 import { SqliteDatabase } from "../infrastructure/sqlite/database.ts";
 import { type StructuredLogger, resolveRequestId } from "../infrastructure/observability/logger.ts";
+import { PROMETHEUS_CONTENT_TYPE, PrometheusMetrics } from "../infrastructure/observability/metrics.ts";
 import { InMemoryMissionRepository } from "../mission/repository.ts";
 import { MissionService } from "../mission/service.ts";
 import { SqliteMissionRepository } from "../mission/sqlite-repository.ts";
@@ -38,6 +39,7 @@ export interface OnyxApplicationOptions {
   logger?: StructuredLogger;
   monotonicNow?: () => number;
   auth?: JwtVerifierOptions;
+  metrics?: PrometheusMetrics;
 }
 
 interface ResourceRoutes {
@@ -55,6 +57,7 @@ export class OnyxApplication {
   readonly #now: () => Date;
   readonly #monotonicNow: () => number;
   readonly #auth: JwtVerifier | undefined;
+  readonly #metrics: PrometheusMetrics;
   #closed = false;
 
   constructor(options: OnyxApplicationOptions = {}) {
@@ -66,6 +69,7 @@ export class OnyxApplication {
     this.#auth = options.auth
       ? new JwtVerifier({...options.auth, ...(!options.auth.now && options.now ? {now: options.now} : {})})
       : undefined;
+    this.#metrics = options.metrics ?? new PrometheusMetrics();
     const time = options.now ? {now: options.now} : {};
     const mission = new MissionService({
       repository: this.#database ? new SqliteMissionRepository(this.#database) : new InMemoryMissionRepository(),
@@ -180,6 +184,15 @@ export class OnyxApplication {
     }
     if (request.method === "GET" && url.pathname === "/openapi.json") {
       return {status: 200, body: structuredClone(OPENAPI_DOCUMENT)};
+    }
+    if (request.method === "GET" && url.pathname === "/metrics") {
+      const now = this.#now();
+      const messaging = this.#database?.readiness(now);
+      return {
+        status: 200,
+        body: this.#metrics.render({durable: this.#database !== undefined, now, ...(messaging ? {messaging} : {})}),
+        headers: {"cache-control": "no-store", "content-type": PROMETHEUS_CONTENT_TYPE},
+      };
     }
 
     const commandMatch = url.pathname.match(/^\/v1\/([^/]+)\/commands\/([^/]+)$/);

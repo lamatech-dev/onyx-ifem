@@ -226,6 +226,23 @@ paths["/openapi.json"] = {
   },
 };
 
+paths["/metrics"] = {
+  get: {
+    operationId: "getMetrics",
+    tags: ["operations"],
+    responses: {
+      "200": {
+        description: "Prometheus text exposition for internal scraping",
+        content: {
+          "text/plain": {
+            schema: {type: "string"},
+          },
+        },
+      },
+    },
+  },
+};
+
 const viewSchemas: JsonObject = {
   MissionView: {
     type: "object",

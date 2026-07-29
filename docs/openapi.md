@@ -26,12 +26,12 @@ The document currently describes:
 
 - 11 command operations with their exact frozen request and emitted-event schemas;
 - Mission, Task, Timeline, and Report collection, item, and history queries;
-- liveness, readiness, and OpenAPI discovery endpoints;
+- liveness, readiness, Prometheus metrics, and OpenAPI discovery endpoints;
 - reusable identifiers, query parameters, views, and canonical error responses.
 
-Protected operations declare the `BearerAuth` security scheme and document 401 and 403 responses. Liveness, readiness, and OpenAPI discovery remain public.
+Protected operations declare the `BearerAuth` security scheme and document 401 and 403 responses. Liveness, readiness, metrics, and OpenAPI discovery remain public infrastructure operations.
 
-Every non-liveness operation documents `429` rate limiting and `503` capacity/dependency shedding responses, including retry headers.
+Every admission-controlled operation documents `429` rate limiting and `503` capacity/dependency shedding responses, including retry headers. Liveness and metrics are deliberately exempt from admission control.
 
 ## Drift validation
 

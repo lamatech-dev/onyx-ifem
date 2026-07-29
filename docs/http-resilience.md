@@ -1,6 +1,6 @@
 # HTTP resilience and overload protection
 
-ONYX applies bounded admission control before reading a command body. Process liveness at `/healthz` is exempt so an overloaded instance can still be diagnosed; every other route is subject to rate and concurrency limits.
+ONYX applies bounded admission control before reading a command body. Process liveness at `/healthz` and internal telemetry at `/metrics` are exempt so an overloaded instance can still be diagnosed; every other route is subject to rate and concurrency limits. Keep the exempt metrics route restricted to the monitoring network.
 
 ## Rate limiting
 

@@ -5,6 +5,7 @@ import { OnyxApplication, errorResponse, type ApiResponse } from "../api/applica
 import { OnyxError } from "../contracts/errors.ts";
 import { ConcurrencyGate, HttpAdmissionController, TokenBucketRateLimiter } from "../infrastructure/http/admission.ts";
 import { jsonLineLogger, resolveRequestId } from "../infrastructure/observability/logger.ts";
+import { PrometheusMetrics } from "../infrastructure/observability/metrics.ts";
 import { createHttpEventPublisher } from "../infrastructure/outbox/http-publisher.ts";
 import { OutboxDispatcher } from "../infrastructure/outbox/dispatcher.ts";
 import { OutboxWorker } from "../infrastructure/outbox/worker.ts";
@@ -41,6 +42,7 @@ const admission = new HttpAdmissionController(
   new ConcurrencyGate(optionalInteger("ONYX_MAX_IN_FLIGHT", 100, 1, 100_000)),
 );
 const requestLogger = jsonLineLogger();
+const metrics = new PrometheusMetrics();
 const logInternalError = (error: unknown): void => {
   const errorName = error instanceof Error ? error.name : "UnknownError";
   process.stderr.write(`${JSON.stringify({
@@ -61,12 +63,17 @@ const application = new OnyxApplication({
   },
   logger: requestLogger,
   logError: logInternalError,
+  metrics,
   ...(auth ? {auth} : {}),
 });
 
 function respond(response: ServerResponse, result: ApiResponse): void {
   response.writeHead(result.status, {"content-type": "application/json; charset=utf-8", ...result.headers});
-  response.end(JSON.stringify(result.body));
+  response.end(serializeResponseBody(result.body));
+}
+
+export function serializeResponseBody(body: unknown): string {
+  return typeof body === "string" ? body : JSON.stringify(body);
 }
 
 async function readJson(request: IncomingMessage): Promise<unknown> {
@@ -93,10 +100,11 @@ export const server = createServer({
   connectionsCheckingInterval: 1_000,
 }, async (request, response) => {
   const startedAt = performance.now();
+  const measurement = metrics.startHttpRequest();
   const requestIdHeader = request.headers["x-request-id"];
   const requestId = resolveRequestId(Array.isArray(requestIdHeader) ? undefined : requestIdHeader, () => uuidV7());
   const pathname = new URL(request.url ?? "/", "http://onyx.local").pathname;
-  const decision = pathname === "/healthz" ? undefined : admission.admit(clientKey(request), Date.now());
+  const decision = pathname === "/healthz" || pathname === "/metrics" ? undefined : admission.admit(clientKey(request), Date.now());
   if (decision && !decision.accepted) {
     const result: ApiResponse = {
       status: decision.status,
@@ -113,8 +121,16 @@ export const server = createServer({
     };
     respond(response, result);
     logTransportResult(request, result, requestId, startedAt);
+    metrics.recordAdmissionRejection(decision.code === "RATE_LIMITED" ? "rate_limited" : "concurrency_limited");
+    measurement.finish({
+      method: request.method ?? "OTHER",
+      path: request.url ?? "/",
+      status: result.status,
+      durationSeconds: Math.max(0, (performance.now() - startedAt) / 1_000),
+    });
     return;
   }
+  let completedStatus = 500;
   try {
     const body = request.method === "POST" ? await readJson(request) : undefined;
     const result = await application.handle({
@@ -123,9 +139,11 @@ export const server = createServer({
       body,
       headers: {authorization: request.headers.authorization, "x-request-id": requestId},
     });
-    respond(response, decision
+    const completed = decision
       ? {...result, headers: {...result.headers, "x-ratelimit-remaining": String(decision.remaining)}}
-      : result);
+      : result;
+    completedStatus = completed.status;
+    respond(response, completed);
   } catch (error) {
     const result = errorResponse(error, logInternalError);
     const completed = {
@@ -136,10 +154,17 @@ export const server = createServer({
         ...(decision ? {"x-ratelimit-remaining": String(decision.remaining)} : {}),
       },
     };
+    completedStatus = completed.status;
     respond(response, completed);
     logTransportResult(request, completed, requestId, startedAt, error);
   } finally {
     decision?.accepted && decision.release();
+    measurement.finish({
+      method: request.method ?? "OTHER",
+      path: request.url ?? "/",
+      status: completedStatus,
+      durationSeconds: Math.max(0, (performance.now() - startedAt) / 1_000),
+    });
   }
 });
 server.maxHeadersCount = maxHeadersCount;

@@ -48,6 +48,7 @@ describe("Ed25519 bearer authentication", () => {
       assert.equal((await app.handle({method: "GET", path: "/healthz"})).status, 200);
       assert.equal((await app.handle({method: "GET", path: "/readyz"})).status, 200);
       assert.equal((await app.handle({method: "GET", path: "/openapi.json"})).status, 200);
+      assert.equal((await app.handle({method: "GET", path: "/metrics"})).status, 200);
 
       const command = await app.handle({method: "POST", path: "/v1/mission/commands/CreateMission", body: createMissionCommand()});
       assert.equal(command.status, 401);

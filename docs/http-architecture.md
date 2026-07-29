@@ -31,7 +31,7 @@ The Node HTTP server is limited to transport concerns:
 
 `ONYX_PORT` is validated before startup and must be an integer from 1 through 65535.
 
-`GET /healthz` is the process liveness probe. `GET /readyz` verifies persistence and exposes bounded outbox/inbox backlog counters. See [Observability](observability.md).
+`GET /healthz` is the process liveness probe. `GET /readyz` verifies persistence and exposes bounded outbox/inbox backlog counters. `GET /metrics` exposes low-cardinality Prometheus counters, gauges, and latency histograms. See [Observability](observability.md).
 
 ## Test boundary
 
