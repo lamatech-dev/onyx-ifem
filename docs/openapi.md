@@ -31,6 +31,8 @@ The document currently describes:
 
 Protected operations declare the `BearerAuth` security scheme and document 401 and 403 responses. Liveness, readiness, and OpenAPI discovery remain public.
 
+Every non-liveness operation documents `429` rate limiting and `503` capacity/dependency shedding responses, including retry headers.
+
 ## Drift validation
 
 ```bash

@@ -17,6 +17,8 @@ npm start
 
 Terminate inbound TLS at a trusted proxy or service mesh and do not expose an authentication-disabled instance outside a development environment. Persist the database and its WAL files on durable storage; do not place SQLite on a filesystem with unreliable locking semantics.
 
+Request admission, proxy trust, parser timeouts, and concurrency controls are documented in [HTTP resilience and overload protection](http-resilience.md).
+
 ## Outbox worker
 
 Set `ONYX_OUTBOX_WEBHOOK_URL` to enable the worker in the API process. The worker requires a file-backed `ONYX_DB_PATH`; it cannot share SQLite's isolated `:memory:` databases.

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { hostname } from "node:os";
 import { OnyxApplication, errorResponse, type ApiResponse } from "../api/application.ts";
 import { OnyxError } from "../contracts/errors.ts";
+import { ConcurrencyGate, HttpAdmissionController, TokenBucketRateLimiter } from "../infrastructure/http/admission.ts";
 import { jsonLineLogger, resolveRequestId } from "../infrastructure/observability/logger.ts";
 import { createHttpEventPublisher } from "../infrastructure/outbox/http-publisher.ts";
 import { OutboxDispatcher } from "../infrastructure/outbox/dispatcher.ts";
@@ -21,6 +22,24 @@ const auth = authMode === "required" ? {
   audience: requiredEnvironment("ONYX_AUTH_AUDIENCE"),
 } : undefined;
 const databasePath = process.env.ONYX_DB_PATH;
+const trustProxy = optionalBoolean("ONYX_TRUST_PROXY", false);
+const requestTimeoutMs = optionalInteger("ONYX_REQUEST_TIMEOUT_MS", 15_000, 1_000, 300_000);
+const headersTimeoutMs = optionalInteger("ONYX_HEADERS_TIMEOUT_MS", 5_000, 1_000, 60_000);
+if (headersTimeoutMs > requestTimeoutMs) throw new Error("ONYX_HEADERS_TIMEOUT_MS must not exceed ONYX_REQUEST_TIMEOUT_MS");
+const keepAliveTimeoutMs = optionalInteger("ONYX_KEEP_ALIVE_TIMEOUT_MS", 5_000, 100, 60_000);
+const socketTimeoutMs = optionalInteger("ONYX_SOCKET_TIMEOUT_MS", 30_000, 1_000, 600_000);
+const maxHeaderSize = optionalInteger("ONYX_MAX_HEADER_BYTES", 16_384, 1_024, 65_536);
+const maxHeadersCount = optionalInteger("ONYX_MAX_HEADERS_COUNT", 100, 10, 1_000);
+const maxRequestsPerSocket = optionalInteger("ONYX_MAX_REQUESTS_PER_SOCKET", 1_000, 1, 100_000);
+const admission = new HttpAdmissionController(
+  new TokenBucketRateLimiter({
+    capacity: optionalNumber("ONYX_RATE_LIMIT_CAPACITY", 120, 1, 100_000),
+    refillPerSecond: optionalNumber("ONYX_RATE_LIMIT_REFILL_PER_SECOND", 20, 0.01, 10_000),
+    maxClients: optionalInteger("ONYX_RATE_LIMIT_MAX_CLIENTS", 10_000, 1, 1_000_000),
+    idleTtlMs: optionalInteger("ONYX_RATE_LIMIT_IDLE_TTL_MS", 600_000, 1_000, 86_400_000),
+  }),
+  new ConcurrencyGate(optionalInteger("ONYX_MAX_IN_FLIGHT", 100, 1, 100_000)),
+);
 const requestLogger = jsonLineLogger();
 const logInternalError = (error: unknown): void => {
   const errorName = error instanceof Error ? error.name : "UnknownError";
@@ -66,35 +85,66 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
   }
 }
 
-export const server = createServer(async (request, response) => {
+export const server = createServer({
+  requestTimeout: requestTimeoutMs,
+  headersTimeout: headersTimeoutMs,
+  keepAliveTimeout: keepAliveTimeoutMs,
+  maxHeaderSize,
+  connectionsCheckingInterval: 1_000,
+}, async (request, response) => {
   const startedAt = performance.now();
   const requestIdHeader = request.headers["x-request-id"];
   const requestId = resolveRequestId(Array.isArray(requestIdHeader) ? undefined : requestIdHeader, () => uuidV7());
+  const pathname = new URL(request.url ?? "/", "http://onyx.local").pathname;
+  const decision = pathname === "/healthz" ? undefined : admission.admit(clientKey(request), Date.now());
+  if (decision && !decision.accepted) {
+    const result: ApiResponse = {
+      status: decision.status,
+      body: {
+        code: decision.code,
+        message: decision.code === "RATE_LIMITED" ? "request rate limit exceeded" : "server concurrency limit reached",
+      },
+      headers: {
+        "x-request-id": requestId,
+        "x-ratelimit-remaining": String(decision.remaining),
+        "retry-after": String(decision.retryAfterSeconds),
+        ...(decision.status === 503 ? {connection: "close"} : {}),
+      },
+    };
+    respond(response, result);
+    logTransportResult(request, result, requestId, startedAt);
+    return;
+  }
   try {
     const body = request.method === "POST" ? await readJson(request) : undefined;
-    respond(response, await application.handle({
+    const result = await application.handle({
       method: request.method ?? "GET",
       path: request.url ?? "/",
       body,
       headers: {authorization: request.headers.authorization, "x-request-id": requestId},
-    }));
+    });
+    respond(response, decision
+      ? {...result, headers: {...result.headers, "x-ratelimit-remaining": String(decision.remaining)}}
+      : result);
   } catch (error) {
     const result = errorResponse(error, logInternalError);
-    respond(response, {...result, headers: {...result.headers, "x-request-id": requestId}});
-    requestLogger({
-      timestamp: new Date().toISOString(),
-      level: result.status >= 500 ? "error" : "warn",
-      event: "http.request.completed",
-      request_id: requestId,
-      method: request.method ?? "GET",
-      path: new URL(request.url ?? "/", "http://onyx.local").pathname,
-      status: result.status,
-      duration_ms: Math.max(0, Math.round((performance.now() - startedAt) * 1_000) / 1_000),
-      error_code: (result.body as {code: string}).code,
-      ...(error instanceof Error ? {error_name: error.name} : {}),
-    });
+    const completed = {
+      ...result,
+      headers: {
+        ...result.headers,
+        "x-request-id": requestId,
+        ...(decision ? {"x-ratelimit-remaining": String(decision.remaining)} : {}),
+      },
+    };
+    respond(response, completed);
+    logTransportResult(request, completed, requestId, startedAt, error);
+  } finally {
+    decision?.accepted && decision.release();
   }
 });
+server.maxHeadersCount = maxHeadersCount;
+server.maxRequestsPerSocket = maxRequestsPerSocket;
+server.setTimeout(socketTimeoutMs);
 
 function requiredEnvironment(name: string): string {
   const value = process.env[name];
@@ -108,6 +158,53 @@ function optionalInteger(name: string, fallback: number, minimum: number, maximu
     throw new Error(`${name} must be an integer from ${minimum} through ${maximum}`);
   }
   return value;
+}
+
+function optionalNumber(name: string, fallback: number, minimum: number, maximum: number): number {
+  const value = Number(process.env[name] ?? String(fallback));
+  if (!Number.isFinite(value) || value < minimum || value > maximum) {
+    throw new Error(`${name} must be a number from ${minimum} through ${maximum}`);
+  }
+  return value;
+}
+
+function optionalBoolean(name: string, fallback: boolean): boolean {
+  const raw = process.env[name];
+  if (raw === undefined) return fallback;
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  throw new Error(`${name} must be true or false`);
+}
+
+function clientKey(request: IncomingMessage): string {
+  if (trustProxy) {
+    const forwarded = request.headers["x-forwarded-for"];
+    const value = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+    const first = value?.split(",", 1)[0]?.trim();
+    if (first && first.length <= 128) return first;
+  }
+  return (request.socket.remoteAddress ?? "unknown").slice(0, 128);
+}
+
+function logTransportResult(
+  request: IncomingMessage,
+  result: ApiResponse,
+  requestId: string,
+  startedAt: number,
+  error?: unknown,
+): void {
+  requestLogger({
+    timestamp: new Date().toISOString(),
+    level: result.status >= 500 ? "error" : "warn",
+    event: "http.request.completed",
+    request_id: requestId,
+    method: request.method ?? "GET",
+    path: new URL(request.url ?? "/", "http://onyx.local").pathname,
+    status: result.status,
+    duration_ms: Math.max(0, Math.round((performance.now() - startedAt) * 1_000) / 1_000),
+    error_code: (result.body as {code: string}).code,
+    ...(error instanceof Error ? {error_name: error.name} : {}),
+  });
 }
 
 function workerLog(level: "info" | "error", event: string, fields: Record<string, unknown>): void {

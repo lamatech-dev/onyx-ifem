@@ -64,7 +64,7 @@ function jsonContent(schema: JsonObject): JsonObject {
 }
 
 const errorResponses: JsonObject = Object.fromEntries(
-  ["400", "401", "403", "404", "409", "422", "500"].map((status) => [status, {$ref: `#/components/responses/Error${status}`}]),
+  ["400", "401", "403", "404", "409", "422", "429", "500", "503"].map((status) => [status, {$ref: `#/components/responses/Error${status}`}]),
 );
 
 const paths: JsonObject = {};
@@ -98,7 +98,9 @@ const queryErrors = {
   "401": {$ref: "#/components/responses/Error401"},
   "403": {$ref: "#/components/responses/Error403"},
   "404": {$ref: "#/components/responses/Error404"},
+  "429": {$ref: "#/components/responses/Error429"},
   "500": {$ref: "#/components/responses/Error500"},
+  "503": {$ref: "#/components/responses/Error503"},
 };
 
 function addResource(resource: string, singular: string, schema: string, events: string[]): void {
@@ -205,9 +207,9 @@ paths["/readyz"] = {
         content: jsonContent({type: "object"}),
       },
       "503": {
-        description: "A required dependency is unavailable",
-        content: jsonContent({type: "object"}),
+        $ref: "#/components/responses/Error503",
       },
+      "429": {$ref: "#/components/responses/Error429"},
     },
   },
 };
@@ -216,7 +218,11 @@ paths["/openapi.json"] = {
   get: {
     operationId: "getOpenApi",
     tags: ["operations"],
-    responses: {"200": {description: "OpenAPI 3.1 description", content: jsonContent({type: "object"})}},
+    responses: {
+      "200": {description: "OpenAPI 3.1 description", content: jsonContent({type: "object"})},
+      "429": {$ref: "#/components/responses/Error429"},
+      "503": {$ref: "#/components/responses/Error503"},
+    },
   },
 };
 
@@ -289,6 +295,16 @@ function errorResponse(description: string): JsonObject {
   return {description, content: jsonContent({$ref: "#/components/schemas/Error"})};
 }
 
+function retryableErrorResponse(description: string): JsonObject {
+  return {
+    ...errorResponse(description),
+    headers: {
+      "Retry-After": {description: "Minimum retry delay in seconds", schema: {type: "integer", minimum: 1}},
+      "X-RateLimit-Remaining": {description: "Remaining tokens in the current local bucket", schema: {type: "integer", minimum: 0}},
+    },
+  };
+}
+
 export const OPENAPI_DOCUMENT: JsonObject = {
   openapi: "3.1.2",
   jsonSchemaDialect: "https://json-schema.org/draft/2020-12/schema",
@@ -322,7 +338,10 @@ export const OPENAPI_DOCUMENT: JsonObject = {
       Error400: errorResponse("Invalid request"), Error401: errorResponse("Authentication required or token invalid"),
       Error403: errorResponse("Authority or organization denied"),
       Error404: errorResponse("Resource not found"), Error409: errorResponse("Version or lifecycle conflict"),
-      Error422: errorResponse("Idempotency or invariant violation"), Error500: errorResponse("Internal failure"),
+      Error422: errorResponse("Idempotency or invariant violation"),
+      Error429: retryableErrorResponse("Request rate limit exceeded"),
+      Error500: errorResponse("Internal failure"),
+      Error503: retryableErrorResponse("Server capacity or dependency unavailable"),
     },
     securitySchemes: {
       BearerAuth: {

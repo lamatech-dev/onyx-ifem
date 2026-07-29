@@ -29,4 +29,6 @@ The Node transport writes newline-delimited JSON completion records. Each record
 
 Authorization headers, request/response bodies, and query strings are never logged. Unexpected application errors are written separately with only their class name, avoiding accidental disclosure of tokens or domain payloads.
 
+Admission rejections use the same request completion log shape with canonical `RATE_LIMITED` or `DEPENDENCY_UNAVAILABLE` error codes.
+
 Readiness counters are operational snapshots, not business analytics. Production monitoring should alert on sustained `outbox.deadLettered > 0`, growth in `outbox.pending`, or inbox receipts that remain processing beyond their configured lease.

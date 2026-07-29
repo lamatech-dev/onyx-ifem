@@ -48,6 +48,8 @@ Authentication is disabled for local development. Production deployments can req
 
 Every response carries an `x-request-id`; the server emits redaction-safe structured JSON logs. Use `/healthz` for liveness and `/readyz` for persistence plus messaging readiness. See [Observability](docs/observability.md).
 
+Finite token-bucket, concurrency, header, receive, socket, and connection-reuse limits protect the HTTP boundary. See [HTTP resilience and overload protection](docs/http-resilience.md).
+
 Set `ONYX_OUTBOX_WEBHOOK_URL` to run the crash-recoverable outbox publisher. Production configuration, HTTPS delivery headers, lease sizing, and graceful shutdown behavior are documented in [Production deployment](docs/deployment.md).
 
 Online backup, manifest verification, restore rehearsal, and migration compatibility checks are available through the `db:backup`, `db:verify`, and `db:restore` scripts. See [Backup and disaster recovery](docs/disaster-recovery.md).

@@ -29,6 +29,9 @@ for (const [path, item] of Object.entries(document.paths as JsonObject)) {
     if (typeof operationId !== "string" || operationId.length === 0) failures.push(`${method.toUpperCase()} ${path}: operationId is required`);
     else if (operationIds.has(operationId)) failures.push(`duplicate operationId: ${operationId}`);
     else operationIds.add(operationId);
+    if (path !== "/healthz" && (typedOperation.responses?.["429"] === undefined || typedOperation.responses?.["503"] === undefined)) {
+      failures.push(`${method.toUpperCase()} ${path}: 429 and 503 overload responses are required`);
+    }
     if (path !== "/healthz" && path !== "/readyz" && path !== "/openapi.json") {
       if (!Array.isArray(typedOperation.security) || typedOperation.security[0]?.BearerAuth === undefined) {
         failures.push(`${method.toUpperCase()} ${path}: BearerAuth is required`);

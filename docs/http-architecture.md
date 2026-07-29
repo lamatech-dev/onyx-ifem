@@ -24,6 +24,7 @@ The Node HTTP server is limited to transport concerns:
 - listening on the configured host and port;
 - streaming and parsing JSON command bodies;
 - enforcing the 1 MiB request-body limit;
+- applying bounded rate, concurrency, header, and timeout controls;
 - serializing application responses as JSON;
 - graceful signal handling and resource shutdown.
 - propagating or generating request IDs and emitting structured completion logs.
