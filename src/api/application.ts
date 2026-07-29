@@ -16,6 +16,7 @@ import { InMemoryWorkRepository } from "../work/repository.ts";
 import { WorkService } from "../work/service.ts";
 import { SqliteWorkRepository } from "../work/sqlite-repository.ts";
 import { OPENAPI_DOCUMENT } from "./openapi.ts";
+import { encodeCursor, readCollectionQuery, readHistoryQuery, readItemQuery } from "./query.ts";
 import { allowedMethodsForPath } from "./routes.ts";
 import { uuidV7 } from "../shared/identifiers.ts";
 
@@ -44,9 +45,14 @@ export interface OnyxApplicationOptions {
 }
 
 interface ResourceRoutes {
-  list: (organizationId: string) => Promise<unknown[]>;
+  list: (organizationId: string, afterId: string | undefined, limit: number) => Promise<ResourcePage>;
   get: (organizationId: string, objectId: string) => Promise<unknown>;
   history: (organizationId: string, objectId: string, afterVersion: number, limit: number) => Promise<unknown[]>;
+}
+
+interface ResourcePage {
+  items: unknown[];
+  next_cursor?: string;
 }
 
 export class OnyxApplication {
@@ -115,22 +121,30 @@ export class OnyxApplication {
     ]);
     this.#resources = new Map([
       ["missions", {
-        list: (organizationId) => mission.listMissions(organizationId),
+        list: async (organizationId, afterId, limit) => page(
+          await mission.listMissions(organizationId, afterId, limit + 1), limit, (item) => item.mission_id,
+        ),
         get: (organizationId, objectId) => mission.getMission(organizationId, objectId),
         history: (organizationId, objectId, afterVersion, limit) => mission.getHistory(organizationId, objectId, afterVersion, limit),
       }],
       ["tasks", {
-        list: (organizationId) => work.listTasks(organizationId),
+        list: async (organizationId, afterId, limit) => page(
+          await work.listTasks(organizationId, afterId, limit + 1), limit, (item) => item.task_id,
+        ),
         get: (organizationId, objectId) => work.getTask(organizationId, objectId),
         history: (organizationId, objectId, afterVersion, limit) => work.getHistory(organizationId, objectId, afterVersion, limit),
       }],
       ["timelines", {
-        list: (organizationId) => timeline.listTimelines(organizationId),
+        list: async (organizationId, afterId, limit) => page(
+          await timeline.listTimelines(organizationId, afterId, limit + 1), limit, (item) => item.timeline_id,
+        ),
         get: (organizationId, objectId) => timeline.getTimeline(organizationId, objectId),
         history: (organizationId, objectId, afterVersion, limit) => timeline.getHistory(organizationId, objectId, afterVersion, limit),
       }],
       ["reports", {
-        list: (organizationId) => reporting.listReports(organizationId),
+        list: async (organizationId, afterId, limit) => page(
+          await reporting.listReports(organizationId, afterId, limit + 1), limit, (item) => item.report_id,
+        ),
         get: (organizationId, objectId) => reporting.getReport(organizationId, objectId),
         history: (organizationId, objectId, afterVersion, limit) => reporting.getHistory(organizationId, objectId, afterVersion, limit),
       }],
@@ -222,16 +236,24 @@ export class OnyxApplication {
         const itemRoute = segments.length === 3;
         const historyRoute = segments.length === 4 && segments[3] === "history";
         if (resource && (collectionRoute || itemRoute || historyRoute)) {
-          const organizationId = url.searchParams.get("organization_id");
-          if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
-          const claims = this.#authenticate(request);
-          if (claims) this.#authorizeRead(claims, organizationId, segments[1]);
-          if (collectionRoute) return {status: 200, body: {items: await resource.list(organizationId)}};
-          if (itemRoute) return {status: 200, body: await resource.get(organizationId, segments[2]!)};
+          if (collectionRoute) {
+            const query = readCollectionQuery(url);
+            const claims = this.#authenticate(request);
+            if (claims) this.#authorizeRead(claims, query.organizationId, segments[1]);
+            return {status: 200, body: await resource.list(query.organizationId, query.afterId, query.limit)};
+          }
+          const objectId = segments[2]!;
+          if (itemRoute) {
+            const query = readItemQuery(url, objectId);
+            const claims = this.#authenticate(request);
+            if (claims) this.#authorizeRead(claims, query.organizationId, segments[1]);
+            return {status: 200, body: await resource.get(query.organizationId, objectId)};
+          }
           if (historyRoute) {
-            const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
-            const limit = Number(url.searchParams.get("limit") ?? "100");
-            return {status: 200, body: {items: await resource.history(organizationId, segments[2]!, afterVersion, limit)}};
+            const query = readHistoryQuery(url, objectId);
+            const claims = this.#authenticate(request);
+            if (claims) this.#authorizeRead(claims, query.organizationId, segments[1]);
+            return {status: 200, body: {items: await resource.history(query.organizationId, objectId, query.afterVersion, query.limit)}};
           }
         }
       }
@@ -310,6 +332,15 @@ function methodNotAllowed(allowedMethods: readonly string[]): ApiResponse {
     status: 405,
     body: {code: "INVALID_ARGUMENT", message: "method is not allowed for route"},
     headers: {allow: allowedMethods.join(", ")},
+  };
+}
+
+function page<T>(items: T[], limit: number, objectId: (item: T) => string): ResourcePage {
+  const hasMore = items.length > limit;
+  const visible = hasMore ? items.slice(0, limit) : items;
+  return {
+    items: visible,
+    ...(hasMore ? {next_cursor: encodeCursor(objectId(visible[visible.length - 1]!))} : {}),
   };
 }
 

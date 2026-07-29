@@ -193,8 +193,8 @@ export class MissionService {
     return toMissionView(mission);
   }
 
-  async listMissions(organizationId: string): Promise<MissionView[]> {
-    return (await this.#repository.list(organizationId)).map(toMissionView);
+  async listMissions(organizationId: string, afterId?: string, limit = 100): Promise<MissionView[]> {
+    return (await this.#repository.list(organizationId, afterId, limit)).map(toMissionView);
   }
 
   async getHistory(organizationId: string, missionId: string, afterVersion = 0, limit = 100): Promise<MissionEvent[]> {

@@ -7,7 +7,7 @@ export interface ReportingOperationRecord {
 
 export interface ReportingRepository {
   find(reportId: string): Promise<Report | undefined>;
-  list(organizationId: string): Promise<Report[]>;
+  list(organizationId: string, afterId: string | undefined, limit: number): Promise<Report[]>;
   history(reportId: string, afterVersion?: number, limit?: number): Promise<ReportCreatedEvent[]>;
   findOperation(operationId: string): Promise<ReportingOperationRecord | undefined>;
   commit(report: Report, event: ReportCreatedEvent, operationId: string, record: ReportingOperationRecord): Promise<void>;
@@ -23,10 +23,11 @@ export class InMemoryReportingRepository implements ReportingRepository {
     return report && structuredClone(report);
   }
 
-  async list(organizationId: string): Promise<Report[]> {
+  async list(organizationId: string, afterId: string | undefined, limit: number): Promise<Report[]> {
     return [...this.#reports.values()]
-      .filter((report) => report.organizationId === organizationId)
+      .filter((report) => report.organizationId === organizationId && (afterId === undefined || report.reportId > afterId))
       .sort((left, right) => left.reportId.localeCompare(right.reportId))
+      .slice(0, limit)
       .map((report) => structuredClone(report));
   }
 

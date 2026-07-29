@@ -7,7 +7,7 @@ export interface OperationRecord {
 
 export interface MissionRepository {
   find(missionId: string): Promise<Mission | undefined>;
-  list(organizationId: string): Promise<Mission[]>;
+  list(organizationId: string, afterId: string | undefined, limit: number): Promise<Mission[]>;
   history(missionId: string, afterVersion?: number, limit?: number): Promise<MissionEvent[]>;
   findOperation(operationId: string): Promise<OperationRecord | undefined>;
   commit(mission: Mission, event: MissionEvent, operationId: string, record: OperationRecord, create: boolean): Promise<void>;
@@ -23,10 +23,11 @@ export class InMemoryMissionRepository implements MissionRepository {
     return mission && structuredClone(mission);
   }
 
-  async list(organizationId: string): Promise<Mission[]> {
+  async list(organizationId: string, afterId: string | undefined, limit: number): Promise<Mission[]> {
     return [...this.#missions.values()]
-      .filter((mission) => mission.organizationId === organizationId)
+      .filter((mission) => mission.organizationId === organizationId && (afterId === undefined || mission.missionId > afterId))
       .sort((left, right) => left.missionId.localeCompare(right.missionId))
+      .slice(0, limit)
       .map((mission) => structuredClone(mission));
   }
 

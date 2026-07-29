@@ -97,8 +97,8 @@ export class TimelineService {
     return toTimelineView(timeline);
   }
 
-  async listTimelines(organizationId: string): Promise<TimelineView[]> {
-    return (await this.#repository.list(organizationId)).map(toTimelineView);
+  async listTimelines(organizationId: string, afterId?: string, limit = 100): Promise<TimelineView[]> {
+    return (await this.#repository.list(organizationId, afterId, limit)).map(toTimelineView);
   }
 
   async getHistory(organizationId: string, timelineId: string, afterVersion = 0, limit = 100): Promise<TimelineCreatedEvent[]> {

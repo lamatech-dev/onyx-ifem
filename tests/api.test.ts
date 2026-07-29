@@ -120,6 +120,61 @@ describe("OnyxApplication", () => {
     }
   });
 
+  it("paginates collections with opaque cursors and validates query syntax", async () => {
+    const application = new OnyxApplication({now});
+    try {
+      for (const sequence of [30, 31, 32]) {
+        const base = createMissionCommand();
+        const missionId = testId(sequence);
+        const created = await application.handle({
+          method: "POST",
+          path: "/v1/mission/commands/CreateMission",
+          body: createMissionCommand({
+            command_id: testId(100 + sequence),
+            operation_id: testId(200 + sequence),
+            payload: {...base.payload, mission_id: missionId},
+            target: {...base.target, object_id: missionId},
+          }),
+        });
+        assert.equal(created.status, 202);
+      }
+
+      const first = await application.handle({
+        method: "GET",
+        path: `/v1/missions?organization_id=${testId(13)}&limit=2`,
+      });
+      assert.equal(first.status, 200);
+      assert.deepEqual(body(first).items.map((item: Record<string, unknown>) => item.mission_id), [testId(30), testId(31)]);
+      assert.equal(typeof body(first).next_cursor, "string");
+
+      const second = await application.handle({
+        method: "GET",
+        path: `/v1/missions?organization_id=${testId(13)}&limit=2&cursor=${body(first).next_cursor}`,
+      });
+      assert.equal(second.status, 200);
+      assert.deepEqual(body(second).items.map((item: Record<string, unknown>) => item.mission_id), [testId(32)]);
+      assert.equal(body(second).next_cursor, undefined);
+
+      const invalidPaths = [
+        "/v1/missions?organization_id=invalid",
+        `/v1/missions?organization_id=${testId(13)}&organization_id=${testId(13)}`,
+        `/v1/missions?organization_id=${testId(13)}&limit=01`,
+        `/v1/missions?organization_id=${testId(13)}&cursor=not-a-cursor`,
+        `/v1/missions?organization_id=${testId(13)}&unknown=true`,
+        `/v1/missions/not-a-uuid?organization_id=${testId(13)}`,
+        `/v1/missions/${testId(30)}/history?organization_id=${testId(13)}&after_version=NaN`,
+        `/v1/missions/${testId(30)}/history?organization_id=${testId(13)}&limit=1001`,
+      ];
+      for (const path of invalidPaths) {
+        const response = await application.handle({method: "GET", path});
+        assert.equal(response.status, 400, path);
+        assert.equal(body(response).code, "INVALID_ARGUMENT", path);
+      }
+    } finally {
+      application.close();
+    }
+  });
+
   it("maps route and contract failures to canonical API errors", async () => {
     const application = new OnyxApplication({now});
     try {
@@ -172,6 +227,46 @@ describe("OnyxApplication", () => {
       });
       assert.equal(restored.status, 200);
       assert.equal(body(restored).mission_id, testId(14));
+      second.close();
+    } finally {
+      await rm(directory, {recursive: true, force: true});
+    }
+  });
+
+  it("keeps collection cursors stable across a SQLite restart", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "onyx-api-pagination-"));
+    const databasePath = join(directory, "onyx.db");
+    try {
+      const first = new OnyxApplication({databasePath, now});
+      for (const sequence of [40, 41]) {
+        const base = createMissionCommand();
+        const missionId = testId(sequence);
+        assert.equal((await first.handle({
+          method: "POST",
+          path: "/v1/mission/commands/CreateMission",
+          body: createMissionCommand({
+            command_id: testId(100 + sequence),
+            operation_id: testId(200 + sequence),
+            payload: {...base.payload, mission_id: missionId},
+            target: {...base.target, object_id: missionId},
+          }),
+        })).status, 202);
+      }
+      const page = await first.handle({
+        method: "GET",
+        path: `/v1/missions?organization_id=${testId(13)}&limit=1`,
+      });
+      assert.deepEqual(body(page).items.map((item: Record<string, unknown>) => item.mission_id), [testId(40)]);
+      const cursor = String(body(page).next_cursor);
+      first.close();
+
+      const second = new OnyxApplication({databasePath, now});
+      const resumed = await second.handle({
+        method: "GET",
+        path: `/v1/missions?organization_id=${testId(13)}&limit=1&cursor=${cursor}`,
+      });
+      assert.deepEqual(body(resumed).items.map((item: Record<string, unknown>) => item.mission_id), [testId(41)]);
+      assert.equal(body(resumed).next_cursor, undefined);
       second.close();
     } finally {
       await rm(directory, {recursive: true, force: true});

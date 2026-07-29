@@ -81,19 +81,19 @@ Available endpoints:
 - `GET /metrics`
 - `GET /openapi.json`
 - `POST /v1/mission/commands/{CommandType}`
-- `GET /v1/missions?organization_id={id}`
+- `GET /v1/missions?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/missions/{id}?organization_id={id}`
 - `GET /v1/missions/{id}/history?organization_id={id}&after_version=0&limit=100`
 - `POST /v1/work/commands/CreateTask`
-- `GET /v1/tasks?organization_id={id}`
+- `GET /v1/tasks?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/tasks/{id}?organization_id={id}`
 - `GET /v1/tasks/{id}/history?organization_id={id}&after_version=0&limit=100`
 - `POST /v1/timeline/commands/CreateTimeline`
-- `GET /v1/timelines?organization_id={id}`
+- `GET /v1/timelines?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/timelines/{id}?organization_id={id}`
 - `GET /v1/timelines/{id}/history?organization_id={id}&after_version=0&limit=100`
 - `POST /v1/reporting-evidence/commands/CreateReport`
-- `GET /v1/reports?organization_id={id}`
+- `GET /v1/reports?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/reports/{id}?organization_id={id}`
 - `GET /v1/reports/{id}/history?organization_id={id}&after_version=0&limit=100`
 

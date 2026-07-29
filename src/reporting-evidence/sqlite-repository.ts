@@ -15,8 +15,8 @@ export class SqliteReportingRepository implements ReportingRepository {
     return this.#database.getState<Report>(CONTEXT, reportId);
   }
 
-  async list(organizationId: string): Promise<Report[]> {
-    return this.#database.listStates<Report>(CONTEXT, organizationId);
+  async list(organizationId: string, afterId: string | undefined, limit: number): Promise<Report[]> {
+    return this.#database.listStates<Report>(CONTEXT, organizationId, afterId, limit);
   }
 
   async history(reportId: string, afterVersion = 0, limit = 100): Promise<ReportCreatedEvent[]> {

@@ -121,13 +121,14 @@ export class SqliteDatabase {
     return row ? JSON.parse(row.state_json) as TState : undefined;
   }
 
-  listStates<TState>(context: string, organizationId: string): TState[] {
+  listStates<TState>(context: string, organizationId: string, afterId: string | undefined, limit: number): TState[] {
     const rows = this.#database.prepare(`
       SELECT state_json
       FROM onyx_aggregates
-      WHERE context = ? AND organization_id = ?
+      WHERE context = ? AND organization_id = ? AND (? IS NULL OR aggregate_id > ?)
       ORDER BY aggregate_id
-    `).all(context, organizationId) as Array<{state_json: string}>;
+      LIMIT ?
+    `).all(context, organizationId, afterId ?? null, afterId ?? null, limit) as Array<{state_json: string}>;
     return rows.map((row) => JSON.parse(row.state_json) as TState);
   }
 

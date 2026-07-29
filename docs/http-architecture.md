@@ -31,6 +31,8 @@ The Node HTTP server is limited to transport concerns:
 
 `ONYX_PORT` is validated before startup and must be an integer from 1 through 65535.
 
+Read routes reject unknown or repeated query parameters, non-canonical UUIDv7 identifiers, and ambiguous integer encodings. Collection reads are bounded to 1–1000 items and return an opaque `next_cursor` only when another page exists; event history uses the same limit bound with a canonical non-negative `after_version`.
+
 `GET /healthz` is the process liveness probe. `GET /readyz` verifies persistence and exposes bounded outbox/inbox backlog counters. `GET /metrics` exposes low-cardinality Prometheus counters, gauges, and latency histograms. See [Observability](observability.md).
 
 ## Test boundary

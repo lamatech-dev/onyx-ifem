@@ -7,7 +7,7 @@ export interface WorkOperationRecord {
 
 export interface WorkRepository {
   find(taskId: string): Promise<Task | undefined>;
-  list(organizationId: string): Promise<Task[]>;
+  list(organizationId: string, afterId: string | undefined, limit: number): Promise<Task[]>;
   history(taskId: string, afterVersion?: number, limit?: number): Promise<TaskCreatedEvent[]>;
   findOperation(operationId: string): Promise<WorkOperationRecord | undefined>;
   commit(task: Task, event: TaskCreatedEvent, operationId: string, record: WorkOperationRecord): Promise<void>;
@@ -23,10 +23,11 @@ export class InMemoryWorkRepository implements WorkRepository {
     return task && structuredClone(task);
   }
 
-  async list(organizationId: string): Promise<Task[]> {
+  async list(organizationId: string, afterId: string | undefined, limit: number): Promise<Task[]> {
     return [...this.#tasks.values()]
-      .filter((task) => task.organizationId === organizationId)
+      .filter((task) => task.organizationId === organizationId && (afterId === undefined || task.taskId > afterId))
       .sort((left, right) => left.taskId.localeCompare(right.taskId))
+      .slice(0, limit)
       .map((task) => structuredClone(task));
   }
 
@@ -64,4 +65,3 @@ export function toTaskView(task: Task): TaskView {
     version: task.version,
   };
 }
-

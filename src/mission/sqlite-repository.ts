@@ -15,8 +15,8 @@ export class SqliteMissionRepository implements MissionRepository {
     return this.#database.getState<Mission>(CONTEXT, missionId);
   }
 
-  async list(organizationId: string): Promise<Mission[]> {
-    return this.#database.listStates<Mission>(CONTEXT, organizationId);
+  async list(organizationId: string, afterId: string | undefined, limit: number): Promise<Mission[]> {
+    return this.#database.listStates<Mission>(CONTEXT, organizationId, afterId, limit);
   }
 
   async history(missionId: string, afterVersion = 0, limit = 100): Promise<MissionEvent[]> {
@@ -43,4 +43,3 @@ export class SqliteMissionRepository implements MissionRepository {
     });
   }
 }
-

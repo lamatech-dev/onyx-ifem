@@ -7,7 +7,7 @@ export interface TimelineOperationRecord {
 
 export interface TimelineRepository {
   find(timelineId: string): Promise<Timeline | undefined>;
-  list(organizationId: string): Promise<Timeline[]>;
+  list(organizationId: string, afterId: string | undefined, limit: number): Promise<Timeline[]>;
   history(timelineId: string, afterVersion?: number, limit?: number): Promise<TimelineCreatedEvent[]>;
   findOperation(operationId: string): Promise<TimelineOperationRecord | undefined>;
   commit(timeline: Timeline, event: TimelineCreatedEvent, operationId: string, record: TimelineOperationRecord): Promise<void>;
@@ -23,10 +23,11 @@ export class InMemoryTimelineRepository implements TimelineRepository {
     return timeline && structuredClone(timeline);
   }
 
-  async list(organizationId: string): Promise<Timeline[]> {
+  async list(organizationId: string, afterId: string | undefined, limit: number): Promise<Timeline[]> {
     return [...this.#timelines.values()]
-      .filter((timeline) => timeline.organizationId === organizationId)
+      .filter((timeline) => timeline.organizationId === organizationId && (afterId === undefined || timeline.timelineId > afterId))
       .sort((left, right) => left.timelineId.localeCompare(right.timelineId))
+      .slice(0, limit)
       .map((timeline) => structuredClone(timeline));
   }
 

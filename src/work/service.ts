@@ -102,8 +102,8 @@ export class WorkService {
     return toTaskView(task);
   }
 
-  async listTasks(organizationId: string): Promise<TaskView[]> {
-    return (await this.#repository.list(organizationId)).map(toTaskView);
+  async listTasks(organizationId: string, afterId?: string, limit = 100): Promise<TaskView[]> {
+    return (await this.#repository.list(organizationId, afterId, limit)).map(toTaskView);
   }
 
   async getHistory(organizationId: string, taskId: string, afterVersion = 0, limit = 100): Promise<TaskCreatedEvent[]> {

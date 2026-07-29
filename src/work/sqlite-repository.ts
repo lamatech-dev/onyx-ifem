@@ -15,8 +15,8 @@ export class SqliteWorkRepository implements WorkRepository {
     return this.#database.getState<Task>(CONTEXT, taskId);
   }
 
-  async list(organizationId: string): Promise<Task[]> {
-    return this.#database.listStates<Task>(CONTEXT, organizationId);
+  async list(organizationId: string, afterId: string | undefined, limit: number): Promise<Task[]> {
+    return this.#database.listStates<Task>(CONTEXT, organizationId, afterId, limit);
   }
 
   async history(taskId: string, afterVersion = 0, limit = 100): Promise<TaskCreatedEvent[]> {
@@ -43,4 +43,3 @@ export class SqliteWorkRepository implements WorkRepository {
     });
   }
 }
-

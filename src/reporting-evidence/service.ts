@@ -99,8 +99,8 @@ export class ReportingService {
     return toReportView(report);
   }
 
-  async listReports(organizationId: string): Promise<ReportView[]> {
-    return (await this.#repository.list(organizationId)).map(toReportView);
+  async listReports(organizationId: string, afterId?: string, limit = 100): Promise<ReportView[]> {
+    return (await this.#repository.list(organizationId, afterId, limit)).map(toReportView);
   }
 
   async getHistory(organizationId: string, reportId: string, afterVersion = 0, limit = 100): Promise<ReportCreatedEvent[]> {

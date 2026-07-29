@@ -110,7 +110,11 @@ function addResource(resource: string, singular: string, schema: string, events:
       operationId: `list${singular}s`,
       tags: [tag],
       security: [{BearerAuth: []}],
-      parameters: [organizationParameter],
+      parameters: [
+        organizationParameter,
+        {$ref: "#/components/parameters/Cursor"},
+        {$ref: "#/components/parameters/Limit"},
+      ],
       responses: {
         "200": {
           description: `${singular} collection`,
@@ -118,7 +122,10 @@ function addResource(resource: string, singular: string, schema: string, events:
             type: "object",
             additionalProperties: false,
             required: ["items"],
-            properties: {items: {type: "array", items: {$ref: `#/components/schemas/${schema}`}}},
+            properties: {
+              items: {type: "array", items: {$ref: `#/components/schemas/${schema}`}},
+              next_cursor: {type: "string", minLength: 1, description: "Opaque cursor for the next page"},
+            },
           }),
         },
         ...queryErrors,
@@ -348,6 +355,7 @@ export const OPENAPI_DOCUMENT: JsonObject = {
         schema: {type: "string", pattern: UUID_PATTERN},
       },
       ObjectId: {name: "id", in: "path", required: true, schema: {type: "string", pattern: UUID_PATTERN}},
+      Cursor: {name: "cursor", in: "query", schema: {type: "string", minLength: 1, maxLength: 128}},
       AfterVersion: {name: "after_version", in: "query", schema: {type: "integer", minimum: 0, default: 0}},
       Limit: {name: "limit", in: "query", schema: {type: "integer", minimum: 1, maximum: 1000, default: 100}},
     },

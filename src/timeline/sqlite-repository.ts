@@ -15,8 +15,8 @@ export class SqliteTimelineRepository implements TimelineRepository {
     return this.#database.getState<Timeline>(CONTEXT, timelineId);
   }
 
-  async list(organizationId: string): Promise<Timeline[]> {
-    return this.#database.listStates<Timeline>(CONTEXT, organizationId);
+  async list(organizationId: string, afterId: string | undefined, limit: number): Promise<Timeline[]> {
+    return this.#database.listStates<Timeline>(CONTEXT, organizationId, afterId, limit);
   }
 
   async history(timelineId: string, afterVersion = 0, limit = 100): Promise<TimelineCreatedEvent[]> {
