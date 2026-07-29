@@ -47,6 +47,8 @@ Restart tests close the database, construct new repository and service instances
 
 The implementation currently uses Node's built-in `node:sqlite` module. Node 24 still reports this module as experimental, so the runtime version must remain pinned and persistence conformance tests must run before upgrades.
 
+File-backed databases support verified online backups and create-only restores. See [Backup and disaster recovery](disaster-recovery.md).
+
 ## Outbox delivery
 
 `OutboxDispatcher.runOnce()` claims a bounded batch using an exclusive, expiring lease. A successful publisher call acknowledges the message. A failed call releases it with exponential backoff; after the configured attempt limit it is moved to the dead-letter state for operator inspection.

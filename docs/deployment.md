@@ -52,3 +52,5 @@ The publisher timeout bounds how long a single event can delay shutdown. The pro
 ## Operational checks
 
 Use `/healthz` for process liveness and `/readyz` for persistence readiness. Alert on dead letters and sustained backlog growth. The event receiver must deduplicate with `idempotency-key`; delivery remains at least once when publication succeeds immediately before acknowledgement is interrupted.
+
+Use the Online Backup API tooling rather than copying a live WAL database. Backup verification, restore rehearsal, and production cutover are covered in [Backup and disaster recovery](disaster-recovery.md).

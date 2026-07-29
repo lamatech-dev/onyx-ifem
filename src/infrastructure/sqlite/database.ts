@@ -2,6 +2,8 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
+export const SQLITE_SCHEMA_VERSION = 4;
+
 export interface StoredOperation<TEvent> {
   fingerprint: string;
   event: TEvent;
@@ -94,10 +96,16 @@ export class SqliteDatabase {
   constructor(path: string) {
     if (path !== ":memory:") mkdirSync(dirname(resolve(path)), {recursive: true});
     this.#database = new DatabaseSync(path);
-    this.#database.exec("PRAGMA foreign_keys = ON");
-    this.#database.exec("PRAGMA busy_timeout = 5000");
-    if (path !== ":memory:") this.#database.exec("PRAGMA journal_mode = WAL");
-    this.#migrate();
+    try {
+      this.#database.exec("PRAGMA foreign_keys = ON");
+      this.#database.exec("PRAGMA busy_timeout = 5000");
+      this.#assertNoFutureSchema();
+      if (path !== ":memory:") this.#database.exec("PRAGMA journal_mode = WAL");
+      this.#migrate();
+    } catch (error) {
+      this.#database.close();
+      throw error;
+    }
   }
 
   close(): void {
@@ -533,6 +541,17 @@ export class SqliteDatabase {
       INSERT OR IGNORE INTO onyx_schema_migrations(version) VALUES (3);
     `);
     this.#migrateOutboxAggregateVersion();
+  }
+
+  #assertNoFutureSchema(): void {
+    const migrationTable = this.#database.prepare(`
+      SELECT 1 AS present FROM sqlite_schema WHERE type = 'table' AND name = 'onyx_schema_migrations'
+    `).get() as {present: number} | undefined;
+    if (!migrationTable) return;
+    const row = this.#database.prepare("SELECT MAX(version) AS version FROM onyx_schema_migrations").get() as {version: number | null};
+    if (row.version !== null && row.version > SQLITE_SCHEMA_VERSION) {
+      throw new Error(`database schema version ${row.version} is newer than supported version ${SQLITE_SCHEMA_VERSION}`);
+    }
   }
 
   #migrateOutboxAggregateVersion(): void {

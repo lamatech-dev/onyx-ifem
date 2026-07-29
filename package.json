@@ -8,6 +8,9 @@
   },
   "scripts": {
     "check": "npm run validate:contracts && npm run validate:openapi && npm run typecheck && npm test",
+    "db:backup": "node --experimental-strip-types tools/database-recovery.ts backup",
+    "db:restore": "node --experimental-strip-types tools/database-recovery.ts restore",
+    "db:verify": "node --experimental-strip-types tools/database-recovery.ts verify",
     "openapi": "node --experimental-strip-types tools/print-openapi.ts",
     "start": "npm run start:api",
     "start:api": "node --experimental-strip-types src/mission/server.ts",
