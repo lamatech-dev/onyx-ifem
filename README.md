@@ -9,7 +9,8 @@ The first implementation slice is the Mission context. It executes every Mission
 ```text
 contracts/v2.0/       Versioned machine-readable contract baseline
 src/contracts/        Canonical envelope and shared runtime types
-src/mission/          Mission domain, service, repository, and HTTP adapter
+src/mission/          Mission domain and application service
+src/work/             Work/Task domain and application service
 src/shared/           Deterministic serialization and identifier utilities
 tests/                Contract and domain verification
 tools/                Repository-level validation commands
@@ -30,7 +31,7 @@ npm run check
 ## Run the Mission API
 
 ```bash
-npm run start:mission
+npm start
 ```
 
 The server listens on `127.0.0.1:3000` by default. Configure `ONYX_HOST`, `ONYX_PORT`, and `ONYX_REPLICA_ID` when needed.
@@ -42,6 +43,10 @@ Available endpoints:
 - `GET /v1/missions?organization_id={id}`
 - `GET /v1/missions/{id}?organization_id={id}`
 - `GET /v1/missions/{id}/history?organization_id={id}&after_version=0&limit=100`
+- `POST /v1/work/commands/CreateTask`
+- `GET /v1/tasks?organization_id={id}`
+- `GET /v1/tasks/{id}?organization_id={id}`
+- `GET /v1/tasks/{id}/history?organization_id={id}&after_version=0&limit=100`
 
 Implemented command types:
 
@@ -56,6 +61,8 @@ Implemented command types:
 
 See [Mission context](docs/mission-context.md) for lifecycle and authority details.
 
+The Work context currently implements `CreateTask`, the only Work command with a `FIELD_COMPLETE` payload. A task may be created only when its referenced Mission exists inside the same organization boundary. See [Work context](docs/work-context.md).
+
 The HTTP adapter intentionally starts with one complete vertical slice. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
 
 ## Contract maturity
@@ -63,4 +70,6 @@ The HTTP adapter intentionally starts with one complete vertical slice. Other bo
 The imported v2.0 package contains 294 command/event schemas. Only contracts marked `FIELD_COMPLETE` should be treated as fully constrained payloads. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` are discoverable placeholders, not production-complete domain contracts.
 
 `CloseMission`, `OperationalHaltMission`, and `RestartMission` are deliberately not implemented because their command payloads are still open.
+
+Work lifecycle commands such as `StartTask`, `PauseTask`, `BlockTask`, and `CloseTask` are also deliberately unavailable until their command payloads are frozen.
 

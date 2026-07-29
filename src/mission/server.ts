@@ -2,12 +2,21 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { OnyxError } from "../contracts/errors.ts";
 import { InMemoryMissionRepository } from "./repository.ts";
 import { MissionService } from "./service.ts";
+import { InMemoryWorkRepository } from "../work/repository.ts";
+import { WorkService } from "../work/service.ts";
 
 const host = process.env.ONYX_HOST ?? "127.0.0.1";
 const port = Number(process.env.ONYX_PORT ?? "3000");
 const service = new MissionService({
   repository: new InMemoryMissionRepository(),
   replicaId: process.env.ONYX_REPLICA_ID ?? "mission-api",
+});
+const workService = new WorkService({
+  repository: new InMemoryWorkRepository(),
+  replicaId: process.env.ONYX_WORK_REPLICA_ID ?? "work-api",
+  requireMission: async (organizationId, missionId) => {
+    await service.getMission(organizationId, missionId);
+  },
 });
 
 function respond(response: ServerResponse, status: number, body: unknown): void {
@@ -34,7 +43,7 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
 export const server = createServer(async (request, response) => {
   try {
     if (request.method === "GET" && request.url === "/healthz") {
-      return respond(response, 200, {status: "ok", context: "mission"});
+      return respond(response, 200, {status: "ok", contexts: ["mission", "work"]});
     }
     if (request.method === "POST" && request.url?.startsWith("/v1/mission/commands/")) {
       const command = await readJson(request);
@@ -43,6 +52,15 @@ export const server = createServer(async (request, response) => {
         throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
       }
       const event = await service.execute(command);
+      return respond(response, 202, event);
+    }
+    if (request.method === "POST" && request.url?.startsWith("/v1/work/commands/")) {
+      const command = await readJson(request);
+      const routeType = request.url.slice("/v1/work/commands/".length);
+      if ((command as {command_type?: string})?.command_type !== routeType) {
+        throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
+      }
+      const event = await workService.execute(command);
       return respond(response, 202, event);
     }
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
@@ -65,6 +83,25 @@ export const server = createServer(async (request, response) => {
       if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
       return respond(response, 200, await service.getMission(organizationId, missionMatch[1]));
     }
+    if (request.method === "GET" && url.pathname === "/v1/tasks") {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      return respond(response, 200, {items: await workService.listTasks(organizationId)});
+    }
+    const taskHistoryMatch = url.pathname.match(/^\/v1\/tasks\/([^/]+)\/history$/);
+    if (request.method === "GET" && taskHistoryMatch) {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
+      const limit = Number(url.searchParams.get("limit") ?? "100");
+      return respond(response, 200, {items: await workService.getHistory(organizationId, taskHistoryMatch[1], afterVersion, limit)});
+    }
+    const taskMatch = url.pathname.match(/^\/v1\/tasks\/([^/]+)$/);
+    if (request.method === "GET" && taskMatch) {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      return respond(response, 200, await workService.getTask(organizationId, taskMatch[1]));
+    }
     return respond(response, 404, {code: "NOT_FOUND", message: "route not found"});
   } catch (error) {
     if (error instanceof OnyxError) {
@@ -76,5 +113,5 @@ export const server = createServer(async (request, response) => {
 });
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  server.listen(port, host, () => console.log(`ONYX Mission API listening on http://${host}:${port}`));
+  server.listen(port, host, () => console.log(`ONYX API listening on http://${host}:${port}`));
 }

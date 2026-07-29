@@ -8,9 +8,10 @@
   },
   "scripts": {
     "check": "npm run validate:contracts && npm test",
+    "start": "npm run start:api",
+    "start:api": "node --experimental-strip-types src/mission/server.ts",
     "start:mission": "node --experimental-strip-types src/mission/server.ts",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "validate:contracts": "node --experimental-strip-types tools/validate-contracts.ts"
   }
 }
-
