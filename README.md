@@ -11,6 +11,7 @@ contracts/v2.0/       Versioned machine-readable contract baseline
 src/api/              Service composition and port-free request dispatcher
 src/auth/             Ed25519 bearer authentication and JWT validation
 src/contracts/        Canonical envelope and shared runtime types
+src/infrastructure/   SQLite persistence and transactional outbox delivery
 src/mission/          Mission domain and application service
 src/work/             Work/Task domain and application service
 src/timeline/         Timeline domain and application service
@@ -56,6 +57,8 @@ ONYX_DB_PATH=./data/onyx.db npm start
 ```
 
 Mission, Work, Timeline, and Reporting-Evidence keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
+
+Every durable event is written to a transactional outbox in the same commit as its aggregate state. The bounded dispatcher supports exclusive leases, retry backoff, dead-lettering, and at-least-once delivery with stable event identifiers.
 
 Available endpoints:
 
