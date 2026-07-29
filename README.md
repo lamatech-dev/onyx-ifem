@@ -79,6 +79,8 @@ Implemented command types:
 
 See [Mission context](docs/mission-context.md) for lifecycle and authority details.
 
+All command handlers share strict validation of the canonical v2.0 envelope before domain-specific payload checks. See [Runtime contract validation](docs/contract-validation.md).
+
 The Work context currently implements `CreateTask`, the only Work command with a `FIELD_COMPLETE` payload. A task may be created only when its referenced Mission exists inside the same organization boundary. See [Work context](docs/work-context.md).
 
 The Timeline context implements `CreateTimeline`. A timeline may currently target an existing Mission or Task inside the same organization boundary. See [Timeline context](docs/timeline-context.md).
