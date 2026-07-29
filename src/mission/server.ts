@@ -36,9 +36,34 @@ export const server = createServer(async (request, response) => {
     if (request.method === "GET" && request.url === "/healthz") {
       return respond(response, 200, {status: "ok", context: "mission"});
     }
-    if (request.method === "POST" && request.url === "/v1/mission/commands/CreateMission") {
-      const event = await service.createMission(await readJson(request));
+    if (request.method === "POST" && request.url?.startsWith("/v1/mission/commands/")) {
+      const command = await readJson(request);
+      const routeType = request.url.slice("/v1/mission/commands/".length);
+      if ((command as {command_type?: string})?.command_type !== routeType) {
+        throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
+      }
+      const event = await service.execute(command);
       return respond(response, 202, event);
+    }
+    const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
+    if (request.method === "GET" && url.pathname === "/v1/missions") {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      return respond(response, 200, {items: await service.listMissions(organizationId)});
+    }
+    const historyMatch = url.pathname.match(/^\/v1\/missions\/([^/]+)\/history$/);
+    if (request.method === "GET" && historyMatch) {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
+      const limit = Number(url.searchParams.get("limit") ?? "100");
+      return respond(response, 200, {items: await service.getHistory(organizationId, historyMatch[1], afterVersion, limit)});
+    }
+    const missionMatch = url.pathname.match(/^\/v1\/missions\/([^/]+)$/);
+    if (request.method === "GET" && missionMatch) {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      return respond(response, 200, await service.getMission(organizationId, missionMatch[1]));
     }
     return respond(response, 404, {code: "NOT_FOUND", message: "route not found"});
   } catch (error) {
@@ -53,4 +78,3 @@ export const server = createServer(async (request, response) => {
 if (import.meta.url === `file://${process.argv[1]}`) {
   server.listen(port, host, () => console.log(`ONYX Mission API listening on http://${host}:${port}`));
 }
-

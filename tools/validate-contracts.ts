@@ -1,5 +1,5 @@
 import { readFile, readdir } from "node:fs/promises";
-import { dirname, join, relative, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 
 const root = resolve("contracts/v2.0");
 const manifestPath = join(root, "manifests/package-manifest.json");
@@ -67,4 +67,3 @@ if (failures.length > 0) {
   console.log(`PASS: ${manifest.artifacts.length} command/event manifest entries reconciled`);
   console.log(`INFO: ${complete} FIELD_COMPLETE; ${manifest.artifacts.length - complete} payload-open`);
 }
-
