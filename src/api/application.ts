@@ -1,4 +1,5 @@
 import { OnyxError } from "../contracts/errors.ts";
+import { JwtVerifier, type AccessTokenClaims, type JwtVerifierOptions } from "../auth/jwt.ts";
 import { SqliteDatabase } from "../infrastructure/sqlite/database.ts";
 import { InMemoryMissionRepository } from "../mission/repository.ts";
 import { MissionService } from "../mission/service.ts";
@@ -18,11 +19,13 @@ export interface ApiRequest {
   method: string;
   path: string;
   body?: unknown;
+  headers?: Readonly<Record<string, string | undefined>>;
 }
 
 export interface ApiResponse {
   status: number;
   body: unknown;
+  headers?: Readonly<Record<string, string>>;
 }
 
 export interface OnyxApplicationOptions {
@@ -30,6 +33,7 @@ export interface OnyxApplicationOptions {
   now?: () => Date;
   replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence", string>>;
   logError?: (error: unknown) => void;
+  auth?: JwtVerifierOptions;
 }
 
 interface ResourceRoutes {
@@ -43,11 +47,15 @@ export class OnyxApplication {
   readonly #commands: ReadonlyMap<string, (body: unknown) => Promise<unknown>>;
   readonly #resources: ReadonlyMap<string, ResourceRoutes>;
   readonly #logError: (error: unknown) => void;
+  readonly #auth: JwtVerifier | undefined;
   #closed = false;
 
   constructor(options: OnyxApplicationOptions = {}) {
     this.#database = options.databasePath ? new SqliteDatabase(options.databasePath) : undefined;
     this.#logError = options.logError ?? console.error;
+    this.#auth = options.auth
+      ? new JwtVerifier({...options.auth, ...(!options.auth.now && options.now ? {now: options.now} : {})})
+      : undefined;
     const time = options.now ? {now: options.now} : {};
     const mission = new MissionService({
       repository: this.#database ? new SqliteMissionRepository(this.#database) : new InMemoryMissionRepository(),
@@ -144,9 +152,11 @@ export class OnyxApplication {
       const routeType = commandMatch[2]!;
       const execute = this.#commands.get(commandContext);
       if (!execute) return notFound();
+      const claims = this.#authenticate(request);
       if ((request.body as {command_type?: string})?.command_type !== routeType) {
         throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
       }
+      if (claims) this.#authorizeCommand(claims, request.body);
       return {status: 202, body: await execute(request.body)};
     }
 
@@ -160,6 +170,8 @@ export class OnyxApplication {
         if (resource && (collectionRoute || itemRoute || historyRoute)) {
           const organizationId = url.searchParams.get("organization_id");
           if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+          const claims = this.#authenticate(request);
+          if (claims) this.#authorizeRead(claims, organizationId, segments[1]);
           if (collectionRoute) return {status: 200, body: {items: await resource.list(organizationId)}};
           if (itemRoute) return {status: 200, body: await resource.get(organizationId, segments[2]!)};
           if (historyRoute) {
@@ -172,6 +184,42 @@ export class OnyxApplication {
     }
     return notFound();
   }
+
+  #authenticate(request: ApiRequest): AccessTokenClaims | undefined {
+    return this.#auth?.authenticate(request.headers?.authorization);
+  }
+
+  #authorizeCommand(claims: AccessTokenClaims, body: unknown): void {
+    const command = body as Record<string, any>;
+    if (command?.organization_id !== claims.org) throw new OnyxError("ORGANIZATION_MISMATCH", "token organization does not match command");
+    if (command?.actor_context?.principal_id !== claims.sub || command?.actor_context?.actor_type !== claims.actor_type) {
+      throw new OnyxError("AUTHORITY_PROOF_INVALID", "token subject does not match actor_context");
+    }
+    const proof = command?.authority_proof;
+    if (proof?.proof_ref !== claims.jti || proof?.authority_epoch !== claims.authority_epoch) {
+      throw new OnyxError("AUTHORITY_PROOF_INVALID", "token does not match authority proof identity or epoch");
+    }
+    if (!Array.isArray(proof.scope) || proof.scope.some((scope: unknown) => typeof scope !== "string" || !claims.scope.includes(scope))) {
+      throw new OnyxError("AUTHORITY_PROOF_INVALID", "authority proof exceeds token scope");
+    }
+    const proofExpiry = Date.parse(proof.expires_at);
+    if (!Number.isFinite(proofExpiry) || proofExpiry > claims.exp * 1_000) {
+      throw new OnyxError("AUTHORITY_PROOF_INVALID", "authority proof expiry exceeds token expiry");
+    }
+  }
+
+  #authorizeRead(claims: AccessTokenClaims, organizationId: string, resource: string): void {
+    if (claims.org !== organizationId) throw new OnyxError("ORGANIZATION_MISMATCH", "token organization does not match query");
+    const requiredScope: Record<string, string> = {
+      missions: "mission:read",
+      tasks: "work:read",
+      timelines: "timeline:read",
+      reports: "reporting-evidence:read",
+    };
+    if (!claims.scope.includes(requiredScope[resource]!)) {
+      throw new OnyxError("AUTHORITY_PROOF_INVALID", `${requiredScope[resource]} authority is missing`);
+    }
+  }
 }
 
 function notFound(): ApiResponse {
@@ -183,6 +231,7 @@ export function errorResponse(error: unknown, logError: (error: unknown) => void
     return {
       status: error.httpStatus,
       body: {code: error.code, message: error.message, ...(error.details ? {details: error.details} : {})},
+      ...(error.code === "AUTHENTICATION_REQUIRED" ? {headers: {"www-authenticate": "Bearer"}} : {}),
     };
   }
   logError(error);

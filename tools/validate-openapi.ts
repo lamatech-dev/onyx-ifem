@@ -24,10 +24,19 @@ for (const command of documentedCommands) if (!frozenCommands.has(command)) fail
 const operationIds = new Set<string>();
 for (const [path, item] of Object.entries(document.paths as JsonObject)) {
   for (const [method, operation] of Object.entries(item as JsonObject)) {
-    const operationId = (operation as JsonObject).operationId;
+    const typedOperation = operation as JsonObject;
+    const operationId = typedOperation.operationId;
     if (typeof operationId !== "string" || operationId.length === 0) failures.push(`${method.toUpperCase()} ${path}: operationId is required`);
     else if (operationIds.has(operationId)) failures.push(`duplicate operationId: ${operationId}`);
     else operationIds.add(operationId);
+    if (path !== "/healthz" && path !== "/openapi.json") {
+      if (!Array.isArray(typedOperation.security) || typedOperation.security[0]?.BearerAuth === undefined) {
+        failures.push(`${method.toUpperCase()} ${path}: BearerAuth is required`);
+      }
+      if (typedOperation.responses?.["401"] === undefined || typedOperation.responses?.["403"] === undefined) {
+        failures.push(`${method.toUpperCase()} ${path}: 401 and 403 responses are required`);
+      }
+    }
   }
 }
 

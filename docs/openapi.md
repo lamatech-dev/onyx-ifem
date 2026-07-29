@@ -29,6 +29,8 @@ The document currently describes:
 - health and OpenAPI discovery endpoints;
 - reusable identifiers, query parameters, views, and canonical error responses.
 
+Protected operations declare the `BearerAuth` security scheme and document 401 and 403 responses. Health and OpenAPI discovery remain public.
+
 ## Drift validation
 
 ```bash

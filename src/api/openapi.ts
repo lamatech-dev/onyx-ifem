@@ -64,7 +64,7 @@ function jsonContent(schema: JsonObject): JsonObject {
 }
 
 const errorResponses: JsonObject = Object.fromEntries(
-  ["400", "403", "404", "409", "422", "500"].map((status) => [status, {$ref: `#/components/responses/Error${status}`}]),
+  ["400", "401", "403", "404", "409", "422", "500"].map((status) => [status, {$ref: `#/components/responses/Error${status}`}]),
 );
 
 const paths: JsonObject = {};
@@ -74,6 +74,7 @@ for (const route of IMPLEMENTED_COMMAND_ROUTES) {
       operationId: route.command[0]!.toLowerCase() + route.command.slice(1),
       tags: [route.context],
       summary: `Execute ${route.command}`,
+      security: [{BearerAuth: []}],
       requestBody: {
         required: true,
         content: jsonContent({$ref: `#/components/schemas/${route.command}`}),
@@ -94,6 +95,8 @@ for (const route of IMPLEMENTED_COMMAND_ROUTES) {
 const organizationParameter = {$ref: "#/components/parameters/OrganizationId"};
 const queryErrors = {
   "400": {$ref: "#/components/responses/Error400"},
+  "401": {$ref: "#/components/responses/Error401"},
+  "403": {$ref: "#/components/responses/Error403"},
   "404": {$ref: "#/components/responses/Error404"},
   "500": {$ref: "#/components/responses/Error500"},
 };
@@ -104,6 +107,7 @@ function addResource(resource: string, singular: string, schema: string, events:
     get: {
       operationId: `list${singular}s`,
       tags: [tag],
+      security: [{BearerAuth: []}],
       parameters: [organizationParameter],
       responses: {
         "200": {
@@ -123,6 +127,7 @@ function addResource(resource: string, singular: string, schema: string, events:
     get: {
       operationId: `get${singular}`,
       tags: [tag],
+      security: [{BearerAuth: []}],
       parameters: [{$ref: "#/components/parameters/ObjectId"}, organizationParameter],
       responses: {
         "200": {description: `${singular} view`, content: jsonContent({$ref: `#/components/schemas/${schema}`})},
@@ -134,6 +139,7 @@ function addResource(resource: string, singular: string, schema: string, events:
     get: {
       operationId: `get${singular}History`,
       tags: [tag],
+      security: [{BearerAuth: []}],
       parameters: [
         {$ref: "#/components/parameters/ObjectId"},
         organizationParameter,
@@ -296,9 +302,18 @@ export const OPENAPI_DOCUMENT: JsonObject = {
       Limit: {name: "limit", in: "query", schema: {type: "integer", minimum: 1, maximum: 1000, default: 100}},
     },
     responses: {
-      Error400: errorResponse("Invalid request"), Error403: errorResponse("Authority or organization denied"),
+      Error400: errorResponse("Invalid request"), Error401: errorResponse("Authentication required or token invalid"),
+      Error403: errorResponse("Authority or organization denied"),
       Error404: errorResponse("Resource not found"), Error409: errorResponse("Version or lifecycle conflict"),
       Error422: errorResponse("Idempotency or invariant violation"), Error500: errorResponse("Internal failure"),
+    },
+    securitySchemes: {
+      BearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT (EdDSA/Ed25519)",
+        description: "ONYX access token with typ=onyx-access+jwt. Required when ONYX_AUTH_MODE=required.",
+      },
     },
   },
 };

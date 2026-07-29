@@ -9,6 +9,7 @@ The executable baseline includes the Mission, Work, Timeline, and Reporting-Evid
 ```text
 contracts/v2.0/       Versioned machine-readable contract baseline
 src/api/              Service composition and port-free request dispatcher
+src/auth/             Ed25519 bearer authentication and JWT validation
 src/contracts/        Canonical envelope and shared runtime types
 src/mission/          Mission domain and application service
 src/work/             Work/Task domain and application service
@@ -41,6 +42,8 @@ npm start
 ```
 
 The server listens on `127.0.0.1:3000` by default. Configure `ONYX_HOST`, `ONYX_PORT`, and replica identifiers when needed.
+
+Authentication is disabled for local development. Production deployments can require Ed25519-signed bearer tokens with `ONYX_AUTH_MODE=required`; see [Authentication and authorization](docs/authentication.md).
 
 The application dispatcher is independent of the Node HTTP transport, so route workflows can run without opening sockets. See [HTTP application architecture](docs/http-architecture.md).
 
