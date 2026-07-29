@@ -59,3 +59,5 @@ jobs:
           grep -q "replicas: 1" /tmp/onyx-kubernetes.yaml
           grep -q "runAsNonRoot: true" /tmp/onyx-kubernetes.yaml
           grep -q "sha256:0000000000000000000000000000000000000000000000000000000000000000" /tmp/onyx-kubernetes.yaml
+      - name: Validate Prometheus rules
+        run: docker run --rm --volume "$PWD:/work:ro" --entrypoint /bin/promtool prom/prometheus:v3.12.0 check rules /work/deploy/monitoring/prometheus-rules.yaml

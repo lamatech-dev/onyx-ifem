@@ -48,7 +48,7 @@ Authentication is disabled for local development. Production deployments can req
 
 Every response carries an `x-request-id`; the server emits redaction-safe structured JSON logs. Use `/healthz` for liveness and `/readyz` for persistence plus messaging readiness. See [Observability](docs/observability.md).
 
-Prometheus-compatible, bounded-cardinality operational metrics are available at `GET /metrics`; keep this infrastructure endpoint off public ingress routes.
+Prometheus-compatible, bounded-cardinality operational metrics are available at `GET /metrics`; keep this infrastructure endpoint off public ingress routes. Provisionable alert rules, a Grafana dashboard, and response procedures are in [Production monitoring](docs/monitoring.md).
 
 Finite token-bucket, concurrency, header, receive, socket, and connection-reuse limits protect the HTTP boundary. See [HTTP resilience and overload protection](docs/http-resilience.md).
 

@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "check": "npm run validate:contracts && npm run validate:openapi && npm run typecheck && npm test",
+    "check": "npm run validate:contracts && npm run validate:openapi && npm run validate:monitoring && npm run typecheck && npm test",
     "db:backup": "node --experimental-strip-types tools/database-recovery.ts backup",
     "db:restore": "node --experimental-strip-types tools/database-recovery.ts restore",
     "db:verify": "node --experimental-strip-types tools/database-recovery.ts verify",
@@ -18,7 +18,8 @@
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "validate:openapi": "node --experimental-strip-types tools/validate-openapi.ts",
-    "validate:contracts": "node --experimental-strip-types tools/validate-contracts.ts"
+    "validate:contracts": "node --experimental-strip-types tools/validate-contracts.ts",
+    "validate:monitoring": "node --experimental-strip-types tools/validate-monitoring.ts"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

@@ -1,0 +1,80 @@
+groups:
+  - name: onyx-ifem-recording
+    interval: 30s
+    rules:
+      - record: job:onyx_http_requests:rate5m
+        expr: sum by (job) (rate(onyx_http_requests_total[5m]))
+      - record: job:onyx_http_server_errors:ratio_rate5m
+        expr: sum by (job) (rate(onyx_http_requests_total{status_code=~"5.."}[5m])) / clamp_min(sum by (job) (rate(onyx_http_requests_total[5m])), 0.001)
+      - record: job:onyx_http_request_duration_seconds:p95_rate5m
+        expr: histogram_quantile(0.95, sum by (job, le) (rate(onyx_http_request_duration_seconds_bucket[5m])))
+      - record: job:onyx_http_admission_rejections:rate5m
+        expr: sum by (job, reason) (rate(onyx_http_admission_rejections_total[5m]))
+
+  - name: onyx-ifem-alerting
+    rules:
+      - alert: OnyxHighServerErrorRatio
+        expr: job:onyx_http_requests:rate5m > 0.1 and job:onyx_http_server_errors:ratio_rate5m > 0.05
+        for: 10m
+        keep_firing_for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: ONYX server error ratio is above 5%
+          description: "Job {{ $labels.job }} has sustained a server error ratio above 5% for ten minutes."
+          runbook_url: https://github.com/lamatech-dev/onyx-ifem/blob/main/docs/monitoring.md#high-server-error-ratio
+      - alert: OnyxHighP95Latency
+        expr: job:onyx_http_requests:rate5m > 0.1 and job:onyx_http_request_duration_seconds:p95_rate5m > 1
+        for: 10m
+        keep_firing_for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: ONYX p95 request latency is above one second
+          description: "Job {{ $labels.job }} has sustained p95 latency above one second for ten minutes."
+          runbook_url: https://github.com/lamatech-dev/onyx-ifem/blob/main/docs/monitoring.md#high-p95-latency
+      - alert: OnyxAdmissionRejections
+        expr: sum by (job) (job:onyx_http_admission_rejections:rate5m) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: ONYX is rejecting more than one request per second
+          description: "Job {{ $labels.job }} is sustaining overload admission rejections."
+          runbook_url: https://github.com/lamatech-dev/onyx-ifem/blob/main/docs/monitoring.md#admission-rejections
+      - alert: OnyxOutboxDeadLetters
+        expr: max by (job) (onyx_outbox_messages{state="dead_lettered"}) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: ONYX transactional outbox contains dead letters
+          description: "Job {{ $labels.job }} has one or more messages that exhausted delivery retries."
+          runbook_url: https://github.com/lamatech-dev/onyx-ifem/blob/main/docs/monitoring.md#outbox-dead-letters
+      - alert: OnyxOutboxBacklogStale
+        expr: max by (job) (onyx_outbox_oldest_pending_age_seconds) > 300
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: ONYX outbox backlog is stale
+          description: "Job {{ $labels.job }} has had a pending outbox message older than five minutes for ten minutes."
+          runbook_url: https://github.com/lamatech-dev/onyx-ifem/blob/main/docs/monitoring.md#stale-outbox-backlog
+      - alert: OnyxInboxFailures
+        expr: max by (job) (onyx_inbox_receipts{state="failed"}) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: ONYX consumer inbox contains failed receipts
+          description: "Job {{ $labels.job }} has one or more inbox receipts in the failed state."
+          runbook_url: https://github.com/lamatech-dev/onyx-ifem/blob/main/docs/monitoring.md#inbox-failures
+      - alert: OnyxPersistenceNotDurable
+        expr: min by (job) (onyx_persistence_durable) < 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: ONYX is running without durable persistence
+          description: "Job {{ $labels.job }} has reported in-memory persistence for five minutes."
+          runbook_url: https://github.com/lamatech-dev/onyx-ifem/blob/main/docs/monitoring.md#persistence-not-durable

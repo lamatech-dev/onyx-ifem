@@ -158,16 +158,17 @@ function appendMessaging(lines: string[], snapshot: MessagingSnapshot, now: Date
     `onyx_inbox_receipts${labels({state: "completed"})} ${snapshot.inbox.completed}`,
     `onyx_inbox_receipts${labels({state: "failed"})} ${snapshot.inbox.failed}`,
   );
-  if (snapshot.outbox.oldestPendingAt) {
-    const timestamp = Date.parse(snapshot.outbox.oldestPendingAt);
-    if (Number.isFinite(timestamp)) {
-      lines.push(
-        "# HELP onyx_outbox_oldest_pending_age_seconds Age of the oldest pending outbox message.",
-        "# TYPE onyx_outbox_oldest_pending_age_seconds gauge",
-        `onyx_outbox_oldest_pending_age_seconds ${Math.max(0, (now.getTime() - timestamp) / 1_000)}`,
-      );
-    }
-  }
+  const oldestPendingTimestamp = snapshot.outbox.oldestPendingAt
+    ? Date.parse(snapshot.outbox.oldestPendingAt)
+    : Number.NaN;
+  const oldestPendingAge = Number.isFinite(oldestPendingTimestamp)
+    ? Math.max(0, (now.getTime() - oldestPendingTimestamp) / 1_000)
+    : 0;
+  lines.push(
+    "# HELP onyx_outbox_oldest_pending_age_seconds Age of the oldest pending outbox message, or zero when none are pending.",
+    "# TYPE onyx_outbox_oldest_pending_age_seconds gauge",
+    `onyx_outbox_oldest_pending_age_seconds ${oldestPendingAge}`,
+  );
 }
 
 function finiteNonNegative(value: number): number {

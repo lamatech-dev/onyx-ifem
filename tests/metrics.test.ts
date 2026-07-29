@@ -54,4 +54,17 @@ describe("Prometheus metrics", () => {
     assert.doesNotMatch(output, /private-org|CreateMission/);
     assert.equal(output.endsWith("\n"), true);
   });
+
+  it("keeps the oldest-pending series present at zero when the outbox is empty", () => {
+    const output = new PrometheusMetrics().render({
+      durable: true,
+      now: new Date("2026-07-30T00:00:10.000Z"),
+      messaging: {
+        outbox: {pending: 0, ready: 0, leased: 0, delivered: 0, deadLettered: 0},
+        inbox: {processing: 0, retryable: 0, completed: 0, failed: 0},
+      },
+    });
+
+    assert.match(output, /onyx_outbox_oldest_pending_age_seconds 0\n/);
+  });
 });

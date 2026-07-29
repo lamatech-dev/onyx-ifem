@@ -30,7 +30,7 @@ Route labels are fixed templates. Raw URLs, command names, organization IDs, agg
 
 The Kubernetes Service carries conventional Prometheus scrape annotations. The default NetworkPolicy still requires the Prometheus Pod to have `onyx-ifem.io/client=true` and its namespace to have `onyx-ifem.io/access=true`. Prometheus Operator users can select the Service with a separately managed `ServiceMonitor` instead of relying on annotations.
 
-Suggested initial alerts are sustained nonzero `onyx_outbox_messages{state="dead_lettered"}`, increasing `onyx_outbox_oldest_pending_age_seconds`, elevated admission rejection rate, and high latency quantiles calculated from the histogram. Tune thresholds from measured traffic and objectives rather than copying development values.
+Provisionable Prometheus recording/alerting rules and a Grafana dashboard are included under `deploy/monitoring`. Their initial thresholds and response procedures are documented in [Production monitoring](monitoring.md). Tune the starter thresholds from measured traffic and service objectives.
 
 ## Request correlation
 
