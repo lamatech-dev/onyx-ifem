@@ -10,6 +10,9 @@ import { SqliteWorkRepository } from "../work/sqlite-repository.ts";
 import { InMemoryTimelineRepository } from "../timeline/repository.ts";
 import { TimelineService } from "../timeline/service.ts";
 import { SqliteTimelineRepository } from "../timeline/sqlite-repository.ts";
+import { InMemoryReportingRepository } from "../reporting-evidence/repository.ts";
+import { ReportingService } from "../reporting-evidence/service.ts";
+import { SqliteReportingRepository } from "../reporting-evidence/sqlite-repository.ts";
 
 const host = process.env.ONYX_HOST ?? "127.0.0.1";
 const port = Number(process.env.ONYX_PORT ?? "3000");
@@ -40,6 +43,25 @@ const timelineService = new TimelineService({
     throw new OnyxError("INVALID_ARGUMENT", `unsupported timeline subject type: ${subject.aggregate_type}`);
   },
 });
+const reportingService = new ReportingService({
+  repository: database ? new SqliteReportingRepository(database) : new InMemoryReportingRepository(),
+  replicaId: process.env.ONYX_REPORTING_REPLICA_ID ?? "reporting-evidence-api",
+  requireSubject: async (organizationId, subject) => {
+    if (subject.aggregate_type === "Mission") {
+      await service.getMission(organizationId, subject.object_id);
+      return;
+    }
+    if (subject.aggregate_type === "Task") {
+      await workService.getTask(organizationId, subject.object_id);
+      return;
+    }
+    if (subject.aggregate_type === "Timeline") {
+      await timelineService.getTimeline(organizationId, subject.object_id);
+      return;
+    }
+    throw new OnyxError("INVALID_ARGUMENT", `unsupported report subject type: ${subject.aggregate_type}`);
+  },
+});
 
 function respond(response: ServerResponse, status: number, body: unknown): void {
   response.writeHead(status, {"content-type": "application/json; charset=utf-8"});
@@ -65,7 +87,7 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
 export const server = createServer(async (request, response) => {
   try {
     if (request.method === "GET" && request.url === "/healthz") {
-      return respond(response, 200, {status: "ok", contexts: ["mission", "work", "timeline"]});
+      return respond(response, 200, {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence"]});
     }
     if (request.method === "POST" && request.url?.startsWith("/v1/mission/commands/")) {
       const command = await readJson(request);
@@ -92,6 +114,15 @@ export const server = createServer(async (request, response) => {
         throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
       }
       const event = await timelineService.execute(command);
+      return respond(response, 202, event);
+    }
+    if (request.method === "POST" && request.url?.startsWith("/v1/reporting-evidence/commands/")) {
+      const command = await readJson(request);
+      const routeType = request.url.slice("/v1/reporting-evidence/commands/".length);
+      if ((command as {command_type?: string})?.command_type !== routeType) {
+        throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
+      }
+      const event = await reportingService.execute(command);
       return respond(response, 202, event);
     }
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
@@ -151,6 +182,25 @@ export const server = createServer(async (request, response) => {
       const organizationId = url.searchParams.get("organization_id");
       if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
       return respond(response, 200, await timelineService.getTimeline(organizationId, timelineMatch[1]));
+    }
+    if (request.method === "GET" && url.pathname === "/v1/reports") {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      return respond(response, 200, {items: await reportingService.listReports(organizationId)});
+    }
+    const reportHistoryMatch = url.pathname.match(/^\/v1\/reports\/([^/]+)\/history$/);
+    if (request.method === "GET" && reportHistoryMatch) {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
+      const limit = Number(url.searchParams.get("limit") ?? "100");
+      return respond(response, 200, {items: await reportingService.getHistory(organizationId, reportHistoryMatch[1], afterVersion, limit)});
+    }
+    const reportMatch = url.pathname.match(/^\/v1\/reports\/([^/]+)$/);
+    if (request.method === "GET" && reportMatch) {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      return respond(response, 200, await reportingService.getReport(organizationId, reportMatch[1]));
     }
     return respond(response, 404, {code: "NOT_FOUND", message: "route not found"});
   } catch (error) {

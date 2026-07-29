@@ -6,11 +6,13 @@ import { describe, it } from "node:test";
 import { SqliteDatabase } from "../src/infrastructure/sqlite/database.ts";
 import { MissionService } from "../src/mission/service.ts";
 import { SqliteMissionRepository } from "../src/mission/sqlite-repository.ts";
+import { ReportingService } from "../src/reporting-evidence/service.ts";
+import { SqliteReportingRepository } from "../src/reporting-evidence/sqlite-repository.ts";
 import { TimelineService } from "../src/timeline/service.ts";
 import { SqliteTimelineRepository } from "../src/timeline/sqlite-repository.ts";
 import { WorkService } from "../src/work/service.ts";
 import { SqliteWorkRepository } from "../src/work/sqlite-repository.ts";
-import { createMissionCommand, createTaskCommand, createTimelineCommand, missionCommand, testId } from "./fixtures.ts";
+import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, missionCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -143,6 +145,42 @@ describe("SQLite persistence", () => {
       assert.equal((await secondTimeline.getTimeline(testId(13), testId(500))).timezone, "Asia/Tehran");
       assert.deepEqual((await secondTimeline.getHistory(testId(13), testId(500))).map((event) => event.event_type), ["TimelineCreated"]);
       assert.deepEqual(await secondTimeline.execute(create), created);
+      secondDatabase.close();
+    } finally {
+      await rm(directory, {recursive: true, force: true});
+    }
+  });
+
+  it("restores Reports, history, and idempotency after restart", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "onyx-sqlite-reporting-"));
+    const path = join(directory, "onyx.db");
+    try {
+      const firstDatabase = new SqliteDatabase(path);
+      const firstMission = new MissionService({repository: new SqliteMissionRepository(firstDatabase), now});
+      await firstMission.execute(createMissionCommand());
+      const firstReporting = new ReportingService({
+        repository: new SqliteReportingRepository(firstDatabase),
+        now,
+        requireSubject: async (organizationId, subject) => {
+          await firstMission.getMission(organizationId, subject.object_id);
+        },
+      });
+      const create = createReportCommand();
+      const created = await firstReporting.execute(create);
+      firstDatabase.close();
+
+      const secondDatabase = new SqliteDatabase(path);
+      const secondMission = new MissionService({repository: new SqliteMissionRepository(secondDatabase), now});
+      const secondReporting = new ReportingService({
+        repository: new SqliteReportingRepository(secondDatabase),
+        now,
+        requireSubject: async (organizationId, subject) => {
+          await secondMission.getMission(organizationId, subject.object_id);
+        },
+      });
+      assert.equal((await secondReporting.getReport(testId(13), testId(600))).title, "Mission status report");
+      assert.deepEqual((await secondReporting.getHistory(testId(13), testId(600))).map((event) => event.event_type), ["ReportCreated"]);
+      assert.deepEqual(await secondReporting.execute(create), created);
       secondDatabase.close();
     } finally {
       await rm(directory, {recursive: true, force: true});

@@ -1,6 +1,7 @@
 import type { CreateMissionCommand, MissionCommand } from "../src/mission/types.ts";
 import type { CreateTaskCommand } from "../src/work/types.ts";
 import type { CreateTimelineCommand } from "../src/timeline/types.ts";
+import type { CreateReportCommand } from "../src/reporting-evidence/types.ts";
 
 export function testId(sequence: number): string {
   return `018f1c2a-7b3d-7abc-8def-${sequence.toString(16).padStart(12, "0")}`;
@@ -126,6 +127,36 @@ export function createTimelineCommand(overrides: Partial<CreateTimelineCommand> 
     },
     schema_version: 1,
     target: {aggregate_type: "Timeline", object_id: testId(500)},
+    vector_clock: {"replica-a": 1},
+    ...overrides,
+  };
+}
+
+export function createReportCommand(overrides: Partial<CreateReportCommand> = {}): CreateReportCommand {
+  return {
+    actor_context: {actor_type: "USER", principal_id: testId(15)},
+    authority_proof: {
+      authority_epoch: 0,
+      expires_at: "2030-01-01T00:00:00.000000Z",
+      proof_ref: "proof:report-create",
+      scope: ["reporting-evidence:create"],
+    },
+    command_id: testId(601),
+    command_type: "CreateReport",
+    correlation_id: testId(200),
+    expected_version: 0,
+    issued_at: "2026-07-29T20:00:00.000000Z",
+    operation_id: testId(602),
+    organization_id: testId(13),
+    payload: {
+      report_id: testId(600),
+      report_type: "MISSION_STATUS",
+      subject_ref: {aggregate_type: "Mission", object_id: testId(14)},
+      author_id: testId(15),
+      title: "Mission status report",
+    },
+    schema_version: 1,
+    target: {aggregate_type: "Report", object_id: testId(600)},
     vector_clock: {"replica-a": 1},
     ...overrides,
   };

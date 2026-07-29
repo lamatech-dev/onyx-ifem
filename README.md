@@ -2,7 +2,7 @@
 
 ONYX is an interface-first execution framework. This repository turns the IFEM v2.0 contract baseline into an executable, independently testable system.
 
-The executable baseline includes the Mission, Work, and Timeline contexts. It implements only v2.0 commands whose payloads are marked `FIELD_COMPLETE`, enforces authority, optimistic concurrency, idempotency, and organization boundaries, persists state with its events, and exposes read APIs.
+The executable baseline includes the Mission, Work, Timeline, and Reporting-Evidence contexts. It implements every v2.0 command whose payload is marked `FIELD_COMPLETE`, enforces authority, optimistic concurrency, idempotency, and organization boundaries, persists state with its events, and exposes read APIs.
 
 ## Repository layout
 
@@ -12,6 +12,7 @@ src/contracts/        Canonical envelope and shared runtime types
 src/mission/          Mission domain and application service
 src/work/             Work/Task domain and application service
 src/timeline/         Timeline domain and application service
+src/reporting-evidence/ Report domain and application service
 src/shared/           Deterministic serialization and identifier utilities
 tests/                Contract and domain verification
 tools/                Repository-level validation commands
@@ -43,7 +44,7 @@ State is in-memory unless `ONYX_DB_PATH` is set. Enable durable SQLite persisten
 ONYX_DB_PATH=./data/onyx.db npm start
 ```
 
-Mission, Work, and Timeline keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
+Mission, Work, Timeline, and Reporting-Evidence keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
 
 Available endpoints:
 
@@ -60,6 +61,10 @@ Available endpoints:
 - `GET /v1/timelines?organization_id={id}`
 - `GET /v1/timelines/{id}?organization_id={id}`
 - `GET /v1/timelines/{id}/history?organization_id={id}&after_version=0&limit=100`
+- `POST /v1/reporting-evidence/commands/CreateReport`
+- `GET /v1/reports?organization_id={id}`
+- `GET /v1/reports/{id}?organization_id={id}`
+- `GET /v1/reports/{id}/history?organization_id={id}&after_version=0&limit=100`
 
 Implemented command types:
 
@@ -78,11 +83,13 @@ The Work context currently implements `CreateTask`, the only Work command with a
 
 The Timeline context implements `CreateTimeline`. A timeline may currently target an existing Mission or Task inside the same organization boundary. See [Timeline context](docs/timeline-context.md).
 
+The Reporting-Evidence context implements `CreateReport`. A report may currently target an existing Mission, Task, or Timeline inside the same organization boundary. See [Reporting-Evidence context](docs/reporting-evidence-context.md).
+
 The HTTP adapter intentionally starts with one complete vertical slice. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
 
 ## Contract maturity
 
-The imported v2.0 package contains 294 command/event schemas. Only contracts marked `FIELD_COMPLETE` should be treated as fully constrained payloads. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` are discoverable placeholders, not production-complete domain contracts.
+The imported v2.0 package contains 294 command/event schemas. All 11 commands marked `FIELD_COMPLETE` now have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` are discoverable placeholders, not production-complete domain contracts.
 
 `CloseMission`, `OperationalHaltMission`, and `RestartMission` are deliberately not implemented because their command payloads are still open.
 
