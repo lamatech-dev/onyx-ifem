@@ -69,7 +69,7 @@ export function missionCommand<TType extends MissionCommand["command_type"], TPa
     schema_version: 1,
     target: {aggregate_type: "Mission", object_id: testId(14)},
     vector_clock: {"replica-a": sequence},
-  } as Extract<MissionCommand, {command_type: TType}>;
+  } as unknown as Extract<MissionCommand, {command_type: TType}>;
 }
 
 export function createTaskCommand(overrides: Partial<CreateTaskCommand> = {}): CreateTaskCommand {

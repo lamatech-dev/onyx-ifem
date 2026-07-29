@@ -7,11 +7,16 @@
     "node": ">=24"
   },
   "scripts": {
-    "check": "npm run validate:contracts && npm test",
+    "check": "npm run validate:contracts && npm run typecheck && npm test",
     "start": "npm run start:api",
     "start:api": "node --experimental-strip-types src/mission/server.ts",
     "start:mission": "node --experimental-strip-types src/mission/server.ts",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
     "validate:contracts": "node --experimental-strip-types tools/validate-contracts.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^7.0.2"
   }
 }

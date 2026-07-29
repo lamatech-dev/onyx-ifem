@@ -23,13 +23,16 @@ tools/                Repository-level validation commands
 
 - Node.js 24 or newer
 
-No third-party runtime or test dependencies are required for the initial slice.
+The API has no third-party runtime dependencies. TypeScript and the matching Node.js type definitions are development-only dependencies.
 
 ## Verify
 
 ```bash
+npm ci
 npm run check
 ```
+
+The check pipeline validates the imported contracts, performs a strict no-emit TypeScript compilation, and runs the complete test suite. See [Type safety](docs/type-safety.md).
 
 ## Run the API
 

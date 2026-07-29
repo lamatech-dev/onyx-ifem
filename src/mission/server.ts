@@ -7,12 +7,12 @@ const port = Number(process.env.ONYX_PORT ?? "3000");
 if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new Error("ONYX_PORT must be an integer from 1 to 65535");
 
 const application = new OnyxApplication({
-  databasePath: process.env.ONYX_DB_PATH,
+  ...(process.env.ONYX_DB_PATH ? {databasePath: process.env.ONYX_DB_PATH} : {}),
   replicaIds: {
-    mission: process.env.ONYX_REPLICA_ID,
-    work: process.env.ONYX_WORK_REPLICA_ID,
-    timeline: process.env.ONYX_TIMELINE_REPLICA_ID,
-    reportingEvidence: process.env.ONYX_REPORTING_REPLICA_ID,
+    ...(process.env.ONYX_REPLICA_ID ? {mission: process.env.ONYX_REPLICA_ID} : {}),
+    ...(process.env.ONYX_WORK_REPLICA_ID ? {work: process.env.ONYX_WORK_REPLICA_ID} : {}),
+    ...(process.env.ONYX_TIMELINE_REPLICA_ID ? {timeline: process.env.ONYX_TIMELINE_REPLICA_ID} : {}),
+    ...(process.env.ONYX_REPORTING_REPLICA_ID ? {reportingEvidence: process.env.ONYX_REPORTING_REPLICA_ID} : {}),
   },
 });
 

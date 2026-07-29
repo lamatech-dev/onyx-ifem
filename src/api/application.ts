@@ -38,7 +38,7 @@ interface ResourceRoutes {
 }
 
 export class OnyxApplication {
-  readonly #database?: SqliteDatabase;
+  readonly #database: SqliteDatabase | undefined;
   readonly #commands: ReadonlyMap<string, (body: unknown) => Promise<unknown>>;
   readonly #resources: ReadonlyMap<string, ResourceRoutes>;
   readonly #logError: (error: unknown) => void;
@@ -47,14 +47,15 @@ export class OnyxApplication {
   constructor(options: OnyxApplicationOptions = {}) {
     this.#database = options.databasePath ? new SqliteDatabase(options.databasePath) : undefined;
     this.#logError = options.logError ?? console.error;
+    const time = options.now ? {now: options.now} : {};
     const mission = new MissionService({
       repository: this.#database ? new SqliteMissionRepository(this.#database) : new InMemoryMissionRepository(),
-      now: options.now,
+      ...time,
       replicaId: options.replicaIds?.mission ?? "mission-api",
     });
     const work = new WorkService({
       repository: this.#database ? new SqliteWorkRepository(this.#database) : new InMemoryWorkRepository(),
-      now: options.now,
+      ...time,
       replicaId: options.replicaIds?.work ?? "work-api",
       requireMission: async (organizationId, missionId) => {
         await mission.getMission(organizationId, missionId);
@@ -62,7 +63,7 @@ export class OnyxApplication {
     });
     const timeline = new TimelineService({
       repository: this.#database ? new SqliteTimelineRepository(this.#database) : new InMemoryTimelineRepository(),
-      now: options.now,
+      ...time,
       replicaId: options.replicaIds?.timeline ?? "timeline-api",
       requireSubject: async (organizationId, subject) => {
         if (subject.aggregate_type === "Mission") return void await mission.getMission(organizationId, subject.object_id);
@@ -72,7 +73,7 @@ export class OnyxApplication {
     });
     const reporting = new ReportingService({
       repository: this.#database ? new SqliteReportingRepository(this.#database) : new InMemoryReportingRepository(),
-      now: options.now,
+      ...time,
       replicaId: options.replicaIds?.reportingEvidence ?? "reporting-evidence-api",
       requireSubject: async (organizationId, subject) => {
         if (subject.aggregate_type === "Mission") return void await mission.getMission(organizationId, subject.object_id);
@@ -82,7 +83,7 @@ export class OnyxApplication {
       },
     });
 
-    this.#commands = new Map([
+    this.#commands = new Map<string, (body: unknown) => Promise<unknown>>([
       ["mission", (body) => mission.execute(body)],
       ["work", (body) => work.execute(body)],
       ["timeline", (body) => timeline.execute(body)],
@@ -135,9 +136,11 @@ export class OnyxApplication {
 
     const commandMatch = url.pathname.match(/^\/v1\/([^/]+)\/commands\/([^/]+)$/);
     if (request.method === "POST" && commandMatch) {
-      const execute = this.#commands.get(commandMatch[1]);
+      const commandContext = commandMatch[1]!;
+      const routeType = commandMatch[2]!;
+      const execute = this.#commands.get(commandContext);
       if (!execute) return notFound();
-      if ((request.body as {command_type?: string})?.command_type !== commandMatch[2]) {
+      if ((request.body as {command_type?: string})?.command_type !== routeType) {
         throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
       }
       return {status: 202, body: await execute(request.body)};
@@ -145,7 +148,7 @@ export class OnyxApplication {
 
     if (request.method === "GET") {
       const segments = url.pathname.split("/").filter(Boolean);
-      if (segments[0] === "v1") {
+      if (segments[0] === "v1" && segments[1] !== undefined) {
         const resource = this.#resources.get(segments[1]);
         const collectionRoute = segments.length === 2;
         const itemRoute = segments.length === 3;
@@ -154,11 +157,11 @@ export class OnyxApplication {
           const organizationId = url.searchParams.get("organization_id");
           if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
           if (collectionRoute) return {status: 200, body: {items: await resource.list(organizationId)}};
-          if (itemRoute) return {status: 200, body: await resource.get(organizationId, segments[2])};
+          if (itemRoute) return {status: 200, body: await resource.get(organizationId, segments[2]!)};
           if (historyRoute) {
             const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
             const limit = Number(url.searchParams.get("limit") ?? "100");
-            return {status: 200, body: {items: await resource.history(organizationId, segments[2], afterVersion, limit)}};
+            return {status: 200, body: {items: await resource.history(organizationId, segments[2]!, afterVersion, limit)}};
           }
         }
       }
@@ -173,7 +176,10 @@ function notFound(): ApiResponse {
 
 export function errorResponse(error: unknown, logError: (error: unknown) => void = console.error): ApiResponse {
   if (error instanceof OnyxError) {
-    return {status: error.httpStatus, body: {code: error.code, message: error.message, details: error.details}};
+    return {
+      status: error.httpStatus,
+      body: {code: error.code, message: error.message, ...(error.details ? {details: error.details} : {})},
+    };
   }
   logError(error);
   return {status: 500, body: {code: "INTERNAL_ERROR", message: "unexpected failure"}};

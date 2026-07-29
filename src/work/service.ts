@@ -59,8 +59,8 @@ export class WorkService {
       description: command.payload.description,
       ownerId: command.payload.owner_id,
       priority: command.payload.priority,
-      dueDateRef: structuredClone(command.payload.due_date_ref),
-      estimate: structuredClone(command.payload.estimate),
+      ...(command.payload.due_date_ref !== undefined ? {dueDateRef: structuredClone(command.payload.due_date_ref)} : {}),
+      ...(command.payload.estimate !== undefined ? {estimate: structuredClone(command.payload.estimate)} : {}),
       status: "DRAFT",
       version: 1,
     };

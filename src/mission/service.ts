@@ -80,8 +80,8 @@ export class MissionService {
       organizationId: command.organization_id,
       ownerId: command.payload.owner_id,
       objective: command.payload.objective,
-      title: command.payload.title,
-      initialBlueprintId: command.payload.initial_blueprint_id,
+      ...(command.payload.title !== undefined ? {title: command.payload.title} : {}),
+      ...(command.payload.initial_blueprint_id !== undefined ? {initialBlueprintId: command.payload.initial_blueprint_id} : {}),
       settings: structuredClone(command.payload.settings),
       status: "DRAFT",
       version: 1,
@@ -104,7 +104,7 @@ export class MissionService {
     }
     mission.revisions[command.payload.revision_id] = {
       revisionId: command.payload.revision_id,
-      baseRevisionId: command.payload.base_revision_id,
+      ...(command.payload.base_revision_id !== undefined ? {baseRevisionId: command.payload.base_revision_id} : {}),
       content: structuredClone(command.payload.content),
       changeSummary: command.payload.change_summary,
     };

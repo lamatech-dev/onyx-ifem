@@ -28,7 +28,7 @@ describe("strict command envelope validation", () => {
   });
 
   it("rejects unknown envelope properties in every executable context", () => {
-    const cases: Array<[Validator, Record<string, unknown>]> = [
+    const cases: Array<[Validator, object]> = [
       [validateCreateMissionCommand, createMissionCommand()],
       [validateCreateTaskCommand, createTaskCommand()],
       [validateCreateTimelineCommand, createTimelineCommand()],

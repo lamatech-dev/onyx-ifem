@@ -65,8 +65,8 @@ export function toMissionView(mission: Mission): MissionView {
     version: mission.version,
     lifecycle_epoch: mission.lifecycleEpoch,
     authority_epoch: mission.authorityEpoch,
-    title: mission.title,
-    active_blueprint_revision_id: mission.activeBlueprintRevisionId,
-    timeline_id: mission.timelineId,
+    ...(mission.title !== undefined ? {title: mission.title} : {}),
+    ...(mission.activeBlueprintRevisionId !== undefined ? {active_blueprint_revision_id: mission.activeBlueprintRevisionId} : {}),
+    ...(mission.timelineId !== undefined ? {timeline_id: mission.timelineId} : {}),
   };
 }

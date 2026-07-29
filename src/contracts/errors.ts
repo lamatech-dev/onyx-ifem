@@ -26,7 +26,7 @@ const HTTP_STATUS: Record<OnyxErrorCode, number> = {
 export class OnyxError extends Error {
   readonly code: OnyxErrorCode;
   readonly httpStatus: number;
-  readonly details?: Record<string, unknown>;
+  readonly details: Record<string, unknown> | undefined;
 
   constructor(code: OnyxErrorCode, message: string, details?: Record<string, unknown>) {
     super(message);
