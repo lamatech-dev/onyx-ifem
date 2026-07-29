@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: onyx-ifem-headless
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: onyx-ifem
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: onyx-ifem
+spec:
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: onyx-ifem
+  type: ClusterIP

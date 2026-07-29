@@ -4,6 +4,8 @@ ONYX runs as one HTTP process with an optional transactional-outbox worker. Prod
 
 For the non-root production image, read-only container invocation, GHCR release artifacts, and SBOM/provenance verification, see [Container and release supply chain](container-and-release.md).
 
+For the production Kustomize base, singleton SQLite storage model, Kubernetes security context, probes, and network policy, see [Kubernetes deployment](kubernetes.md).
+
 ## API configuration
 
 ```bash

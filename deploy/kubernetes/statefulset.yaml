@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: onyx-ifem
+spec:
+  replicas: 1
+  serviceName: onyx-ifem-headless
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: onyx-ifem
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: onyx-ifem
+    spec:
+      automountServiceAccountToken: false
+      serviceAccountName: onyx-ifem
+      terminationGracePeriodSeconds: 150
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: onyx-ifem
+          image: ghcr.io/lamatech-dev/onyx-ifem:0.1.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: onyx-ifem-config
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ONYX_REPLICA_ID
+              value: $(POD_NAME)-mission
+            - name: ONYX_WORK_REPLICA_ID
+              value: $(POD_NAME)-work
+            - name: ONYX_TIMELINE_REPLICA_ID
+              value: $(POD_NAME)-timeline
+            - name: ONYX_REPORTING_REPLICA_ID
+              value: $(POD_NAME)-reporting-evidence
+            - name: ONYX_OUTBOX_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: bearer-token
+                  name: onyx-ifem-outbox
+                  optional: true
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            failureThreshold: 30
+            periodSeconds: 2
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            failureThreshold: 2
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            failureThreshold: 4
+            periodSeconds: 15
+            timeoutSeconds: 2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          volumeMounts:
+            - mountPath: /var/lib/onyx
+              name: data
+            - mountPath: /run/secrets
+              name: auth
+              readOnly: true
+      volumes:
+        - name: auth
+          secret:
+            defaultMode: 0444
+            items:
+              - key: public-key.pem
+                path: onyx-auth-public.pem
+            secretName: onyx-ifem-auth
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi

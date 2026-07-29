@@ -54,6 +54,8 @@ Set `ONYX_OUTBOX_WEBHOOK_URL` to run the crash-recoverable outbox publisher. Pro
 
 The hardened production container, CI security gates, CycloneDX SBOM, multi-platform GHCR publishing, and tag-based release process are documented in [Container and release supply chain](docs/container-and-release.md).
 
+The hardened singleton StatefulSet, persistent-volume model, probes, secrets, network policy, and immutable-image deployment procedure are documented in [Kubernetes deployment](docs/kubernetes.md).
+
 Online backup, manifest verification, restore rehearsal, and migration compatibility checks are available through the `db:backup`, `db:verify`, and `db:restore` scripts. See [Backup and disaster recovery](docs/disaster-recovery.md).
 
 The application dispatcher is independent of the Node HTTP transport, so route workflows can run without opening sockets. See [HTTP application architecture](docs/http-architecture.md).

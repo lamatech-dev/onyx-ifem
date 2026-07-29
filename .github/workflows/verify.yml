@@ -51,3 +51,11 @@ jobs:
         run: |
           test "$(docker image inspect onyx-ifem:ci --format '{{.Config.User}}')" = "node"
           docker image inspect onyx-ifem:ci --format '{{json .Config.Healthcheck.Test}}' | grep -q healthz
+          docker run --rm --entrypoint test onyx-ifem:ci -f /app/tools/database-recovery.ts
+      - name: Render the Kubernetes deployment
+        run: |
+          docker run --rm --volume "$PWD:/work:ro" --workdir /work registry.k8s.io/kubectl:v1.35.6 kustomize deploy/kubernetes > /tmp/onyx-kubernetes.yaml
+          grep -q "kind: StatefulSet" /tmp/onyx-kubernetes.yaml
+          grep -q "replicas: 1" /tmp/onyx-kubernetes.yaml
+          grep -q "runAsNonRoot: true" /tmp/onyx-kubernetes.yaml
+          grep -q "sha256:0000000000000000000000000000000000000000000000000000000000000000" /tmp/onyx-kubernetes.yaml

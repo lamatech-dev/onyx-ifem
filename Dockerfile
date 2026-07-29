@@ -31,6 +31,7 @@ RUN install -d -o node -g node /var/lib/onyx
 COPY --from=verify --chown=node:node /workspace/package.json ./package.json
 COPY --from=verify --chown=node:node /workspace/contracts ./contracts
 COPY --from=verify --chown=node:node /workspace/src ./src
+COPY --from=verify --chown=node:node /workspace/tools ./tools
 
 USER node
 EXPOSE 3000
