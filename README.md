@@ -79,7 +79,7 @@ Implemented command types:
 
 See [Mission context](docs/mission-context.md) for lifecycle and authority details.
 
-All command handlers share strict validation of the canonical v2.0 envelope before domain-specific payload checks. See [Runtime contract validation](docs/contract-validation.md).
+All command handlers share strict validation of the canonical v2.0 envelope before domain-specific payload checks. Emitted events are validated and their canonical integrity digests are verified before persistence. See [Runtime contract validation](docs/contract-validation.md).
 
 The Work context currently implements `CreateTask`, the only Work command with a `FIELD_COMPLETE` payload. A task may be created only when its referenced Mission exists inside the same organization boundary. See [Work context](docs/work-context.md).
 

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { OnyxError } from "../src/contracts/errors.ts";
+import { assertEmittedEvent, validateEventEnvelope } from "../src/contracts/validation.ts";
+import { InMemoryMissionRepository } from "../src/mission/repository.ts";
+import { MissionService } from "../src/mission/service.ts";
 import { validateCreateMissionCommand } from "../src/mission/validation.ts";
 import { validateCreateReportCommand } from "../src/reporting-evidence/validation.ts";
 import { validateCreateTimelineCommand } from "../src/timeline/validation.ts";
@@ -68,5 +71,45 @@ describe("strict command envelope validation", () => {
         membership_id: base.operation_id,
       },
     });
+  });
+});
+
+describe("strict event envelope validation", () => {
+  it("accepts emitted events and verifies their integrity digest", async () => {
+    const service = new MissionService({
+      repository: new InMemoryMissionRepository(),
+      now: () => new Date("2026-07-29T20:00:01.000Z"),
+    });
+    const event = await service.execute(createMissionCommand());
+
+    validateEventEnvelope(event, "MissionCreated", "Mission");
+  });
+
+  it("rejects malformed event envelopes and content tampering", async () => {
+    const service = new MissionService({
+      repository: new InMemoryMissionRepository(),
+      now: () => new Date("2026-07-29T20:00:01.000Z"),
+    });
+    const event = await service.execute(createMissionCommand());
+    const validate = (value: unknown): void => void validateEventEnvelope(value, "MissionCreated", "Mission");
+    const invalidEvents = [
+      {...event, extension: true},
+      {...event, aggregate: {...event.aggregate, extension: true}},
+      {...event, aggregate: {...event.aggregate, aggregate_type: "Task"}},
+      {...event, aggregate_version: -1},
+      {...event, occurred_at: "2026-07-29T20:00:01Z"},
+      {...event, vector_clock: {"replica-a": 0}},
+      {...event, audit: {...event.audit, extension: true}},
+      {...event, audit: {...event.audit, integrity_digest: "0".repeat(64)}},
+      {...event, payload: {...event.payload, title: "tampered after signing"}},
+    ];
+    for (const invalidEvent of invalidEvents) rejectsInvalid(validate, invalidEvent);
+  });
+
+  it("turns emitted-event violations into internal failures", () => {
+    assert.throws(
+      () => assertEmittedEvent({}, "MissionCreated", "Mission"),
+      (error: unknown) => error instanceof Error && !(error instanceof OnyxError),
+    );
   });
 });

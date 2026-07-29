@@ -1,4 +1,5 @@
 import { OnyxError } from "../contracts/errors.ts";
+import { assertEmittedEvent } from "../contracts/validation.ts";
 import { sha256 } from "../shared/canonical-json.ts";
 import { utcInstant, uuidV7 } from "../shared/identifiers.ts";
 import { toTaskView, type WorkRepository } from "./repository.ts";
@@ -90,6 +91,7 @@ export class WorkService {
       ...eventWithoutDigest,
       audit: {provenance: "CreateTask@1", integrity_digest: sha256(eventWithoutDigest)},
     };
+    assertEmittedEvent(event, "TaskCreated", "Task");
     await this.#repository.commit(task, event, command.operation_id, {fingerprint, event});
     return structuredClone(event);
   }
@@ -112,4 +114,3 @@ export class WorkService {
     return this.#repository.history(taskId, afterVersion, limit);
   }
 }
-

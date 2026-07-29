@@ -1,5 +1,6 @@
 import type { DomainObjectRef } from "../contracts/envelopes.ts";
 import { OnyxError } from "../contracts/errors.ts";
+import { assertEmittedEvent } from "../contracts/validation.ts";
 import { sha256 } from "../shared/canonical-json.ts";
 import { utcInstant, uuidV7 } from "../shared/identifiers.ts";
 import { toTimelineView, type TimelineRepository } from "./repository.ts";
@@ -85,6 +86,7 @@ export class TimelineService {
       ...eventWithoutDigest,
       audit: {provenance: "CreateTimeline@1", integrity_digest: sha256(eventWithoutDigest)},
     };
+    assertEmittedEvent(event, "TimelineCreated", "Timeline");
     await this.#repository.commit(timeline, event, command.operation_id, {fingerprint, event});
     return structuredClone(event);
   }

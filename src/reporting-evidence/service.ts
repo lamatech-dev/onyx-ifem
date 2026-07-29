@@ -1,5 +1,6 @@
 import type { DomainObjectRef } from "../contracts/envelopes.ts";
 import { OnyxError } from "../contracts/errors.ts";
+import { assertEmittedEvent } from "../contracts/validation.ts";
 import { sha256 } from "../shared/canonical-json.ts";
 import { utcInstant, uuidV7 } from "../shared/identifiers.ts";
 import { toReportView, type ReportingRepository } from "./repository.ts";
@@ -87,6 +88,7 @@ export class ReportingService {
       ...eventWithoutDigest,
       audit: {provenance: "CreateReport@1", integrity_digest: sha256(eventWithoutDigest)},
     };
+    assertEmittedEvent(event, "ReportCreated", "Report");
     await this.#repository.commit(report, event, command.operation_id, {fingerprint, event});
     return structuredClone(event);
   }

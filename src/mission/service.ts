@@ -1,5 +1,6 @@
 import { OnyxError } from "../contracts/errors.ts";
 import type { VectorClock } from "../contracts/envelopes.ts";
+import { assertEmittedEvent } from "../contracts/validation.ts";
 import { sha256 } from "../shared/canonical-json.ts";
 import { utcInstant, uuidV7 } from "../shared/identifiers.ts";
 import { toMissionView, type MissionRepository } from "./repository.ts";
@@ -269,6 +270,7 @@ export class MissionService {
       ...eventWithoutDigest,
       audit: {provenance: `${command.command_type}@1`, integrity_digest: sha256(eventWithoutDigest)},
     } as MissionEvent;
+    assertEmittedEvent(event, eventType, "Mission");
     await this.#repository.commit(
       mission,
       event,
