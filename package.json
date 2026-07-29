@@ -21,7 +21,7 @@
     "validate:contracts": "node --experimental-strip-types tools/validate-contracts.ts"
   },
   "devDependencies": {
-    "@types/node": "^24.13.3",
+    "@types/node": "^26.1.2",
     "typescript": "^7.0.2"
   }
 }
