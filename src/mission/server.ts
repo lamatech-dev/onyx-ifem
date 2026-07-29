@@ -4,15 +4,19 @@ import { InMemoryMissionRepository } from "./repository.ts";
 import { MissionService } from "./service.ts";
 import { InMemoryWorkRepository } from "../work/repository.ts";
 import { WorkService } from "../work/service.ts";
+import { SqliteDatabase } from "../infrastructure/sqlite/database.ts";
+import { SqliteMissionRepository } from "./sqlite-repository.ts";
+import { SqliteWorkRepository } from "../work/sqlite-repository.ts";
 
 const host = process.env.ONYX_HOST ?? "127.0.0.1";
 const port = Number(process.env.ONYX_PORT ?? "3000");
+const database = process.env.ONYX_DB_PATH ? new SqliteDatabase(process.env.ONYX_DB_PATH) : undefined;
 const service = new MissionService({
-  repository: new InMemoryMissionRepository(),
+  repository: database ? new SqliteMissionRepository(database) : new InMemoryMissionRepository(),
   replicaId: process.env.ONYX_REPLICA_ID ?? "mission-api",
 });
 const workService = new WorkService({
-  repository: new InMemoryWorkRepository(),
+  repository: database ? new SqliteWorkRepository(database) : new InMemoryWorkRepository(),
   replicaId: process.env.ONYX_WORK_REPLICA_ID ?? "work-api",
   requireMission: async (organizationId, missionId) => {
     await service.getMission(organizationId, missionId);
@@ -114,4 +118,13 @@ export const server = createServer(async (request, response) => {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   server.listen(port, host, () => console.log(`ONYX API listening on http://${host}:${port}`));
+
+  const shutdown = (): void => {
+    server.close(() => {
+      database?.close();
+      process.exit(0);
+    });
+  };
+  process.once("SIGINT", shutdown);
+  process.once("SIGTERM", shutdown);
 }

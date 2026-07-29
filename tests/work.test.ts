@@ -5,42 +5,9 @@ import { InMemoryMissionRepository } from "../src/mission/repository.ts";
 import { MissionService } from "../src/mission/service.ts";
 import { InMemoryWorkRepository } from "../src/work/repository.ts";
 import { WorkService } from "../src/work/service.ts";
-import type { CreateTaskCommand } from "../src/work/types.ts";
-import { createMissionCommand, testId } from "./fixtures.ts";
+import { createMissionCommand, createTaskCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
-
-function createTaskCommand(overrides: Partial<CreateTaskCommand> = {}): CreateTaskCommand {
-  return {
-    actor_context: {actor_type: "USER", principal_id: testId(15)},
-    authority_proof: {
-      authority_epoch: 0,
-      expires_at: "2030-01-01T00:00:00.000000Z",
-      proof_ref: "proof:work-create",
-      scope: ["work:create"],
-    },
-    command_id: testId(401),
-    command_type: "CreateTask",
-    correlation_id: testId(200),
-    expected_version: 0,
-    issued_at: "2026-07-29T20:00:00.000000Z",
-    operation_id: testId(402),
-    organization_id: testId(13),
-    payload: {
-      task_id: testId(400),
-      mission_id: testId(14),
-      title: "Implement the Mission adapter",
-      description: "Build and verify the first dependent Work item.",
-      owner_id: testId(15),
-      priority: "HIGH",
-      estimate: {value: 3, unit: "POINT"},
-    },
-    schema_version: 1,
-    target: {aggregate_type: "Task", object_id: testId(400)},
-    vector_clock: {"replica-a": 1},
-    ...overrides,
-  };
-}
 
 async function fixture(): Promise<{mission: MissionService; work: WorkService}> {
   const mission = new MissionService({repository: new InMemoryMissionRepository(), now});
@@ -116,4 +83,3 @@ describe("WorkService.createTask", () => {
     );
   });
 });
-

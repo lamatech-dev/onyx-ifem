@@ -34,7 +34,15 @@ npm run check
 npm start
 ```
 
-The server listens on `127.0.0.1:3000` by default. Configure `ONYX_HOST`, `ONYX_PORT`, and `ONYX_REPLICA_ID` when needed.
+The server listens on `127.0.0.1:3000` by default. Configure `ONYX_HOST`, `ONYX_PORT`, and replica identifiers when needed.
+
+State is in-memory unless `ONYX_DB_PATH` is set. Enable durable SQLite persistence with:
+
+```bash
+ONYX_DB_PATH=./data/onyx.db npm start
+```
+
+Mission and Work keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
 
 Available endpoints:
 
@@ -72,4 +80,3 @@ The imported v2.0 package contains 294 command/event schemas. Only contracts mar
 `CloseMission`, `OperationalHaltMission`, and `RestartMission` are deliberately not implemented because their command payloads are still open.
 
 Work lifecycle commands such as `StartTask`, `PauseTask`, `BlockTask`, and `CloseTask` are also deliberately unavailable until their command payloads are frozen.
-

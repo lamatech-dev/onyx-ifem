@@ -1,4 +1,5 @@
 import type { CreateMissionCommand, MissionCommand } from "../src/mission/types.ts";
+import type { CreateTaskCommand } from "../src/work/types.ts";
 
 export function testId(sequence: number): string {
   return `018f1c2a-7b3d-7abc-8def-${sequence.toString(16).padStart(12, "0")}`;
@@ -67,4 +68,36 @@ export function missionCommand<TType extends MissionCommand["command_type"], TPa
     target: {aggregate_type: "Mission", object_id: testId(14)},
     vector_clock: {"replica-a": sequence},
   } as Extract<MissionCommand, {command_type: TType}>;
+}
+
+export function createTaskCommand(overrides: Partial<CreateTaskCommand> = {}): CreateTaskCommand {
+  return {
+    actor_context: {actor_type: "USER", principal_id: testId(15)},
+    authority_proof: {
+      authority_epoch: 0,
+      expires_at: "2030-01-01T00:00:00.000000Z",
+      proof_ref: "proof:work-create",
+      scope: ["work:create"],
+    },
+    command_id: testId(401),
+    command_type: "CreateTask",
+    correlation_id: testId(200),
+    expected_version: 0,
+    issued_at: "2026-07-29T20:00:00.000000Z",
+    operation_id: testId(402),
+    organization_id: testId(13),
+    payload: {
+      task_id: testId(400),
+      mission_id: testId(14),
+      title: "Implement the Mission adapter",
+      description: "Build and verify the first dependent Work item.",
+      owner_id: testId(15),
+      priority: "HIGH",
+      estimate: {value: 3, unit: "POINT"},
+    },
+    schema_version: 1,
+    target: {aggregate_type: "Task", object_id: testId(400)},
+    vector_clock: {"replica-a": 1},
+    ...overrides,
+  };
 }
