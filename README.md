@@ -2,7 +2,7 @@
 
 ONYX is an interface-first execution framework. This repository turns the IFEM v2.0 contract baseline into an executable, independently testable system.
 
-The first implementation slice is the Mission context. It executes every Mission command whose v2.0 payload is marked `FIELD_COMPLETE`, enforces authority, lifecycle, optimistic concurrency, and idempotency rules, persists mission state with its events, and exposes read APIs.
+The executable baseline includes the Mission, Work, and Timeline contexts. It implements only v2.0 commands whose payloads are marked `FIELD_COMPLETE`, enforces authority, optimistic concurrency, idempotency, and organization boundaries, persists state with its events, and exposes read APIs.
 
 ## Repository layout
 
@@ -11,6 +11,7 @@ contracts/v2.0/       Versioned machine-readable contract baseline
 src/contracts/        Canonical envelope and shared runtime types
 src/mission/          Mission domain and application service
 src/work/             Work/Task domain and application service
+src/timeline/         Timeline domain and application service
 src/shared/           Deterministic serialization and identifier utilities
 tests/                Contract and domain verification
 tools/                Repository-level validation commands
@@ -42,7 +43,7 @@ State is in-memory unless `ONYX_DB_PATH` is set. Enable durable SQLite persisten
 ONYX_DB_PATH=./data/onyx.db npm start
 ```
 
-Mission and Work keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
+Mission, Work, and Timeline keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
 
 Available endpoints:
 
@@ -55,6 +56,10 @@ Available endpoints:
 - `GET /v1/tasks?organization_id={id}`
 - `GET /v1/tasks/{id}?organization_id={id}`
 - `GET /v1/tasks/{id}/history?organization_id={id}&after_version=0&limit=100`
+- `POST /v1/timeline/commands/CreateTimeline`
+- `GET /v1/timelines?organization_id={id}`
+- `GET /v1/timelines/{id}?organization_id={id}`
+- `GET /v1/timelines/{id}/history?organization_id={id}&after_version=0&limit=100`
 
 Implemented command types:
 
@@ -71,6 +76,8 @@ See [Mission context](docs/mission-context.md) for lifecycle and authority detai
 
 The Work context currently implements `CreateTask`, the only Work command with a `FIELD_COMPLETE` payload. A task may be created only when its referenced Mission exists inside the same organization boundary. See [Work context](docs/work-context.md).
 
+The Timeline context implements `CreateTimeline`. A timeline may currently target an existing Mission or Task inside the same organization boundary. See [Timeline context](docs/timeline-context.md).
+
 The HTTP adapter intentionally starts with one complete vertical slice. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
 
 ## Contract maturity
@@ -79,4 +86,4 @@ The imported v2.0 package contains 294 command/event schemas. Only contracts mar
 
 `CloseMission`, `OperationalHaltMission`, and `RestartMission` are deliberately not implemented because their command payloads are still open.
 
-Work lifecycle commands such as `StartTask`, `PauseTask`, `BlockTask`, and `CloseTask` are also deliberately unavailable until their command payloads are frozen.
+Work lifecycle commands such as `StartTask`, `PauseTask`, `BlockTask`, and `CloseTask` are also deliberately unavailable until their command payloads are frozen. Timeline scheduling commands remain unavailable for the same reason.

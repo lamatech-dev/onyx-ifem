@@ -1,5 +1,6 @@
 import type { CreateMissionCommand, MissionCommand } from "../src/mission/types.ts";
 import type { CreateTaskCommand } from "../src/work/types.ts";
+import type { CreateTimelineCommand } from "../src/timeline/types.ts";
 
 export function testId(sequence: number): string {
   return `018f1c2a-7b3d-7abc-8def-${sequence.toString(16).padStart(12, "0")}`;
@@ -97,6 +98,34 @@ export function createTaskCommand(overrides: Partial<CreateTaskCommand> = {}): C
     },
     schema_version: 1,
     target: {aggregate_type: "Task", object_id: testId(400)},
+    vector_clock: {"replica-a": 1},
+    ...overrides,
+  };
+}
+
+export function createTimelineCommand(overrides: Partial<CreateTimelineCommand> = {}): CreateTimelineCommand {
+  return {
+    actor_context: {actor_type: "USER", principal_id: testId(15)},
+    authority_proof: {
+      authority_epoch: 0,
+      expires_at: "2030-01-01T00:00:00.000000Z",
+      proof_ref: "proof:timeline-create",
+      scope: ["timeline:create"],
+    },
+    command_id: testId(501),
+    command_type: "CreateTimeline",
+    correlation_id: testId(200),
+    expected_version: 0,
+    issued_at: "2026-07-29T20:00:00.000000Z",
+    operation_id: testId(502),
+    organization_id: testId(13),
+    payload: {
+      timeline_id: testId(500),
+      subject_ref: {aggregate_type: "Mission", object_id: testId(14)},
+      timezone: "Asia/Tehran",
+    },
+    schema_version: 1,
+    target: {aggregate_type: "Timeline", object_id: testId(500)},
     vector_clock: {"replica-a": 1},
     ...overrides,
   };

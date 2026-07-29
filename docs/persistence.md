@@ -19,7 +19,7 @@ The initial migration creates:
 - `onyx_operations` for idempotency fingerprints and original results;
 - `onyx_schema_migrations` for migration history.
 
-Every key includes a bounded-context identifier. Mission and Work therefore cannot overwrite each other's aggregate or operation identifiers.
+Every key includes a bounded-context identifier. Mission, Work, and Timeline therefore cannot overwrite each other's aggregate or operation identifiers.
 
 ## Atomic commit
 
@@ -38,7 +38,7 @@ Restart tests close the database, construct new repository and service instances
 - aggregate snapshots are restored;
 - ordered history remains available;
 - identical command replay returns the original event;
-- Work references remain resolvable through the Mission boundary.
+- Work references remain resolvable through the Mission boundary;
+- Timeline state and idempotency survive restart while subjects remain resolvable through their owning context.
 
 The implementation currently uses Node's built-in `node:sqlite` module. Node 24 still reports this module as experimental, so the runtime version must remain pinned and persistence conformance tests must run before upgrades.
-

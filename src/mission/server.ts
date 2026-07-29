@@ -7,6 +7,9 @@ import { WorkService } from "../work/service.ts";
 import { SqliteDatabase } from "../infrastructure/sqlite/database.ts";
 import { SqliteMissionRepository } from "./sqlite-repository.ts";
 import { SqliteWorkRepository } from "../work/sqlite-repository.ts";
+import { InMemoryTimelineRepository } from "../timeline/repository.ts";
+import { TimelineService } from "../timeline/service.ts";
+import { SqliteTimelineRepository } from "../timeline/sqlite-repository.ts";
 
 const host = process.env.ONYX_HOST ?? "127.0.0.1";
 const port = Number(process.env.ONYX_PORT ?? "3000");
@@ -20,6 +23,21 @@ const workService = new WorkService({
   replicaId: process.env.ONYX_WORK_REPLICA_ID ?? "work-api",
   requireMission: async (organizationId, missionId) => {
     await service.getMission(organizationId, missionId);
+  },
+});
+const timelineService = new TimelineService({
+  repository: database ? new SqliteTimelineRepository(database) : new InMemoryTimelineRepository(),
+  replicaId: process.env.ONYX_TIMELINE_REPLICA_ID ?? "timeline-api",
+  requireSubject: async (organizationId, subject) => {
+    if (subject.aggregate_type === "Mission") {
+      await service.getMission(organizationId, subject.object_id);
+      return;
+    }
+    if (subject.aggregate_type === "Task") {
+      await workService.getTask(organizationId, subject.object_id);
+      return;
+    }
+    throw new OnyxError("INVALID_ARGUMENT", `unsupported timeline subject type: ${subject.aggregate_type}`);
   },
 });
 
@@ -47,7 +65,7 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
 export const server = createServer(async (request, response) => {
   try {
     if (request.method === "GET" && request.url === "/healthz") {
-      return respond(response, 200, {status: "ok", contexts: ["mission", "work"]});
+      return respond(response, 200, {status: "ok", contexts: ["mission", "work", "timeline"]});
     }
     if (request.method === "POST" && request.url?.startsWith("/v1/mission/commands/")) {
       const command = await readJson(request);
@@ -65,6 +83,15 @@ export const server = createServer(async (request, response) => {
         throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
       }
       const event = await workService.execute(command);
+      return respond(response, 202, event);
+    }
+    if (request.method === "POST" && request.url?.startsWith("/v1/timeline/commands/")) {
+      const command = await readJson(request);
+      const routeType = request.url.slice("/v1/timeline/commands/".length);
+      if ((command as {command_type?: string})?.command_type !== routeType) {
+        throw new OnyxError("INVALID_ARGUMENT", "command_type must match the command route");
+      }
+      const event = await timelineService.execute(command);
       return respond(response, 202, event);
     }
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
@@ -105,6 +132,25 @@ export const server = createServer(async (request, response) => {
       const organizationId = url.searchParams.get("organization_id");
       if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
       return respond(response, 200, await workService.getTask(organizationId, taskMatch[1]));
+    }
+    if (request.method === "GET" && url.pathname === "/v1/timelines") {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      return respond(response, 200, {items: await timelineService.listTimelines(organizationId)});
+    }
+    const timelineHistoryMatch = url.pathname.match(/^\/v1\/timelines\/([^/]+)\/history$/);
+    if (request.method === "GET" && timelineHistoryMatch) {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      const afterVersion = Number(url.searchParams.get("after_version") ?? "0");
+      const limit = Number(url.searchParams.get("limit") ?? "100");
+      return respond(response, 200, {items: await timelineService.getHistory(organizationId, timelineHistoryMatch[1], afterVersion, limit)});
+    }
+    const timelineMatch = url.pathname.match(/^\/v1\/timelines\/([^/]+)$/);
+    if (request.method === "GET" && timelineMatch) {
+      const organizationId = url.searchParams.get("organization_id");
+      if (!organizationId) throw new OnyxError("INVALID_ARGUMENT", "organization_id is required");
+      return respond(response, 200, await timelineService.getTimeline(organizationId, timelineMatch[1]));
     }
     return respond(response, 404, {code: "NOT_FOUND", message: "route not found"});
   } catch (error) {

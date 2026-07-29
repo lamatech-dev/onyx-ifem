@@ -6,9 +6,11 @@ import { describe, it } from "node:test";
 import { SqliteDatabase } from "../src/infrastructure/sqlite/database.ts";
 import { MissionService } from "../src/mission/service.ts";
 import { SqliteMissionRepository } from "../src/mission/sqlite-repository.ts";
+import { TimelineService } from "../src/timeline/service.ts";
+import { SqliteTimelineRepository } from "../src/timeline/sqlite-repository.ts";
 import { WorkService } from "../src/work/service.ts";
 import { SqliteWorkRepository } from "../src/work/sqlite-repository.ts";
-import { createMissionCommand, createTaskCommand, missionCommand, testId } from "./fixtures.ts";
+import { createMissionCommand, createTaskCommand, createTimelineCommand, missionCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -105,6 +107,42 @@ describe("SQLite persistence", () => {
       });
       assert.equal((await restoredWork.getTask(testId(13), testId(400))).mission_id, testId(14));
       assert.deepEqual(await restoredWork.execute(create), created);
+      secondDatabase.close();
+    } finally {
+      await rm(directory, {recursive: true, force: true});
+    }
+  });
+
+  it("restores Timelines, history, and idempotency after restart", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "onyx-sqlite-timeline-"));
+    const path = join(directory, "onyx.db");
+    try {
+      const firstDatabase = new SqliteDatabase(path);
+      const firstMission = new MissionService({repository: new SqliteMissionRepository(firstDatabase), now});
+      await firstMission.execute(createMissionCommand());
+      const firstTimeline = new TimelineService({
+        repository: new SqliteTimelineRepository(firstDatabase),
+        now,
+        requireSubject: async (organizationId, subject) => {
+          await firstMission.getMission(organizationId, subject.object_id);
+        },
+      });
+      const create = createTimelineCommand();
+      const created = await firstTimeline.execute(create);
+      firstDatabase.close();
+
+      const secondDatabase = new SqliteDatabase(path);
+      const secondMission = new MissionService({repository: new SqliteMissionRepository(secondDatabase), now});
+      const secondTimeline = new TimelineService({
+        repository: new SqliteTimelineRepository(secondDatabase),
+        now,
+        requireSubject: async (organizationId, subject) => {
+          await secondMission.getMission(organizationId, subject.object_id);
+        },
+      });
+      assert.equal((await secondTimeline.getTimeline(testId(13), testId(500))).timezone, "Asia/Tehran");
+      assert.deepEqual((await secondTimeline.getHistory(testId(13), testId(500))).map((event) => event.event_type), ["TimelineCreated"]);
+      assert.deepEqual(await secondTimeline.execute(create), created);
       secondDatabase.close();
     } finally {
       await rm(directory, {recursive: true, force: true});
