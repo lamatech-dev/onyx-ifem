@@ -22,7 +22,7 @@ describe("HTTP executable", () => {
         ONYX_MAX_IN_FLIGHT: "1",
         ONYX_OUTBOX_WEBHOOK_URL: "",
         ONYX_PORT: String(port),
-        ONYX_RATE_LIMIT_CAPACITY: "4",
+        ONYX_RATE_LIMIT_CAPACITY: "9",
         ONYX_RATE_LIMIT_REFILL_PER_SECOND: "0.01",
       }),
       stdio: ["ignore", "pipe", "pipe"],
@@ -58,6 +58,7 @@ describe("HTTP executable", () => {
         body: "{",
       });
       assert.equal(malformed.status, 400);
+      assert.equal(malformed.headers.get("connection"), "close");
       assert.equal((await malformed.json() as {code: string}).code, "INVALID_ARGUMENT");
 
       const oversized = await fetch(`${origin}/v1/mission/commands/CreateMission`, {
@@ -67,6 +68,43 @@ describe("HTTP executable", () => {
       });
       assert.equal(oversized.status, 400);
       assert.equal((await oversized.json() as {message: string}).message, "command envelope exceeds 1 MiB");
+
+      const missingContentType = await fetch(`${origin}/v1/mission/commands/CreateMission`, {
+        method: "POST",
+        body: Buffer.from("{}"),
+      });
+      assert.equal(missingContentType.status, 400);
+      assert.equal(missingContentType.headers.get("connection"), "close");
+      assert.equal((await missingContentType.json() as {message: string}).message, "content-type application/json is required");
+
+      const wrongContentType = await fetch(`${origin}/v1/mission/commands/CreateMission`, {
+        method: "POST",
+        headers: {"content-type": "text/plain"},
+        body: "{}",
+      });
+      assert.equal(wrongContentType.status, 400);
+
+      const wrongCharset = await fetch(`${origin}/v1/mission/commands/CreateMission`, {
+        method: "POST",
+        headers: {"content-type": "application/json; charset=iso-8859-1"},
+        body: "{}",
+      });
+      assert.equal(wrongCharset.status, 400);
+
+      const compressed = await fetch(`${origin}/v1/mission/commands/CreateMission`, {
+        method: "POST",
+        headers: {"content-encoding": "gzip", "content-type": "application/json"},
+        body: "{}",
+      });
+      assert.equal(compressed.status, 400);
+
+      const invalidUtf8 = await fetch(`${origin}/v1/mission/commands/CreateMission`, {
+        method: "POST",
+        headers: {"content-type": "application/json"},
+        body: Buffer.from([0x7b, 0x22, 0x78, 0x22, 0x3a, 0x22, 0xff, 0x22, 0x7d]),
+      });
+      assert.equal(invalidUtf8.status, 400);
+      assert.equal((await invalidUtf8.json() as {message: string}).message, "request body must be valid UTF-8");
 
       const held = createConnection({host: "127.0.0.1", port});
       let heldResponse = "";

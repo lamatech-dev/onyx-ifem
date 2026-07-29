@@ -2,8 +2,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { hostname } from "node:os";
 import { OnyxApplication, errorResponse, type ApiResponse } from "../api/application.ts";
 import { loadAuthenticationOptions } from "../auth/config.ts";
-import { OnyxError } from "../contracts/errors.ts";
 import { ConcurrencyGate, HttpAdmissionController, TokenBucketRateLimiter, isAdmissionExempt } from "../infrastructure/http/admission.ts";
+import { readJsonBody } from "../infrastructure/http/json-body.ts";
 import { jsonLineLogger, resolveRequestId } from "../infrastructure/observability/logger.ts";
 import { PrometheusMetrics } from "../infrastructure/observability/metrics.ts";
 import { createHttpEventPublisher } from "../infrastructure/outbox/http-publisher.ts";
@@ -70,22 +70,6 @@ export function serializeResponseBody(body: unknown): string {
   return typeof body === "string" ? body : JSON.stringify(body);
 }
 
-async function readJson(request: IncomingMessage): Promise<unknown> {
-  const chunks: Buffer[] = [];
-  let length = 0;
-  for await (const chunk of request) {
-    const buffer = Buffer.from(chunk);
-    length += buffer.length;
-    if (length > 1_048_576) throw new OnyxError("INVALID_ARGUMENT", "command envelope exceeds 1 MiB");
-    chunks.push(buffer);
-  }
-  try {
-    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
-  } catch {
-    throw new OnyxError("INVALID_ARGUMENT", "request body must be valid JSON");
-  }
-}
-
 export const server = createServer({
   requestTimeout: requestTimeoutMs,
   headersTimeout: headersTimeoutMs,
@@ -125,8 +109,10 @@ export const server = createServer({
     return;
   }
   let completedStatus = 500;
+  let requestBodyComplete = request.method !== "POST";
   try {
-    const body = request.method === "POST" ? await readJson(request) : undefined;
+    const body = request.method === "POST" ? await readJsonBody(request) : undefined;
+    requestBodyComplete = true;
     const result = await application.handle({
       method: request.method ?? "GET",
       path: request.url ?? "/",
@@ -146,6 +132,7 @@ export const server = createServer({
         ...result.headers,
         "x-request-id": requestId,
         ...(decision ? {"x-ratelimit-remaining": String(decision.remaining)} : {}),
+        ...(!requestBodyComplete ? {connection: "close"} : {}),
       },
     };
     completedStatus = completed.status;

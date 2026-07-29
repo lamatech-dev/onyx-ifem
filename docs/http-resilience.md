@@ -18,6 +18,8 @@ The limiter is local to one process. Multi-replica deployments need a central ga
 
 ## HTTP parser and socket limits
 
+Command requests must use `Content-Type: application/json`, optionally with one `charset=utf-8` parameter. Missing, alternate, duplicated, or additional media parameters are rejected before JSON parsing. `Content-Encoding` may be absent or `identity`; compressed request bodies are not accepted. Body bytes are decoded with fatal UTF-8 validation, so malformed byte sequences cannot be silently replaced before contract validation. Parsing failures return `Connection: close`, preventing an unread or invalid request body from contaminating a keep-alive connection.
+
 Defaults are intentionally finite:
 
 | Variable | Default | Purpose |
