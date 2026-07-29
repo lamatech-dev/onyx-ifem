@@ -9,6 +9,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
 COPY contracts ./contracts
+COPY deploy/monitoring ./deploy/monitoring
 COPY src ./src
 COPY tests ./tests
 COPY tools ./tools
