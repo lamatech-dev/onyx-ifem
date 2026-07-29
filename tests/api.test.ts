@@ -20,6 +20,14 @@ describe("OnyxApplication", () => {
       assert.equal(health.status, 200);
       assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence"]);
 
+      const openapi = await application.handle({method: "GET", path: "/openapi.json"});
+      assert.equal(openapi.status, 200);
+      assert.equal(body(openapi).openapi, "3.1.2");
+      assert.equal(Object.keys(body(openapi).paths as object).length, 25);
+      body(openapi).info.title = "mutated by caller";
+      const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
+      assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");
+
       const missing = await application.handle({method: "GET", path: "/v1/unknown"});
       assert.equal(missing.status, 404);
       assert.equal(body(missing).code, "NOT_FOUND");

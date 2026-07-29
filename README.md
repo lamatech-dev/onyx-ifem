@@ -44,6 +44,8 @@ The server listens on `127.0.0.1:3000` by default. Configure `ONYX_HOST`, `ONYX_
 
 The application dispatcher is independent of the Node HTTP transport, so route workflows can run without opening sockets. See [HTTP application architecture](docs/http-architecture.md).
 
+A self-contained OpenAPI 3.1.2 document is available at `GET /openapi.json` or through `npm run openapi`. See [OpenAPI description](docs/openapi.md).
+
 State is in-memory unless `ONYX_DB_PATH` is set. Enable durable SQLite persistence with:
 
 ```bash
@@ -55,6 +57,7 @@ Mission, Work, Timeline, and Reporting-Evidence keep separate context ownership 
 Available endpoints:
 
 - `GET /healthz`
+- `GET /openapi.json`
 - `POST /v1/mission/commands/{CommandType}`
 - `GET /v1/missions?organization_id={id}`
 - `GET /v1/missions/{id}?organization_id={id}`

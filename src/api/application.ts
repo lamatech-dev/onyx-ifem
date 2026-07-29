@@ -12,6 +12,7 @@ import { SqliteTimelineRepository } from "../timeline/sqlite-repository.ts";
 import { InMemoryWorkRepository } from "../work/repository.ts";
 import { WorkService } from "../work/service.ts";
 import { SqliteWorkRepository } from "../work/sqlite-repository.ts";
+import { OPENAPI_DOCUMENT } from "./openapi.ts";
 
 export interface ApiRequest {
   method: string;
@@ -132,6 +133,9 @@ export class OnyxApplication {
     const url = new URL(request.path, "http://onyx.local");
     if (request.method === "GET" && url.pathname === "/healthz") {
       return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence"]}};
+    }
+    if (request.method === "GET" && url.pathname === "/openapi.json") {
+      return {status: 200, body: structuredClone(OPENAPI_DOCUMENT)};
     }
 
     const commandMatch = url.pathname.match(/^\/v1\/([^/]+)\/commands\/([^/]+)$/);
