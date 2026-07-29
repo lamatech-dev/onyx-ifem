@@ -5,17 +5,49 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm run check
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Validate contracts, API, types, and behavior
+        run: npm run check
+      - name: Audit all dependencies
+        run: npm audit --audit-level=high
+      - name: Generate and validate the application SBOM
+        run: |
+          npm sbom --omit=dev --sbom-format=cyclonedx --sbom-type=application > sbom.cdx.json
+          node -e "const bom = JSON.parse(require('node:fs').readFileSync('sbom.cdx.json', 'utf8')); if (bom.bomFormat !== 'CycloneDX') process.exit(1)"
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build the production image
+        run: docker build --tag onyx-ifem:ci .
+      - name: Verify the runtime user and image defaults
+        run: |
+          test "$(docker image inspect onyx-ifem:ci --format '{{.Config.User}}')" = "node"
+          docker image inspect onyx-ifem:ci --format '{{json .Config.Healthcheck.Test}}' | grep -q healthz

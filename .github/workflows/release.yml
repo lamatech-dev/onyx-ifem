@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Verify tag and package version
+        id: version
+        shell: bash
+        run: |
+          package_version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")"
+          if [[ "${GITHUB_REF_NAME}" != "v${package_version}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package version ${package_version}" >&2
+            exit 1
+          fi
+          echo "version=${package_version}" >> "${GITHUB_OUTPUT}"
+      - name: Validate the release source
+        run: |
+          npm run check
+          npm audit --audit-level=high
+      - name: Generate the application SBOM
+        shell: bash
+        run: |
+          asset="onyx-ifem-${{ steps.version.outputs.version }}.cdx.json"
+          npm sbom --omit=dev --sbom-format=cyclonedx --sbom-type=application > "${asset}"
+          node -e "const bom = JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8')); if (bom.bomFormat !== 'CycloneDX') process.exit(1)" "${asset}"
+          sha256sum "${asset}" > "${asset}.sha256"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Derive image tags and labels
+        id: metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      - name: Build and publish the multi-platform image
+        id: image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          asset="onyx-ifem-${{ steps.version.outputs.version }}.cdx.json"
+          gh release create "${GITHUB_REF_NAME}" "${asset}" "${asset}.sha256" --verify-tag --generate-notes --title "ONYX IFEM ${GITHUB_REF_NAME}"
+      - name: Record the immutable image reference
+        shell: bash
+        run: |
+          echo "### Container image" >> "${GITHUB_STEP_SUMMARY}"
+          printf '`%s`\n' "${REGISTRY}/${IMAGE_NAME}@${{ steps.image.outputs.digest }}" >> "${GITHUB_STEP_SUMMARY}"

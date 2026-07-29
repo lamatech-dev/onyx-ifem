@@ -1,0 +1,15 @@
+.DS_Store
+.git
+.github
+.gitignore
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.zip
+coverage
+data
+dist
+docs
+node_modules
+sbom*.json

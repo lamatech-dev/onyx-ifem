@@ -52,6 +52,8 @@ Finite token-bucket, concurrency, header, receive, socket, and connection-reuse 
 
 Set `ONYX_OUTBOX_WEBHOOK_URL` to run the crash-recoverable outbox publisher. Production configuration, HTTPS delivery headers, lease sizing, and graceful shutdown behavior are documented in [Production deployment](docs/deployment.md).
 
+The hardened production container, CI security gates, CycloneDX SBOM, multi-platform GHCR publishing, and tag-based release process are documented in [Container and release supply chain](docs/container-and-release.md).
+
 Online backup, manifest verification, restore rehearsal, and migration compatibility checks are available through the `db:backup`, `db:verify`, and `db:restore` scripts. See [Backup and disaster recovery](docs/disaster-recovery.md).
 
 The application dispatcher is independent of the Node HTTP transport, so route workflows can run without opening sockets. See [HTTP application architecture](docs/http-architecture.md).

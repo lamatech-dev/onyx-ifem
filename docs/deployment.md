@@ -2,6 +2,8 @@
 
 ONYX runs as one HTTP process with an optional transactional-outbox worker. Production mode requires file-backed SQLite, required bearer authentication, TLS termination for inbound traffic, and an HTTPS event receiver.
 
+For the non-root production image, read-only container invocation, GHCR release artifacts, and SBOM/provenance verification, see [Container and release supply chain](container-and-release.md).
+
 ## API configuration
 
 ```bash
