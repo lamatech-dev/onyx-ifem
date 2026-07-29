@@ -23,8 +23,7 @@ ENV NODE_ENV=production \
     ONYX_HOST=0.0.0.0 \
     ONYX_PORT=3000 \
     ONYX_DB_PATH=/var/lib/onyx/onyx.db \
-    ONYX_AUTH_MODE=required \
-    ONYX_AUTH_PUBLIC_KEY_PATH=/run/secrets/onyx-auth-public.pem
+    ONYX_AUTH_MODE=required
 
 WORKDIR /app
 RUN install -d -o node -g node /var/lib/onyx

@@ -12,7 +12,19 @@ ONYX_AUTH_AUDIENCE=onyx-ifem-api \
 npm start
 ```
 
-`ONYX_AUTH_MODE` accepts only `disabled` or `required`. Required mode fails during startup if the public-key path, issuer, or audience is missing or the key is not Ed25519. Private signing keys belong to the external identity service and must never be deployed with the ONYX API.
+`ONYX_AUTH_MODE` accepts only `disabled` or `required`. Required mode fails during startup if the selected key source, issuer, or audience is missing or a configured key is not Ed25519. Private signing keys belong to the external identity service and must never be deployed with the ONYX API.
+
+For rotation without a token-signing outage, configure a local static JWKS instead of the single PEM:
+
+```bash
+ONYX_AUTH_MODE=required \
+ONYX_AUTH_JWKS_PATH=/run/secrets/onyx-access-jwks.json \
+ONYX_AUTH_ISSUER=https://identity.example.com \
+ONYX_AUTH_AUDIENCE=onyx-ifem-api \
+npm start
+```
+
+Exactly one of `ONYX_AUTH_PUBLIC_KEY_PATH` and `ONYX_AUTH_JWKS_PATH` must be configured. The JWKS is read at startup, may contain 1–32 public Ed25519 `OKP` keys, and requires a unique bounded `kid` for each key. Private `d` values and incompatible `alg`, `use`, or `key_ops` metadata are rejected. ONYX never follows a token-controlled key URL.
 
 ## ONYX access-token profile
 
@@ -20,6 +32,7 @@ Tokens use compact JWS serialization with:
 
 - exactly `alg=EdDSA`;
 - exactly `typ=onyx-access+jwt`;
+- no `kid` in single-PEM mode, or a required configured `kid` in JWKS mode;
 - an Ed25519 signature;
 - the configured `iss` and `aud` values;
 - UUIDv7 `sub` and `org` claims;
@@ -50,8 +63,20 @@ The context service still enforces the command-specific scope and proof expirati
 
 The query organization must equal the token organization. `/healthz`, `/readyz`, `/metrics`, and `/openapi.json` remain public for infrastructure operations and API discovery. Keep `/metrics` and `/readyz` off public ingress routes.
 
+## Key rotation
+
+Use an overlap window longer than the maximum token lifetime plus clock tolerance:
+
+1. add the next public key to the mounted JWKS while keeping the retiring key;
+2. restart ONYX and verify readiness;
+3. switch the issuer to sign new tokens with the next `kid`;
+4. wait for all tokens signed by the retiring key to expire;
+5. remove the retiring public key and restart ONYX again.
+
+Unknown or missing key IDs fail authentication. The file is intentionally not hot-reloaded, so every accepted key set corresponds to a reviewed deployment revision.
+
 ## Deployment requirements
 
-Bearer tokens must be transported over TLS. Rotate signing keys through a coordinated deployment; the current verifier intentionally accepts one configured Ed25519 public key and never follows token-controlled key URLs. Invalid or missing tokens return `401 AUTHENTICATION_REQUIRED` with `WWW-Authenticate: Bearer`; authenticated requests that exceed tenant or authority boundaries return 403.
+Bearer tokens must be transported over TLS. Invalid or missing tokens return `401 AUTHENTICATION_REQUIRED` with `WWW-Authenticate: Bearer`; authenticated requests that exceed tenant or authority boundaries return 403.
 
-The validation profile follows [JWT Best Current Practices (RFC 8725)](https://www.rfc-editor.org/info/rfc8725/), [JSON Web Token (RFC 7519)](https://www.rfc-editor.org/info/rfc7519/), and [EdDSA for JOSE (RFC 8037)](https://www.rfc-editor.org/info/rfc8037/).
+The validation profile follows [JWT Best Current Practices (RFC 8725)](https://www.rfc-editor.org/info/rfc8725/), [JSON Web Token (RFC 7519)](https://www.rfc-editor.org/info/rfc7519/), [JSON Web Key (RFC 7517)](https://www.rfc-editor.org/info/rfc7517/), and [EdDSA for JOSE (RFC 8037)](https://www.rfc-editor.org/info/rfc8037/).

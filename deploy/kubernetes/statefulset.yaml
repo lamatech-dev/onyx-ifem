@@ -101,9 +101,6 @@ spec:
         - name: auth
           secret:
             defaultMode: 0444
-            items:
-              - key: public-key.pem
-                path: onyx-auth-public.pem
             secretName: onyx-ifem-auth
   volumeClaimTemplates:
     - metadata:

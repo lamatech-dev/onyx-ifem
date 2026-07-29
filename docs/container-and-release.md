@@ -14,6 +14,7 @@ docker run --rm \
   --security-opt=no-new-privileges \
   --mount type=volume,source=onyx-data,target=/var/lib/onyx \
   --mount type=bind,source=/absolute/path/onyx-auth-public.pem,target=/run/secrets/onyx-auth-public.pem,readonly \
+  --env ONYX_AUTH_PUBLIC_KEY_PATH=/run/secrets/onyx-auth-public.pem \
   --env ONYX_AUTH_ISSUER=https://identity.example.com \
   --env ONYX_AUTH_AUDIENCE=onyx-ifem-api \
   --publish 127.0.0.1:3000:3000 \

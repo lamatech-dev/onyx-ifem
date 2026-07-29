@@ -44,7 +44,7 @@ npm start
 
 The server listens on `127.0.0.1:3000` by default. Configure `ONYX_HOST`, `ONYX_PORT`, and replica identifiers when needed.
 
-Authentication is disabled for local development. Production deployments can require Ed25519-signed bearer tokens with `ONYX_AUTH_MODE=required`; see [Authentication and authorization](docs/authentication.md).
+Authentication is disabled for local development. Production deployments can require Ed25519-signed bearer tokens with `ONYX_AUTH_MODE=required`; single-PEM and static-JWKS key rotation profiles are documented in [Authentication and authorization](docs/authentication.md).
 
 Every response carries an `x-request-id`; the server emits redaction-safe structured JSON logs. Use `/healthz` for liveness and `/readyz` for persistence plus messaging readiness. See [Observability](docs/observability.md).
 

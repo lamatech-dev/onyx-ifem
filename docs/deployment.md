@@ -23,6 +23,8 @@ Terminate inbound TLS at a trusted proxy or service mesh and do not expose an au
 
 Request admission, proxy trust, parser timeouts, and concurrency controls are documented in [HTTP resilience and overload protection](http-resilience.md).
 
+For zero-downtime signing-key rotation, replace the single PEM path with `ONYX_AUTH_JWKS_PATH` and use the public-only static key-ring procedure in [Authentication and authorization](authentication.md).
+
 ## Outbox worker
 
 Set `ONYX_OUTBOX_WEBHOOK_URL` to enable the worker in the API process. The worker requires a file-backed `ONYX_DB_PATH`; it cannot share SQLite's isolated `:memory:` databases.

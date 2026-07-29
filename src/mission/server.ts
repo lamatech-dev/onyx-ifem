@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { readFileSync } from "node:fs";
 import { hostname } from "node:os";
 import { OnyxApplication, errorResponse, type ApiResponse } from "../api/application.ts";
+import { loadAuthenticationOptions } from "../auth/config.ts";
 import { OnyxError } from "../contracts/errors.ts";
 import { ConcurrencyGate, HttpAdmissionController, TokenBucketRateLimiter } from "../infrastructure/http/admission.ts";
 import { jsonLineLogger, resolveRequestId } from "../infrastructure/observability/logger.ts";
@@ -15,13 +15,7 @@ import { uuidV7 } from "../shared/identifiers.ts";
 const host = process.env.ONYX_HOST ?? "127.0.0.1";
 const port = Number(process.env.ONYX_PORT ?? "3000");
 if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new Error("ONYX_PORT must be an integer from 1 to 65535");
-const authMode = process.env.ONYX_AUTH_MODE ?? "disabled";
-if (authMode !== "disabled" && authMode !== "required") throw new Error("ONYX_AUTH_MODE must be disabled or required");
-const auth = authMode === "required" ? {
-  publicKey: readFileSync(requiredEnvironment("ONYX_AUTH_PUBLIC_KEY_PATH")),
-  issuer: requiredEnvironment("ONYX_AUTH_ISSUER"),
-  audience: requiredEnvironment("ONYX_AUTH_AUDIENCE"),
-} : undefined;
+const auth = loadAuthenticationOptions(process.env);
 const databasePath = process.env.ONYX_DB_PATH;
 const trustProxy = optionalBoolean("ONYX_TRUST_PROXY", false);
 const requestTimeoutMs = optionalInteger("ONYX_REQUEST_TIMEOUT_MS", 15_000, 1_000, 300_000);
@@ -170,12 +164,6 @@ export const server = createServer({
 server.maxHeadersCount = maxHeadersCount;
 server.maxRequestsPerSocket = maxRequestsPerSocket;
 server.setTimeout(socketTimeoutMs);
-
-function requiredEnvironment(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is required when ONYX_AUTH_MODE=required`);
-  return value;
-}
 
 function optionalInteger(name: string, fallback: number, minimum: number, maximum: number): number {
   const value = Number(process.env[name] ?? String(fallback));

@@ -40,6 +40,13 @@ kubectl -n onyx-ifem get pod,pvc,service
 
 The PVC is retained when the StatefulSet is deleted. Treat PVC deletion as a separate destructive operation and verify a restorable backup first.
 
+For overlapping signing-key rotation, create the authentication Secret from a public-only JWKS instead, replace `ONYX_AUTH_PUBLIC_KEY_PATH` in the ConfigMap with `ONYX_AUTH_JWKS_PATH=/run/secrets/jwks.json`, and follow the staged procedure in [Authentication and authorization](authentication.md):
+
+```bash
+kubectl -n onyx-ifem create secret generic onyx-ifem-auth \
+  --from-file=jwks.json=/absolute/path/onyx-access-jwks.json
+```
+
 The base requests 5 GiB from the cluster's default StorageClass. Set `storageClassName` explicitly when no default exists. The selected volume must provide reliable POSIX locking for SQLite; enable the platform's storage encryption and validate volume snapshots through restore rehearsals rather than treating snapshots alone as verified backups.
 
 ## Network access

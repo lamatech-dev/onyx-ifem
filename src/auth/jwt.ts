@@ -5,7 +5,7 @@ import type { ActorContext, UuidV7 } from "../contracts/envelopes.ts";
 
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const TOKEN_TYPE = "onyx-access+jwt";
-const HEADER_KEYS = new Set(["alg", "typ"]);
+const HEADER_KEYS = new Set(["alg", "typ", "kid"]);
 const CLAIM_KEYS = new Set(["iss", "aud", "sub", "org", "actor_type", "scope", "exp", "nbf", "iat", "authority_epoch", "jti"]);
 const ACTOR_TYPES = new Set<ActorContext["actor_type"]>(["USER", "SERVICE", "DEVICE"]);
 const utf8 = new TextDecoder("utf-8", {fatal: true});
@@ -24,16 +24,21 @@ export interface AccessTokenClaims {
   jti: string;
 }
 
-export interface JwtVerifierOptions {
-  publicKey: string | Buffer | KeyObject;
+interface JwtVerifierCommonOptions {
   issuer: string;
   audience: string;
   now?: () => Date;
   clockToleranceSeconds?: number;
 }
 
+export type JwtVerifierOptions = JwtVerifierCommonOptions & (
+  | {publicKey: string | Buffer | KeyObject; publicKeys?: never}
+  | {publicKey?: never; publicKeys: ReadonlyMap<string, string | Buffer | KeyObject>}
+);
+
 export class JwtVerifier {
-  readonly #publicKey: KeyObject;
+  readonly #publicKey: KeyObject | undefined;
+  readonly #publicKeys: ReadonlyMap<string, KeyObject> | undefined;
   readonly #issuer: string;
   readonly #audience: string;
   readonly #now: () => Date;
@@ -42,9 +47,18 @@ export class JwtVerifier {
   constructor(options: JwtVerifierOptions) {
     if (!options.issuer) throw new Error("JWT issuer must not be empty");
     if (!options.audience) throw new Error("JWT audience must not be empty");
-    this.#publicKey = options.publicKey instanceof KeyObject ? options.publicKey : createPublicKey(options.publicKey);
-    if (this.#publicKey.type !== "public" || this.#publicKey.asymmetricKeyType !== "ed25519") {
-      throw new Error("JWT verification key must be an Ed25519 public key");
+    if (options.publicKeys) {
+      if (options.publicKeys.size < 1 || options.publicKeys.size > 32) throw new Error("JWT key ring must contain from 1 through 32 keys");
+      const keys = new Map<string, KeyObject>();
+      for (const [keyId, keyMaterial] of options.publicKeys) {
+        validateKeyId(keyId);
+        keys.set(keyId, verificationKey(keyMaterial));
+      }
+      this.#publicKeys = keys;
+      this.#publicKey = undefined;
+    } else {
+      this.#publicKey = verificationKey(options.publicKey);
+      this.#publicKeys = undefined;
     }
     this.#issuer = options.issuer;
     this.#audience = options.audience;
@@ -65,12 +79,13 @@ export class JwtVerifier {
     const header = this.#json(encodedHeader, "header");
     this.#exactKeys(header, HEADER_KEYS, "header");
     if (header.alg !== "EdDSA" || header.typ !== TOKEN_TYPE) this.#reject("bearer token algorithm or type is not allowed");
+    const publicKey = this.#selectKey(header.kid);
 
     const signingInput = Buffer.from(`${encodedHeader}.${encodedClaims}`, "ascii");
     const signature = this.#base64url(encodedSignature, "signature");
     let signatureValid = false;
     try {
-      signatureValid = verify(null, signingInput, this.#publicKey, signature);
+      signatureValid = verify(null, signingInput, publicKey, signature);
     } catch {
       signatureValid = false;
     }
@@ -131,16 +146,40 @@ export class JwtVerifier {
     if (Object.keys(value).some((key) => !keys.has(key))) this.#reject(`bearer token ${field} contains unsupported fields`);
   }
 
+  #selectKey(keyId: unknown): KeyObject {
+    if (this.#publicKeys) {
+      if (typeof keyId !== "string") this.#reject("bearer token kid is required");
+      const key = this.#publicKeys.get(keyId);
+      if (!key) this.#reject("bearer token kid is unknown");
+      return key;
+    }
+    if (keyId !== undefined) this.#reject("bearer token kid is not allowed with a single verification key");
+    return this.#publicKey!;
+  }
+
   #reject(message: string): never {
     throw new OnyxError("AUTHENTICATION_REQUIRED", message);
   }
 }
 
-export function signAccessToken(privateKey: string | Buffer | KeyObject, claims: AccessTokenClaims): string {
+export function signAccessToken(privateKey: string | Buffer | KeyObject, claims: AccessTokenClaims, keyId?: string): string {
   const key = privateKey instanceof KeyObject ? privateKey : createPrivateKey(privateKey);
   if (key.type !== "private" || key.asymmetricKeyType !== "ed25519") throw new Error("JWT signing key must be an Ed25519 private key");
-  const header = Buffer.from(JSON.stringify({alg: "EdDSA", typ: TOKEN_TYPE}), "utf8").toString("base64url");
+  if (keyId !== undefined) validateKeyId(keyId);
+  const header = Buffer.from(JSON.stringify({alg: "EdDSA", typ: TOKEN_TYPE, ...(keyId ? {kid: keyId} : {})}), "utf8").toString("base64url");
   const payload = Buffer.from(JSON.stringify(claims), "utf8").toString("base64url");
   const signature = sign(null, Buffer.from(`${header}.${payload}`, "ascii"), key).toString("base64url");
   return `${header}.${payload}.${signature}`;
+}
+
+function verificationKey(keyMaterial: string | Buffer | KeyObject): KeyObject {
+  const key = keyMaterial instanceof KeyObject ? keyMaterial : createPublicKey(keyMaterial);
+  if (key.type !== "public" || key.asymmetricKeyType !== "ed25519") {
+    throw new Error("JWT verification key must be an Ed25519 public key");
+  }
+  return key;
+}
+
+function validateKeyId(keyId: string): void {
+  if (!/^[A-Za-z0-9._:-]{1,128}$/.test(keyId)) throw new Error("JWT key ID must contain 1 through 128 safe characters");
 }

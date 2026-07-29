@@ -5,6 +5,7 @@ metadata:
 data:
   ONYX_AUTH_AUDIENCE: onyx-ifem-api
   ONYX_AUTH_ISSUER: https://identity.example.invalid
+  ONYX_AUTH_PUBLIC_KEY_PATH: /run/secrets/public-key.pem
   ONYX_HEADERS_TIMEOUT_MS: "5000"
   ONYX_KEEP_ALIVE_TIMEOUT_MS: "5000"
   ONYX_MAX_HEADER_BYTES: "16384"
