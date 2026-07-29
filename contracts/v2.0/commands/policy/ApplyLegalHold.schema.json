@@ -1,0 +1,28 @@
+{
+  "$id": "https://contracts.onyx.local/commands/policy/ApplyLegalHold.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/command-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "command_type": {
+          "const": "ApplyLegalHold"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX ApplyLegalHold",
+  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-context": "C18",
+  "x-onyx-topic": "policy.events"
+}

@@ -1,0 +1,34 @@
+{
+  "canonical_json": "RFC8259 subset; lexicographically sorted keys for signing/hashing",
+  "identifier_format": "UUIDv7 lowercase canonical string",
+  "max_envelope_bytes": 1048576,
+  "payload_completeness": {
+    "FIELD_COMPLETE": "Payload fields directly supported by surfaced frozen registry.",
+    "NAME_FROZEN_PAYLOAD_OPEN": "Name and envelope are frozen; payload is permissive until exact fields are extracted."
+  },
+  "registry_version": "2.0.0-artifact-baseline",
+  "rules": [
+    {
+      "change": "add_optional_field",
+      "compatibility": "BACKWARD_COMPATIBLE"
+    },
+    {
+      "change": "add_event_or_command_type",
+      "compatibility": "BACKWARD_COMPATIBLE"
+    },
+    {
+      "change": "remove_required_field",
+      "compatibility": "BREAKING"
+    },
+    {
+      "change": "rename_field",
+      "compatibility": "BREAKING"
+    },
+    {
+      "change": "change_semantic_meaning",
+      "compatibility": "BREAKING"
+    }
+  ],
+  "schema_draft": "2020-12",
+  "timestamp_format": "RFC3339 UTC Z suffix with microsecond precision"
+}

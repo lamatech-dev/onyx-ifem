@@ -1,0 +1,28 @@
+{
+  "$id": "https://contracts.onyx.local/events/context/ContextLinkCreated.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/event-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "event_type": {
+          "const": "ContextLinkCreated"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX ContextLinkCreated",
+  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-context": "C05",
+  "x-onyx-topic": "context.events"
+}

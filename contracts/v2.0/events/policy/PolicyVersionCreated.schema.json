@@ -1,0 +1,28 @@
+{
+  "$id": "https://contracts.onyx.local/events/policy/PolicyVersionCreated.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/event-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "event_type": {
+          "const": "PolicyVersionCreated"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX PolicyVersionCreated",
+  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-context": "C18",
+  "x-onyx-topic": "policy.events"
+}

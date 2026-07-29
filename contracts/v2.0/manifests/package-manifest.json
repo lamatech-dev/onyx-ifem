@@ -1,0 +1,2524 @@
+{
+  "artifacts": [
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "command",
+      "name": "CreateMission",
+      "path": "contracts/commands/mission/CreateMission.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "command",
+      "name": "CreateBlueprintRevision",
+      "path": "contracts/commands/mission/CreateBlueprintRevision.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "command",
+      "name": "SubmitBlueprint",
+      "path": "contracts/commands/mission/SubmitBlueprint.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "command",
+      "name": "ActivateMission",
+      "path": "contracts/commands/mission/ActivateMission.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "command",
+      "name": "PauseMission",
+      "path": "contracts/commands/mission/PauseMission.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C01",
+      "kind": "command",
+      "name": "OperationalHaltMission",
+      "path": "contracts/commands/mission/OperationalHaltMission.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "command",
+      "name": "ResumeMission",
+      "path": "contracts/commands/mission/ResumeMission.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C01",
+      "kind": "command",
+      "name": "RestartMission",
+      "path": "contracts/commands/mission/RestartMission.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C01",
+      "kind": "command",
+      "name": "CloseMission",
+      "path": "contracts/commands/mission/CloseMission.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "command",
+      "name": "ArchiveMission",
+      "path": "contracts/commands/mission/ArchiveMission.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "command",
+      "name": "CancelMission",
+      "path": "contracts/commands/mission/CancelMission.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionCreated",
+      "path": "contracts/events/mission/MissionCreated.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionBlueprintRevisionCreated",
+      "path": "contracts/events/mission/MissionBlueprintRevisionCreated.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionBlueprintSubmitted",
+      "path": "contracts/events/mission/MissionBlueprintSubmitted.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionActivated",
+      "path": "contracts/events/mission/MissionActivated.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionPaused",
+      "path": "contracts/events/mission/MissionPaused.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionOperationallyHalted",
+      "path": "contracts/events/mission/MissionOperationallyHalted.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionResumed",
+      "path": "contracts/events/mission/MissionResumed.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionRestarted",
+      "path": "contracts/events/mission/MissionRestarted.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionClosed",
+      "path": "contracts/events/mission/MissionClosed.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionArchived",
+      "path": "contracts/events/mission/MissionArchived.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C01",
+      "kind": "event",
+      "name": "MissionCancelled",
+      "path": "contracts/events/mission/MissionCancelled.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "command",
+      "name": "CreateTask",
+      "path": "contracts/commands/work/CreateTask.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "AssignOwner",
+      "path": "contracts/commands/work/AssignOwner.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "ChangePriority",
+      "path": "contracts/commands/work/ChangePriority.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "AddDependency",
+      "path": "contracts/commands/work/AddDependency.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "StartTask",
+      "path": "contracts/commands/work/StartTask.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "PauseTask",
+      "path": "contracts/commands/work/PauseTask.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "BlockTask",
+      "path": "contracts/commands/work/BlockTask.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "SubmitCompletion",
+      "path": "contracts/commands/work/SubmitCompletion.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "ApproveTask",
+      "path": "contracts/commands/work/ApproveTask.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "ReopenTask",
+      "path": "contracts/commands/work/ReopenTask.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "CloseTask",
+      "path": "contracts/commands/work/CloseTask.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "command",
+      "name": "CancelTask",
+      "path": "contracts/commands/work/CancelTask.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskCreated",
+      "path": "contracts/events/work/TaskCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskOwnerAssigned",
+      "path": "contracts/events/work/TaskOwnerAssigned.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskPriorityChanged",
+      "path": "contracts/events/work/TaskPriorityChanged.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskDependencyAdded",
+      "path": "contracts/events/work/TaskDependencyAdded.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskStarted",
+      "path": "contracts/events/work/TaskStarted.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskPaused",
+      "path": "contracts/events/work/TaskPaused.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskBlocked",
+      "path": "contracts/events/work/TaskBlocked.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskCompletionSubmitted",
+      "path": "contracts/events/work/TaskCompletionSubmitted.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskApproved",
+      "path": "contracts/events/work/TaskApproved.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskReopened",
+      "path": "contracts/events/work/TaskReopened.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskClosed",
+      "path": "contracts/events/work/TaskClosed.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C02",
+      "kind": "event",
+      "name": "TaskCancelled",
+      "path": "contracts/events/work/TaskCancelled.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "command",
+      "name": "CreateOrganization",
+      "path": "contracts/commands/organization/CreateOrganization.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "command",
+      "name": "CreateWorkspace",
+      "path": "contracts/commands/organization/CreateWorkspace.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "command",
+      "name": "CreateDepartment",
+      "path": "contracts/commands/organization/CreateDepartment.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "command",
+      "name": "CreateTeam",
+      "path": "contracts/commands/organization/CreateTeam.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "command",
+      "name": "CreateGroup",
+      "path": "contracts/commands/organization/CreateGroup.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "command",
+      "name": "MoveTeam",
+      "path": "contracts/commands/organization/MoveTeam.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "command",
+      "name": "ArchiveDepartment",
+      "path": "contracts/commands/organization/ArchiveDepartment.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "command",
+      "name": "ArchiveOrganization",
+      "path": "contracts/commands/organization/ArchiveOrganization.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "event",
+      "name": "OrganizationCreated",
+      "path": "contracts/events/organization/OrganizationCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "event",
+      "name": "WorkspaceCreated",
+      "path": "contracts/events/organization/WorkspaceCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "event",
+      "name": "DepartmentCreated",
+      "path": "contracts/events/organization/DepartmentCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "event",
+      "name": "TeamCreated",
+      "path": "contracts/events/organization/TeamCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "event",
+      "name": "GroupCreated",
+      "path": "contracts/events/organization/GroupCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "event",
+      "name": "TeamMoved",
+      "path": "contracts/events/organization/TeamMoved.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "event",
+      "name": "DepartmentArchived",
+      "path": "contracts/events/organization/DepartmentArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C03",
+      "kind": "event",
+      "name": "OrganizationArchived",
+      "path": "contracts/events/organization/OrganizationArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "command",
+      "name": "CreateUser",
+      "path": "contracts/commands/identity-authority/CreateUser.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "command",
+      "name": "AssignRole",
+      "path": "contracts/commands/identity-authority/AssignRole.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "command",
+      "name": "RevokeRole",
+      "path": "contracts/commands/identity-authority/RevokeRole.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "command",
+      "name": "RegisterDevice",
+      "path": "contracts/commands/identity-authority/RegisterDevice.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "command",
+      "name": "RevokeDevice",
+      "path": "contracts/commands/identity-authority/RevokeDevice.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "command",
+      "name": "DelegateAuthority",
+      "path": "contracts/commands/identity-authority/DelegateAuthority.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "command",
+      "name": "RevokeDelegation",
+      "path": "contracts/commands/identity-authority/RevokeDelegation.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "command",
+      "name": "DisableUser",
+      "path": "contracts/commands/identity-authority/DisableUser.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "command",
+      "name": "EnableUser",
+      "path": "contracts/commands/identity-authority/EnableUser.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "event",
+      "name": "UserCreated",
+      "path": "contracts/events/identity-authority/UserCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "event",
+      "name": "RoleAssigned",
+      "path": "contracts/events/identity-authority/RoleAssigned.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "event",
+      "name": "RoleRevoked",
+      "path": "contracts/events/identity-authority/RoleRevoked.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "event",
+      "name": "DeviceRegistered",
+      "path": "contracts/events/identity-authority/DeviceRegistered.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "event",
+      "name": "DeviceRevoked",
+      "path": "contracts/events/identity-authority/DeviceRevoked.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "event",
+      "name": "AuthorityDelegated",
+      "path": "contracts/events/identity-authority/AuthorityDelegated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "event",
+      "name": "DelegationRevoked",
+      "path": "contracts/events/identity-authority/DelegationRevoked.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "event",
+      "name": "UserDisabled",
+      "path": "contracts/events/identity-authority/UserDisabled.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C04",
+      "kind": "event",
+      "name": "UserEnabled",
+      "path": "contracts/events/identity-authority/UserEnabled.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "command",
+      "name": "CreateContextLink",
+      "path": "contracts/commands/context/CreateContextLink.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "command",
+      "name": "UpdateContextMetadata",
+      "path": "contracts/commands/context/UpdateContextMetadata.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "command",
+      "name": "ChangeContextStrength",
+      "path": "contracts/commands/context/ChangeContextStrength.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "command",
+      "name": "ArchiveContextLink",
+      "path": "contracts/commands/context/ArchiveContextLink.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "command",
+      "name": "RestoreContextLink",
+      "path": "contracts/commands/context/RestoreContextLink.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "event",
+      "name": "ContextLinkCreated",
+      "path": "contracts/events/context/ContextLinkCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "event",
+      "name": "ContextMetadataUpdated",
+      "path": "contracts/events/context/ContextMetadataUpdated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "event",
+      "name": "ContextStrengthChanged",
+      "path": "contracts/events/context/ContextStrengthChanged.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "event",
+      "name": "ContextLinkArchived",
+      "path": "contracts/events/context/ContextLinkArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C05",
+      "kind": "event",
+      "name": "ContextLinkRestored",
+      "path": "contracts/events/context/ContextLinkRestored.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "command",
+      "name": "CreateMeeting",
+      "path": "contracts/commands/meeting/CreateMeeting.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "command",
+      "name": "InviteParticipant",
+      "path": "contracts/commands/meeting/InviteParticipant.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "command",
+      "name": "RemoveParticipant",
+      "path": "contracts/commands/meeting/RemoveParticipant.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "command",
+      "name": "StartMeeting",
+      "path": "contracts/commands/meeting/StartMeeting.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "command",
+      "name": "RecordDecision",
+      "path": "contracts/commands/meeting/RecordDecision.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "command",
+      "name": "ProposeActionItem",
+      "path": "contracts/commands/meeting/ProposeActionItem.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "command",
+      "name": "EndMeeting",
+      "path": "contracts/commands/meeting/EndMeeting.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "command",
+      "name": "CancelMeeting",
+      "path": "contracts/commands/meeting/CancelMeeting.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "event",
+      "name": "MeetingCreated",
+      "path": "contracts/events/meeting/MeetingCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "event",
+      "name": "ParticipantInvited",
+      "path": "contracts/events/meeting/ParticipantInvited.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "event",
+      "name": "ParticipantRemoved",
+      "path": "contracts/events/meeting/ParticipantRemoved.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "event",
+      "name": "MeetingStarted",
+      "path": "contracts/events/meeting/MeetingStarted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "event",
+      "name": "DecisionRecorded",
+      "path": "contracts/events/meeting/DecisionRecorded.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "event",
+      "name": "ActionItemProposed",
+      "path": "contracts/events/meeting/ActionItemProposed.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "event",
+      "name": "MeetingEnded",
+      "path": "contracts/events/meeting/MeetingEnded.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C06",
+      "kind": "event",
+      "name": "MeetingCancelled",
+      "path": "contracts/events/meeting/MeetingCancelled.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "command",
+      "name": "CreateConversation",
+      "path": "contracts/commands/communication/CreateConversation.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "command",
+      "name": "AddMember",
+      "path": "contracts/commands/communication/AddMember.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "command",
+      "name": "PostMessage",
+      "path": "contracts/commands/communication/PostMessage.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "command",
+      "name": "EditMessage",
+      "path": "contracts/commands/communication/EditMessage.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "command",
+      "name": "RedactMessage",
+      "path": "contracts/commands/communication/RedactMessage.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "command",
+      "name": "AddReaction",
+      "path": "contracts/commands/communication/AddReaction.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "command",
+      "name": "RemoveReaction",
+      "path": "contracts/commands/communication/RemoveReaction.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "command",
+      "name": "ArchiveConversation",
+      "path": "contracts/commands/communication/ArchiveConversation.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "event",
+      "name": "ConversationCreated",
+      "path": "contracts/events/communication/ConversationCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "event",
+      "name": "ConversationMemberAdded",
+      "path": "contracts/events/communication/ConversationMemberAdded.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "event",
+      "name": "MessagePosted",
+      "path": "contracts/events/communication/MessagePosted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "event",
+      "name": "MessageEdited",
+      "path": "contracts/events/communication/MessageEdited.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "event",
+      "name": "MessageRedacted",
+      "path": "contracts/events/communication/MessageRedacted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "event",
+      "name": "ReactionAdded",
+      "path": "contracts/events/communication/ReactionAdded.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "event",
+      "name": "ReactionRemoved",
+      "path": "contracts/events/communication/ReactionRemoved.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C07",
+      "kind": "event",
+      "name": "ConversationArchived",
+      "path": "contracts/events/communication/ConversationArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "command",
+      "name": "CreateFileAsset",
+      "path": "contracts/commands/file/CreateFileAsset.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "command",
+      "name": "StartUpload",
+      "path": "contracts/commands/file/StartUpload.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "command",
+      "name": "AppendChunk",
+      "path": "contracts/commands/file/AppendChunk.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "command",
+      "name": "FinalizeUpload",
+      "path": "contracts/commands/file/FinalizeUpload.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "command",
+      "name": "CreateVersion",
+      "path": "contracts/commands/file/CreateVersion.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "command",
+      "name": "GrantFileAccess",
+      "path": "contracts/commands/file/GrantFileAccess.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "command",
+      "name": "RevokeFileAccess",
+      "path": "contracts/commands/file/RevokeFileAccess.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "command",
+      "name": "QuarantineFile",
+      "path": "contracts/commands/file/QuarantineFile.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "command",
+      "name": "ArchiveFile",
+      "path": "contracts/commands/file/ArchiveFile.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "event",
+      "name": "FileAssetCreated",
+      "path": "contracts/events/file/FileAssetCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "event",
+      "name": "UploadStarted",
+      "path": "contracts/events/file/UploadStarted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "event",
+      "name": "ChunkAccepted",
+      "path": "contracts/events/file/ChunkAccepted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "event",
+      "name": "UploadFinalized",
+      "path": "contracts/events/file/UploadFinalized.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "event",
+      "name": "FileVersionCreated",
+      "path": "contracts/events/file/FileVersionCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "event",
+      "name": "FileAccessGranted",
+      "path": "contracts/events/file/FileAccessGranted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "event",
+      "name": "FileAccessRevoked",
+      "path": "contracts/events/file/FileAccessRevoked.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "event",
+      "name": "FileQuarantined",
+      "path": "contracts/events/file/FileQuarantined.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C08",
+      "kind": "event",
+      "name": "FileArchived",
+      "path": "contracts/events/file/FileArchived.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C09",
+      "kind": "command",
+      "name": "CreateReport",
+      "path": "contracts/commands/reporting-evidence/CreateReport.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "command",
+      "name": "AddEvidence",
+      "path": "contracts/commands/reporting-evidence/AddEvidence.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "command",
+      "name": "SubmitReport",
+      "path": "contracts/commands/reporting-evidence/SubmitReport.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "command",
+      "name": "VerifyEvidence",
+      "path": "contracts/commands/reporting-evidence/VerifyEvidence.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "command",
+      "name": "RejectEvidence",
+      "path": "contracts/commands/reporting-evidence/RejectEvidence.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "command",
+      "name": "ApproveReport",
+      "path": "contracts/commands/reporting-evidence/ApproveReport.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "command",
+      "name": "RejectReport",
+      "path": "contracts/commands/reporting-evidence/RejectReport.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "command",
+      "name": "ArchiveReport",
+      "path": "contracts/commands/reporting-evidence/ArchiveReport.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C09",
+      "kind": "event",
+      "name": "ReportCreated",
+      "path": "contracts/events/reporting-evidence/ReportCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "event",
+      "name": "EvidenceAdded",
+      "path": "contracts/events/reporting-evidence/EvidenceAdded.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "event",
+      "name": "ReportSubmitted",
+      "path": "contracts/events/reporting-evidence/ReportSubmitted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "event",
+      "name": "EvidenceVerified",
+      "path": "contracts/events/reporting-evidence/EvidenceVerified.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "event",
+      "name": "EvidenceRejected",
+      "path": "contracts/events/reporting-evidence/EvidenceRejected.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "event",
+      "name": "ReportApproved",
+      "path": "contracts/events/reporting-evidence/ReportApproved.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "event",
+      "name": "ReportRejected",
+      "path": "contracts/events/reporting-evidence/ReportRejected.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C09",
+      "kind": "event",
+      "name": "ReportArchived",
+      "path": "contracts/events/reporting-evidence/ReportArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "CreateApproval",
+      "path": "contracts/commands/approval/CreateApproval.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "AssignApprover",
+      "path": "contracts/commands/approval/AssignApprover.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "Approve",
+      "path": "contracts/commands/approval/Approve.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "Reject",
+      "path": "contracts/commands/approval/Reject.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "RequestChanges",
+      "path": "contracts/commands/approval/RequestChanges.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "DelegateApproval",
+      "path": "contracts/commands/approval/DelegateApproval.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "EscalateApproval",
+      "path": "contracts/commands/approval/EscalateApproval.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "CancelApproval",
+      "path": "contracts/commands/approval/CancelApproval.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "ReverseApproval",
+      "path": "contracts/commands/approval/ReverseApproval.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "command",
+      "name": "ReopenApproval",
+      "path": "contracts/commands/approval/ReopenApproval.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ApprovalCreated",
+      "path": "contracts/events/approval/ApprovalCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ApproverAssigned",
+      "path": "contracts/events/approval/ApproverAssigned.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ApprovalGranted",
+      "path": "contracts/events/approval/ApprovalGranted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ApprovalRejected",
+      "path": "contracts/events/approval/ApprovalRejected.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ChangesRequested",
+      "path": "contracts/events/approval/ChangesRequested.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ApprovalDelegated",
+      "path": "contracts/events/approval/ApprovalDelegated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ApprovalEscalated",
+      "path": "contracts/events/approval/ApprovalEscalated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ApprovalCancelled",
+      "path": "contracts/events/approval/ApprovalCancelled.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ApprovalReversed",
+      "path": "contracts/events/approval/ApprovalReversed.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C10",
+      "kind": "event",
+      "name": "ApprovalReopened",
+      "path": "contracts/events/approval/ApprovalReopened.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C11",
+      "kind": "command",
+      "name": "CreateTimeline",
+      "path": "contracts/commands/timeline/CreateTimeline.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "command",
+      "name": "AddMilestone",
+      "path": "contracts/commands/timeline/AddMilestone.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "command",
+      "name": "SetDeadline",
+      "path": "contracts/commands/timeline/SetDeadline.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "command",
+      "name": "MoveDeadline",
+      "path": "contracts/commands/timeline/MoveDeadline.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "command",
+      "name": "DefineCriticalMarker",
+      "path": "contracts/commands/timeline/DefineCriticalMarker.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "command",
+      "name": "ActivatePenaltyZone",
+      "path": "contracts/commands/timeline/ActivatePenaltyZone.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "command",
+      "name": "ResolveScheduleException",
+      "path": "contracts/commands/timeline/ResolveScheduleException.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "command",
+      "name": "ArchiveTimeline",
+      "path": "contracts/commands/timeline/ArchiveTimeline.schema.json"
+    },
+    {
+      "completeness": "FIELD_COMPLETE",
+      "context": "C11",
+      "kind": "event",
+      "name": "TimelineCreated",
+      "path": "contracts/events/timeline/TimelineCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "event",
+      "name": "MilestoneAdded",
+      "path": "contracts/events/timeline/MilestoneAdded.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "event",
+      "name": "DeadlineChanged",
+      "path": "contracts/events/timeline/DeadlineChanged.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "event",
+      "name": "DeadlineMoved",
+      "path": "contracts/events/timeline/DeadlineMoved.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "event",
+      "name": "CriticalMarkerDefined",
+      "path": "contracts/events/timeline/CriticalMarkerDefined.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "event",
+      "name": "CriticalMarkerReached",
+      "path": "contracts/events/timeline/CriticalMarkerReached.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "event",
+      "name": "DeadlineReached",
+      "path": "contracts/events/timeline/DeadlineReached.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "event",
+      "name": "PenaltyZoneActivated",
+      "path": "contracts/events/timeline/PenaltyZoneActivated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "event",
+      "name": "ScheduleExceptionRaised",
+      "path": "contracts/events/timeline/ScheduleExceptionRaised.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C11",
+      "kind": "event",
+      "name": "TimelineArchived",
+      "path": "contracts/events/timeline/TimelineArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "command",
+      "name": "CreateCapacityProfile",
+      "path": "contracts/commands/capacity/CreateCapacityProfile.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "command",
+      "name": "UpdateAvailability",
+      "path": "contracts/commands/capacity/UpdateAvailability.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "command",
+      "name": "AllocateWorkload",
+      "path": "contracts/commands/capacity/AllocateWorkload.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "command",
+      "name": "CaptureCapacitySnapshot",
+      "path": "contracts/commands/capacity/CaptureCapacitySnapshot.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "command",
+      "name": "RecalculateCapacity",
+      "path": "contracts/commands/capacity/RecalculateCapacity.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "command",
+      "name": "ArchiveCapacityProfile",
+      "path": "contracts/commands/capacity/ArchiveCapacityProfile.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "event",
+      "name": "CapacityProfileCreated",
+      "path": "contracts/events/capacity/CapacityProfileCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "event",
+      "name": "AvailabilityUpdated",
+      "path": "contracts/events/capacity/AvailabilityUpdated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "event",
+      "name": "WorkloadAllocated",
+      "path": "contracts/events/capacity/WorkloadAllocated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "event",
+      "name": "CapacitySnapshotCaptured",
+      "path": "contracts/events/capacity/CapacitySnapshotCaptured.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "event",
+      "name": "CapacityRecalculated",
+      "path": "contracts/events/capacity/CapacityRecalculated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C12",
+      "kind": "event",
+      "name": "CapacityProfileArchived",
+      "path": "contracts/events/capacity/CapacityProfileArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "command",
+      "name": "GenerateForecast",
+      "path": "contracts/commands/forecasting/GenerateForecast.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "command",
+      "name": "CreateScenario",
+      "path": "contracts/commands/forecasting/CreateScenario.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "command",
+      "name": "RecalculateForecast",
+      "path": "contracts/commands/forecasting/RecalculateForecast.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "command",
+      "name": "PublishForecast",
+      "path": "contracts/commands/forecasting/PublishForecast.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "command",
+      "name": "ArchiveForecast",
+      "path": "contracts/commands/forecasting/ArchiveForecast.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "event",
+      "name": "ForecastGenerated",
+      "path": "contracts/events/forecasting/ForecastGenerated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "event",
+      "name": "ScenarioCreated",
+      "path": "contracts/events/forecasting/ScenarioCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "event",
+      "name": "ForecastRecalculated",
+      "path": "contracts/events/forecasting/ForecastRecalculated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "event",
+      "name": "ForecastPublished",
+      "path": "contracts/events/forecasting/ForecastPublished.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C13",
+      "kind": "event",
+      "name": "ForecastArchived",
+      "path": "contracts/events/forecasting/ForecastArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "command",
+      "name": "CreateAutomationRule",
+      "path": "contracts/commands/automation/CreateAutomationRule.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "command",
+      "name": "EnableRule",
+      "path": "contracts/commands/automation/EnableRule.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "command",
+      "name": "DisableRule",
+      "path": "contracts/commands/automation/DisableRule.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "command",
+      "name": "EvaluateRule",
+      "path": "contracts/commands/automation/EvaluateRule.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "command",
+      "name": "ExecuteAction",
+      "path": "contracts/commands/automation/ExecuteAction.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "command",
+      "name": "RetryExecution",
+      "path": "contracts/commands/automation/RetryExecution.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "command",
+      "name": "CompensateExecution",
+      "path": "contracts/commands/automation/CompensateExecution.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "command",
+      "name": "ArchiveRule",
+      "path": "contracts/commands/automation/ArchiveRule.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "event",
+      "name": "AutomationRuleCreated",
+      "path": "contracts/events/automation/AutomationRuleCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "event",
+      "name": "AutomationRuleEnabled",
+      "path": "contracts/events/automation/AutomationRuleEnabled.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "event",
+      "name": "AutomationRuleDisabled",
+      "path": "contracts/events/automation/AutomationRuleDisabled.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "event",
+      "name": "AutomationRuleTriggered",
+      "path": "contracts/events/automation/AutomationRuleTriggered.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "event",
+      "name": "AutomationActionExecuted",
+      "path": "contracts/events/automation/AutomationActionExecuted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "event",
+      "name": "AutomationExecutionFailed",
+      "path": "contracts/events/automation/AutomationExecutionFailed.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "event",
+      "name": "AutomationExecutionCompensated",
+      "path": "contracts/events/automation/AutomationExecutionCompensated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C14",
+      "kind": "event",
+      "name": "AutomationRuleArchived",
+      "path": "contracts/events/automation/AutomationRuleArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "command",
+      "name": "CreateNotification",
+      "path": "contracts/commands/notification/CreateNotification.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "command",
+      "name": "ResolveRecipients",
+      "path": "contracts/commands/notification/ResolveRecipients.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "command",
+      "name": "SendNotification",
+      "path": "contracts/commands/notification/SendNotification.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "command",
+      "name": "RetryDelivery",
+      "path": "contracts/commands/notification/RetryDelivery.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "command",
+      "name": "EscalateNotification",
+      "path": "contracts/commands/notification/EscalateNotification.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "command",
+      "name": "AcknowledgeNotification",
+      "path": "contracts/commands/notification/AcknowledgeNotification.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "command",
+      "name": "ArchiveNotification",
+      "path": "contracts/commands/notification/ArchiveNotification.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "event",
+      "name": "NotificationCreated",
+      "path": "contracts/events/notification/NotificationCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "event",
+      "name": "RecipientsResolved",
+      "path": "contracts/events/notification/RecipientsResolved.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "event",
+      "name": "NotificationSent",
+      "path": "contracts/events/notification/NotificationSent.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "event",
+      "name": "NotificationDeliveryFailed",
+      "path": "contracts/events/notification/NotificationDeliveryFailed.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "event",
+      "name": "NotificationEscalated",
+      "path": "contracts/events/notification/NotificationEscalated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "event",
+      "name": "NotificationAcknowledged",
+      "path": "contracts/events/notification/NotificationAcknowledged.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C15",
+      "kind": "event",
+      "name": "NotificationArchived",
+      "path": "contracts/events/notification/NotificationArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "command",
+      "name": "StartSynchronization",
+      "path": "contracts/commands/synchronization/StartSynchronization.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "command",
+      "name": "OfferOperationBatch",
+      "path": "contracts/commands/synchronization/OfferOperationBatch.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "command",
+      "name": "AcceptOperationBatch",
+      "path": "contracts/commands/synchronization/AcceptOperationBatch.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "command",
+      "name": "MergeOperationBatch",
+      "path": "contracts/commands/synchronization/MergeOperationBatch.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "command",
+      "name": "ResolveConflict",
+      "path": "contracts/commands/synchronization/ResolveConflict.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "command",
+      "name": "EscalateConflict",
+      "path": "contracts/commands/synchronization/EscalateConflict.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "command",
+      "name": "AcknowledgeSynchronization",
+      "path": "contracts/commands/synchronization/AcknowledgeSynchronization.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "command",
+      "name": "CloseSynchronization",
+      "path": "contracts/commands/synchronization/CloseSynchronization.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "event",
+      "name": "SynchronizationStarted",
+      "path": "contracts/events/synchronization/SynchronizationStarted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "event",
+      "name": "OperationBatchOffered",
+      "path": "contracts/events/synchronization/OperationBatchOffered.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "event",
+      "name": "OperationBatchAccepted",
+      "path": "contracts/events/synchronization/OperationBatchAccepted.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "event",
+      "name": "OperationBatchMerged",
+      "path": "contracts/events/synchronization/OperationBatchMerged.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "event",
+      "name": "ConflictDetected",
+      "path": "contracts/events/synchronization/ConflictDetected.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "event",
+      "name": "ConflictResolved",
+      "path": "contracts/events/synchronization/ConflictResolved.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "event",
+      "name": "ConflictEscalated",
+      "path": "contracts/events/synchronization/ConflictEscalated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "event",
+      "name": "SynchronizationAcknowledged",
+      "path": "contracts/events/synchronization/SynchronizationAcknowledged.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C16",
+      "kind": "event",
+      "name": "SynchronizationClosed",
+      "path": "contracts/events/synchronization/SynchronizationClosed.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "command",
+      "name": "AppendAuditEntry",
+      "path": "contracts/commands/audit/AppendAuditEntry.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "command",
+      "name": "SealAuditPartition",
+      "path": "contracts/commands/audit/SealAuditPartition.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "command",
+      "name": "CreateAuditExport",
+      "path": "contracts/commands/audit/CreateAuditExport.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "command",
+      "name": "VerifyIntegrity",
+      "path": "contracts/commands/audit/VerifyIntegrity.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "command",
+      "name": "ArchiveAuditPartition",
+      "path": "contracts/commands/audit/ArchiveAuditPartition.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "event",
+      "name": "AuditEntryAppended",
+      "path": "contracts/events/audit/AuditEntryAppended.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "event",
+      "name": "AuditPartitionSealed",
+      "path": "contracts/events/audit/AuditPartitionSealed.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "event",
+      "name": "AuditExportCreated",
+      "path": "contracts/events/audit/AuditExportCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "event",
+      "name": "AuditIntegrityVerified",
+      "path": "contracts/events/audit/AuditIntegrityVerified.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C17",
+      "kind": "event",
+      "name": "AuditPartitionArchived",
+      "path": "contracts/events/audit/AuditPartitionArchived.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "command",
+      "name": "CreatePolicy",
+      "path": "contracts/commands/policy/CreatePolicy.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "command",
+      "name": "CreatePolicyVersion",
+      "path": "contracts/commands/policy/CreatePolicyVersion.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "command",
+      "name": "PublishPolicyVersion",
+      "path": "contracts/commands/policy/PublishPolicyVersion.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "command",
+      "name": "EvaluatePolicy",
+      "path": "contracts/commands/policy/EvaluatePolicy.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "command",
+      "name": "RegisterViolation",
+      "path": "contracts/commands/policy/RegisterViolation.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "command",
+      "name": "ApplyLegalHold",
+      "path": "contracts/commands/policy/ApplyLegalHold.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "command",
+      "name": "ReleaseLegalHold",
+      "path": "contracts/commands/policy/ReleaseLegalHold.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "command",
+      "name": "RetirePolicy",
+      "path": "contracts/commands/policy/RetirePolicy.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "command",
+      "name": "DefineRateLimitPolicy",
+      "path": "contracts/commands/policy/DefineRateLimitPolicy.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "PolicyCreated",
+      "path": "contracts/events/policy/PolicyCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "PolicyVersionCreated",
+      "path": "contracts/events/policy/PolicyVersionCreated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "PolicyVersionPublished",
+      "path": "contracts/events/policy/PolicyVersionPublished.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "PolicyEvaluated",
+      "path": "contracts/events/policy/PolicyEvaluated.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "PolicyViolationDetected",
+      "path": "contracts/events/policy/PolicyViolationDetected.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "LegalHoldApplied",
+      "path": "contracts/events/policy/LegalHoldApplied.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "LegalHoldReleased",
+      "path": "contracts/events/policy/LegalHoldReleased.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "PolicyRetired",
+      "path": "contracts/events/policy/PolicyRetired.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "RateLimitPolicyDefined",
+      "path": "contracts/events/policy/RateLimitPolicyDefined.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "QuotaThresholdReached",
+      "path": "contracts/events/policy/QuotaThresholdReached.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "QuotaExceeded",
+      "path": "contracts/events/policy/QuotaExceeded.schema.json"
+    },
+    {
+      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "context": "C18",
+      "kind": "event",
+      "name": "RateLimitTriggered",
+      "path": "contracts/events/policy/RateLimitTriggered.schema.json"
+    }
+  ],
+  "authority": [
+    "ONYX IFEM Frozen System Contract Registry v1.0",
+    "ONYX Handover Document v2.0",
+    "ONYX Unified Technical Blueprint v2.0"
+  ],
+  "completeness_summary": {
+    "field_complete_payload_schemas": 32,
+    "name_frozen_payload_open_schemas": 262,
+    "total_command_event_schemas": 294,
+    "warning": "Executable bundle; permissive payload schemas do not invent unsurfaced fields."
+  },
+  "contexts": {
+    "C01": {
+      "commands": [
+        "CreateMission",
+        "CreateBlueprintRevision",
+        "SubmitBlueprint",
+        "ActivateMission",
+        "PauseMission",
+        "OperationalHaltMission",
+        "ResumeMission",
+        "RestartMission",
+        "CloseMission",
+        "ArchiveMission",
+        "CancelMission"
+      ],
+      "events": [
+        "MissionCreated",
+        "MissionBlueprintRevisionCreated",
+        "MissionBlueprintSubmitted",
+        "MissionActivated",
+        "MissionPaused",
+        "MissionOperationallyHalted",
+        "MissionResumed",
+        "MissionRestarted",
+        "MissionClosed",
+        "MissionArchived",
+        "MissionCancelled"
+      ],
+      "name": "mission",
+      "topic": "mission.events"
+    },
+    "C02": {
+      "commands": [
+        "CreateTask",
+        "AssignOwner",
+        "ChangePriority",
+        "AddDependency",
+        "StartTask",
+        "PauseTask",
+        "BlockTask",
+        "SubmitCompletion",
+        "ApproveTask",
+        "ReopenTask",
+        "CloseTask",
+        "CancelTask"
+      ],
+      "events": [
+        "TaskCreated",
+        "TaskOwnerAssigned",
+        "TaskPriorityChanged",
+        "TaskDependencyAdded",
+        "TaskStarted",
+        "TaskPaused",
+        "TaskBlocked",
+        "TaskCompletionSubmitted",
+        "TaskApproved",
+        "TaskReopened",
+        "TaskClosed",
+        "TaskCancelled"
+      ],
+      "name": "work",
+      "topic": "work.events"
+    },
+    "C03": {
+      "commands": [
+        "CreateOrganization",
+        "CreateWorkspace",
+        "CreateDepartment",
+        "CreateTeam",
+        "CreateGroup",
+        "MoveTeam",
+        "ArchiveDepartment",
+        "ArchiveOrganization"
+      ],
+      "events": [
+        "OrganizationCreated",
+        "WorkspaceCreated",
+        "DepartmentCreated",
+        "TeamCreated",
+        "GroupCreated",
+        "TeamMoved",
+        "DepartmentArchived",
+        "OrganizationArchived"
+      ],
+      "name": "organization",
+      "topic": "organization.events"
+    },
+    "C04": {
+      "commands": [
+        "CreateUser",
+        "AssignRole",
+        "RevokeRole",
+        "RegisterDevice",
+        "RevokeDevice",
+        "DelegateAuthority",
+        "RevokeDelegation",
+        "DisableUser",
+        "EnableUser"
+      ],
+      "events": [
+        "UserCreated",
+        "RoleAssigned",
+        "RoleRevoked",
+        "DeviceRegistered",
+        "DeviceRevoked",
+        "AuthorityDelegated",
+        "DelegationRevoked",
+        "UserDisabled",
+        "UserEnabled"
+      ],
+      "name": "identity-authority",
+      "topic": "identity-authority.events"
+    },
+    "C05": {
+      "commands": [
+        "CreateContextLink",
+        "UpdateContextMetadata",
+        "ChangeContextStrength",
+        "ArchiveContextLink",
+        "RestoreContextLink"
+      ],
+      "events": [
+        "ContextLinkCreated",
+        "ContextMetadataUpdated",
+        "ContextStrengthChanged",
+        "ContextLinkArchived",
+        "ContextLinkRestored"
+      ],
+      "name": "context",
+      "topic": "context.events"
+    },
+    "C06": {
+      "commands": [
+        "CreateMeeting",
+        "InviteParticipant",
+        "RemoveParticipant",
+        "StartMeeting",
+        "RecordDecision",
+        "ProposeActionItem",
+        "EndMeeting",
+        "CancelMeeting"
+      ],
+      "events": [
+        "MeetingCreated",
+        "ParticipantInvited",
+        "ParticipantRemoved",
+        "MeetingStarted",
+        "DecisionRecorded",
+        "ActionItemProposed",
+        "MeetingEnded",
+        "MeetingCancelled"
+      ],
+      "name": "meeting",
+      "topic": "meeting.events"
+    },
+    "C07": {
+      "commands": [
+        "CreateConversation",
+        "AddMember",
+        "PostMessage",
+        "EditMessage",
+        "RedactMessage",
+        "AddReaction",
+        "RemoveReaction",
+        "ArchiveConversation"
+      ],
+      "events": [
+        "ConversationCreated",
+        "ConversationMemberAdded",
+        "MessagePosted",
+        "MessageEdited",
+        "MessageRedacted",
+        "ReactionAdded",
+        "ReactionRemoved",
+        "ConversationArchived"
+      ],
+      "name": "communication",
+      "topic": "communication.events"
+    },
+    "C08": {
+      "commands": [
+        "CreateFileAsset",
+        "StartUpload",
+        "AppendChunk",
+        "FinalizeUpload",
+        "CreateVersion",
+        "GrantFileAccess",
+        "RevokeFileAccess",
+        "QuarantineFile",
+        "ArchiveFile"
+      ],
+      "events": [
+        "FileAssetCreated",
+        "UploadStarted",
+        "ChunkAccepted",
+        "UploadFinalized",
+        "FileVersionCreated",
+        "FileAccessGranted",
+        "FileAccessRevoked",
+        "FileQuarantined",
+        "FileArchived"
+      ],
+      "name": "file",
+      "topic": "file.events"
+    },
+    "C09": {
+      "commands": [
+        "CreateReport",
+        "AddEvidence",
+        "SubmitReport",
+        "VerifyEvidence",
+        "RejectEvidence",
+        "ApproveReport",
+        "RejectReport",
+        "ArchiveReport"
+      ],
+      "events": [
+        "ReportCreated",
+        "EvidenceAdded",
+        "ReportSubmitted",
+        "EvidenceVerified",
+        "EvidenceRejected",
+        "ReportApproved",
+        "ReportRejected",
+        "ReportArchived"
+      ],
+      "name": "reporting-evidence",
+      "topic": "reporting-evidence.events"
+    },
+    "C10": {
+      "commands": [
+        "CreateApproval",
+        "AssignApprover",
+        "Approve",
+        "Reject",
+        "RequestChanges",
+        "DelegateApproval",
+        "EscalateApproval",
+        "CancelApproval",
+        "ReverseApproval",
+        "ReopenApproval"
+      ],
+      "events": [
+        "ApprovalCreated",
+        "ApproverAssigned",
+        "ApprovalGranted",
+        "ApprovalRejected",
+        "ChangesRequested",
+        "ApprovalDelegated",
+        "ApprovalEscalated",
+        "ApprovalCancelled",
+        "ApprovalReversed",
+        "ApprovalReopened"
+      ],
+      "name": "approval",
+      "topic": "approval.events"
+    },
+    "C11": {
+      "commands": [
+        "CreateTimeline",
+        "AddMilestone",
+        "SetDeadline",
+        "MoveDeadline",
+        "DefineCriticalMarker",
+        "ActivatePenaltyZone",
+        "ResolveScheduleException",
+        "ArchiveTimeline"
+      ],
+      "events": [
+        "TimelineCreated",
+        "MilestoneAdded",
+        "DeadlineChanged",
+        "DeadlineMoved",
+        "CriticalMarkerDefined",
+        "CriticalMarkerReached",
+        "DeadlineReached",
+        "PenaltyZoneActivated",
+        "ScheduleExceptionRaised",
+        "TimelineArchived"
+      ],
+      "name": "timeline",
+      "topic": "timeline.events"
+    },
+    "C12": {
+      "commands": [
+        "CreateCapacityProfile",
+        "UpdateAvailability",
+        "AllocateWorkload",
+        "CaptureCapacitySnapshot",
+        "RecalculateCapacity",
+        "ArchiveCapacityProfile"
+      ],
+      "events": [
+        "CapacityProfileCreated",
+        "AvailabilityUpdated",
+        "WorkloadAllocated",
+        "CapacitySnapshotCaptured",
+        "CapacityRecalculated",
+        "CapacityProfileArchived"
+      ],
+      "name": "capacity",
+      "topic": "capacity.events"
+    },
+    "C13": {
+      "commands": [
+        "GenerateForecast",
+        "CreateScenario",
+        "RecalculateForecast",
+        "PublishForecast",
+        "ArchiveForecast"
+      ],
+      "events": [
+        "ForecastGenerated",
+        "ScenarioCreated",
+        "ForecastRecalculated",
+        "ForecastPublished",
+        "ForecastArchived"
+      ],
+      "name": "forecasting",
+      "topic": "forecasting.events"
+    },
+    "C14": {
+      "commands": [
+        "CreateAutomationRule",
+        "EnableRule",
+        "DisableRule",
+        "EvaluateRule",
+        "ExecuteAction",
+        "RetryExecution",
+        "CompensateExecution",
+        "ArchiveRule"
+      ],
+      "events": [
+        "AutomationRuleCreated",
+        "AutomationRuleEnabled",
+        "AutomationRuleDisabled",
+        "AutomationRuleTriggered",
+        "AutomationActionExecuted",
+        "AutomationExecutionFailed",
+        "AutomationExecutionCompensated",
+        "AutomationRuleArchived"
+      ],
+      "name": "automation",
+      "topic": "automation.events"
+    },
+    "C15": {
+      "commands": [
+        "CreateNotification",
+        "ResolveRecipients",
+        "SendNotification",
+        "RetryDelivery",
+        "EscalateNotification",
+        "AcknowledgeNotification",
+        "ArchiveNotification"
+      ],
+      "events": [
+        "NotificationCreated",
+        "RecipientsResolved",
+        "NotificationSent",
+        "NotificationDeliveryFailed",
+        "NotificationEscalated",
+        "NotificationAcknowledged",
+        "NotificationArchived"
+      ],
+      "name": "notification",
+      "topic": "notification.events"
+    },
+    "C16": {
+      "commands": [
+        "StartSynchronization",
+        "OfferOperationBatch",
+        "AcceptOperationBatch",
+        "MergeOperationBatch",
+        "ResolveConflict",
+        "EscalateConflict",
+        "AcknowledgeSynchronization",
+        "CloseSynchronization"
+      ],
+      "events": [
+        "SynchronizationStarted",
+        "OperationBatchOffered",
+        "OperationBatchAccepted",
+        "OperationBatchMerged",
+        "ConflictDetected",
+        "ConflictResolved",
+        "ConflictEscalated",
+        "SynchronizationAcknowledged",
+        "SynchronizationClosed"
+      ],
+      "name": "synchronization",
+      "topic": "synchronization.events"
+    },
+    "C17": {
+      "commands": [
+        "AppendAuditEntry",
+        "SealAuditPartition",
+        "CreateAuditExport",
+        "VerifyIntegrity",
+        "ArchiveAuditPartition"
+      ],
+      "events": [
+        "AuditEntryAppended",
+        "AuditPartitionSealed",
+        "AuditExportCreated",
+        "AuditIntegrityVerified",
+        "AuditPartitionArchived"
+      ],
+      "name": "audit",
+      "topic": "audit.events"
+    },
+    "C18": {
+      "commands": [
+        "CreatePolicy",
+        "CreatePolicyVersion",
+        "PublishPolicyVersion",
+        "EvaluatePolicy",
+        "RegisterViolation",
+        "ApplyLegalHold",
+        "ReleaseLegalHold",
+        "RetirePolicy",
+        "DefineRateLimitPolicy"
+      ],
+      "events": [
+        "PolicyCreated",
+        "PolicyVersionCreated",
+        "PolicyVersionPublished",
+        "PolicyEvaluated",
+        "PolicyViolationDetected",
+        "LegalHoldApplied",
+        "LegalHoldReleased",
+        "PolicyRetired",
+        "RateLimitPolicyDefined",
+        "QuotaThresholdReached",
+        "QuotaExceeded",
+        "RateLimitTriggered"
+      ],
+      "name": "policy",
+      "topic": "policy.events"
+    }
+  },
+  "formats": [
+    "JSON Schema 2020-12",
+    "OpenAPI 3.1",
+    "AsyncAPI 3.0",
+    "Protocol Buffers 3",
+    "Rust",
+    "TypeScript"
+  ],
+  "generated_at": "2026-07-29T16:39:05.468033+00:00",
+  "package_id": "ONYX-IFEM-12-ARTIFACTS",
+  "version": "2.0.0"
+}

@@ -1,0 +1,28 @@
+{
+  "$id": "https://contracts.onyx.local/commands/forecasting/GenerateForecast.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/command-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "command_type": {
+          "const": "GenerateForecast"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX GenerateForecast",
+  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-context": "C13",
+  "x-onyx-topic": "forecasting.events"
+}

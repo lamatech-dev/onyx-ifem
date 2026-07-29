@@ -1,0 +1,1039 @@
+asyncapi: 3.0.0
+info:
+  title: ONYX Domain Event Bus
+  version: 1.0.0
+defaultContentType: application/json
+servers:
+  broker:
+    host: broker.onyx.invalid
+    protocol: kafka
+channels:
+  mission:
+    address: mission.events
+    messages:
+      MissionCreated:
+        $ref: '#/components/messages/MissionCreated'
+      MissionBlueprintRevisionCreated:
+        $ref: '#/components/messages/MissionBlueprintRevisionCreated'
+      MissionBlueprintSubmitted:
+        $ref: '#/components/messages/MissionBlueprintSubmitted'
+      MissionActivated:
+        $ref: '#/components/messages/MissionActivated'
+      MissionPaused:
+        $ref: '#/components/messages/MissionPaused'
+      MissionOperationallyHalted:
+        $ref: '#/components/messages/MissionOperationallyHalted'
+      MissionResumed:
+        $ref: '#/components/messages/MissionResumed'
+      MissionRestarted:
+        $ref: '#/components/messages/MissionRestarted'
+      MissionClosed:
+        $ref: '#/components/messages/MissionClosed'
+      MissionArchived:
+        $ref: '#/components/messages/MissionArchived'
+      MissionCancelled:
+        $ref: '#/components/messages/MissionCancelled'
+  work:
+    address: work.events
+    messages:
+      TaskCreated:
+        $ref: '#/components/messages/TaskCreated'
+      TaskOwnerAssigned:
+        $ref: '#/components/messages/TaskOwnerAssigned'
+      TaskPriorityChanged:
+        $ref: '#/components/messages/TaskPriorityChanged'
+      TaskDependencyAdded:
+        $ref: '#/components/messages/TaskDependencyAdded'
+      TaskStarted:
+        $ref: '#/components/messages/TaskStarted'
+      TaskPaused:
+        $ref: '#/components/messages/TaskPaused'
+      TaskBlocked:
+        $ref: '#/components/messages/TaskBlocked'
+      TaskCompletionSubmitted:
+        $ref: '#/components/messages/TaskCompletionSubmitted'
+      TaskApproved:
+        $ref: '#/components/messages/TaskApproved'
+      TaskReopened:
+        $ref: '#/components/messages/TaskReopened'
+      TaskClosed:
+        $ref: '#/components/messages/TaskClosed'
+      TaskCancelled:
+        $ref: '#/components/messages/TaskCancelled'
+  organization:
+    address: organization.events
+    messages:
+      OrganizationCreated:
+        $ref: '#/components/messages/OrganizationCreated'
+      WorkspaceCreated:
+        $ref: '#/components/messages/WorkspaceCreated'
+      DepartmentCreated:
+        $ref: '#/components/messages/DepartmentCreated'
+      TeamCreated:
+        $ref: '#/components/messages/TeamCreated'
+      GroupCreated:
+        $ref: '#/components/messages/GroupCreated'
+      TeamMoved:
+        $ref: '#/components/messages/TeamMoved'
+      DepartmentArchived:
+        $ref: '#/components/messages/DepartmentArchived'
+      OrganizationArchived:
+        $ref: '#/components/messages/OrganizationArchived'
+  identity_authority:
+    address: identity-authority.events
+    messages:
+      UserCreated:
+        $ref: '#/components/messages/UserCreated'
+      RoleAssigned:
+        $ref: '#/components/messages/RoleAssigned'
+      RoleRevoked:
+        $ref: '#/components/messages/RoleRevoked'
+      DeviceRegistered:
+        $ref: '#/components/messages/DeviceRegistered'
+      DeviceRevoked:
+        $ref: '#/components/messages/DeviceRevoked'
+      AuthorityDelegated:
+        $ref: '#/components/messages/AuthorityDelegated'
+      DelegationRevoked:
+        $ref: '#/components/messages/DelegationRevoked'
+      UserDisabled:
+        $ref: '#/components/messages/UserDisabled'
+      UserEnabled:
+        $ref: '#/components/messages/UserEnabled'
+  context:
+    address: context.events
+    messages:
+      ContextLinkCreated:
+        $ref: '#/components/messages/ContextLinkCreated'
+      ContextMetadataUpdated:
+        $ref: '#/components/messages/ContextMetadataUpdated'
+      ContextStrengthChanged:
+        $ref: '#/components/messages/ContextStrengthChanged'
+      ContextLinkArchived:
+        $ref: '#/components/messages/ContextLinkArchived'
+      ContextLinkRestored:
+        $ref: '#/components/messages/ContextLinkRestored'
+  meeting:
+    address: meeting.events
+    messages:
+      MeetingCreated:
+        $ref: '#/components/messages/MeetingCreated'
+      ParticipantInvited:
+        $ref: '#/components/messages/ParticipantInvited'
+      ParticipantRemoved:
+        $ref: '#/components/messages/ParticipantRemoved'
+      MeetingStarted:
+        $ref: '#/components/messages/MeetingStarted'
+      DecisionRecorded:
+        $ref: '#/components/messages/DecisionRecorded'
+      ActionItemProposed:
+        $ref: '#/components/messages/ActionItemProposed'
+      MeetingEnded:
+        $ref: '#/components/messages/MeetingEnded'
+      MeetingCancelled:
+        $ref: '#/components/messages/MeetingCancelled'
+  communication:
+    address: communication.events
+    messages:
+      ConversationCreated:
+        $ref: '#/components/messages/ConversationCreated'
+      ConversationMemberAdded:
+        $ref: '#/components/messages/ConversationMemberAdded'
+      MessagePosted:
+        $ref: '#/components/messages/MessagePosted'
+      MessageEdited:
+        $ref: '#/components/messages/MessageEdited'
+      MessageRedacted:
+        $ref: '#/components/messages/MessageRedacted'
+      ReactionAdded:
+        $ref: '#/components/messages/ReactionAdded'
+      ReactionRemoved:
+        $ref: '#/components/messages/ReactionRemoved'
+      ConversationArchived:
+        $ref: '#/components/messages/ConversationArchived'
+  file:
+    address: file.events
+    messages:
+      FileAssetCreated:
+        $ref: '#/components/messages/FileAssetCreated'
+      UploadStarted:
+        $ref: '#/components/messages/UploadStarted'
+      ChunkAccepted:
+        $ref: '#/components/messages/ChunkAccepted'
+      UploadFinalized:
+        $ref: '#/components/messages/UploadFinalized'
+      FileVersionCreated:
+        $ref: '#/components/messages/FileVersionCreated'
+      FileAccessGranted:
+        $ref: '#/components/messages/FileAccessGranted'
+      FileAccessRevoked:
+        $ref: '#/components/messages/FileAccessRevoked'
+      FileQuarantined:
+        $ref: '#/components/messages/FileQuarantined'
+      FileArchived:
+        $ref: '#/components/messages/FileArchived'
+  reporting_evidence:
+    address: reporting-evidence.events
+    messages:
+      ReportCreated:
+        $ref: '#/components/messages/ReportCreated'
+      EvidenceAdded:
+        $ref: '#/components/messages/EvidenceAdded'
+      ReportSubmitted:
+        $ref: '#/components/messages/ReportSubmitted'
+      EvidenceVerified:
+        $ref: '#/components/messages/EvidenceVerified'
+      EvidenceRejected:
+        $ref: '#/components/messages/EvidenceRejected'
+      ReportApproved:
+        $ref: '#/components/messages/ReportApproved'
+      ReportRejected:
+        $ref: '#/components/messages/ReportRejected'
+      ReportArchived:
+        $ref: '#/components/messages/ReportArchived'
+  approval:
+    address: approval.events
+    messages:
+      ApprovalCreated:
+        $ref: '#/components/messages/ApprovalCreated'
+      ApproverAssigned:
+        $ref: '#/components/messages/ApproverAssigned'
+      ApprovalGranted:
+        $ref: '#/components/messages/ApprovalGranted'
+      ApprovalRejected:
+        $ref: '#/components/messages/ApprovalRejected'
+      ChangesRequested:
+        $ref: '#/components/messages/ChangesRequested'
+      ApprovalDelegated:
+        $ref: '#/components/messages/ApprovalDelegated'
+      ApprovalEscalated:
+        $ref: '#/components/messages/ApprovalEscalated'
+      ApprovalCancelled:
+        $ref: '#/components/messages/ApprovalCancelled'
+      ApprovalReversed:
+        $ref: '#/components/messages/ApprovalReversed'
+      ApprovalReopened:
+        $ref: '#/components/messages/ApprovalReopened'
+  timeline:
+    address: timeline.events
+    messages:
+      TimelineCreated:
+        $ref: '#/components/messages/TimelineCreated'
+      MilestoneAdded:
+        $ref: '#/components/messages/MilestoneAdded'
+      DeadlineChanged:
+        $ref: '#/components/messages/DeadlineChanged'
+      DeadlineMoved:
+        $ref: '#/components/messages/DeadlineMoved'
+      CriticalMarkerDefined:
+        $ref: '#/components/messages/CriticalMarkerDefined'
+      CriticalMarkerReached:
+        $ref: '#/components/messages/CriticalMarkerReached'
+      DeadlineReached:
+        $ref: '#/components/messages/DeadlineReached'
+      PenaltyZoneActivated:
+        $ref: '#/components/messages/PenaltyZoneActivated'
+      ScheduleExceptionRaised:
+        $ref: '#/components/messages/ScheduleExceptionRaised'
+      TimelineArchived:
+        $ref: '#/components/messages/TimelineArchived'
+  capacity:
+    address: capacity.events
+    messages:
+      CapacityProfileCreated:
+        $ref: '#/components/messages/CapacityProfileCreated'
+      AvailabilityUpdated:
+        $ref: '#/components/messages/AvailabilityUpdated'
+      WorkloadAllocated:
+        $ref: '#/components/messages/WorkloadAllocated'
+      CapacitySnapshotCaptured:
+        $ref: '#/components/messages/CapacitySnapshotCaptured'
+      CapacityRecalculated:
+        $ref: '#/components/messages/CapacityRecalculated'
+      CapacityProfileArchived:
+        $ref: '#/components/messages/CapacityProfileArchived'
+  forecasting:
+    address: forecasting.events
+    messages:
+      ForecastGenerated:
+        $ref: '#/components/messages/ForecastGenerated'
+      ScenarioCreated:
+        $ref: '#/components/messages/ScenarioCreated'
+      ForecastRecalculated:
+        $ref: '#/components/messages/ForecastRecalculated'
+      ForecastPublished:
+        $ref: '#/components/messages/ForecastPublished'
+      ForecastArchived:
+        $ref: '#/components/messages/ForecastArchived'
+  automation:
+    address: automation.events
+    messages:
+      AutomationRuleCreated:
+        $ref: '#/components/messages/AutomationRuleCreated'
+      AutomationRuleEnabled:
+        $ref: '#/components/messages/AutomationRuleEnabled'
+      AutomationRuleDisabled:
+        $ref: '#/components/messages/AutomationRuleDisabled'
+      AutomationRuleTriggered:
+        $ref: '#/components/messages/AutomationRuleTriggered'
+      AutomationActionExecuted:
+        $ref: '#/components/messages/AutomationActionExecuted'
+      AutomationExecutionFailed:
+        $ref: '#/components/messages/AutomationExecutionFailed'
+      AutomationExecutionCompensated:
+        $ref: '#/components/messages/AutomationExecutionCompensated'
+      AutomationRuleArchived:
+        $ref: '#/components/messages/AutomationRuleArchived'
+  notification:
+    address: notification.events
+    messages:
+      NotificationCreated:
+        $ref: '#/components/messages/NotificationCreated'
+      RecipientsResolved:
+        $ref: '#/components/messages/RecipientsResolved'
+      NotificationSent:
+        $ref: '#/components/messages/NotificationSent'
+      NotificationDeliveryFailed:
+        $ref: '#/components/messages/NotificationDeliveryFailed'
+      NotificationEscalated:
+        $ref: '#/components/messages/NotificationEscalated'
+      NotificationAcknowledged:
+        $ref: '#/components/messages/NotificationAcknowledged'
+      NotificationArchived:
+        $ref: '#/components/messages/NotificationArchived'
+  synchronization:
+    address: synchronization.events
+    messages:
+      SynchronizationStarted:
+        $ref: '#/components/messages/SynchronizationStarted'
+      OperationBatchOffered:
+        $ref: '#/components/messages/OperationBatchOffered'
+      OperationBatchAccepted:
+        $ref: '#/components/messages/OperationBatchAccepted'
+      OperationBatchMerged:
+        $ref: '#/components/messages/OperationBatchMerged'
+      ConflictDetected:
+        $ref: '#/components/messages/ConflictDetected'
+      ConflictResolved:
+        $ref: '#/components/messages/ConflictResolved'
+      ConflictEscalated:
+        $ref: '#/components/messages/ConflictEscalated'
+      SynchronizationAcknowledged:
+        $ref: '#/components/messages/SynchronizationAcknowledged'
+      SynchronizationClosed:
+        $ref: '#/components/messages/SynchronizationClosed'
+  audit:
+    address: audit.events
+    messages:
+      AuditEntryAppended:
+        $ref: '#/components/messages/AuditEntryAppended'
+      AuditPartitionSealed:
+        $ref: '#/components/messages/AuditPartitionSealed'
+      AuditExportCreated:
+        $ref: '#/components/messages/AuditExportCreated'
+      AuditIntegrityVerified:
+        $ref: '#/components/messages/AuditIntegrityVerified'
+      AuditPartitionArchived:
+        $ref: '#/components/messages/AuditPartitionArchived'
+  policy:
+    address: policy.events
+    messages:
+      PolicyCreated:
+        $ref: '#/components/messages/PolicyCreated'
+      PolicyVersionCreated:
+        $ref: '#/components/messages/PolicyVersionCreated'
+      PolicyVersionPublished:
+        $ref: '#/components/messages/PolicyVersionPublished'
+      PolicyEvaluated:
+        $ref: '#/components/messages/PolicyEvaluated'
+      PolicyViolationDetected:
+        $ref: '#/components/messages/PolicyViolationDetected'
+      LegalHoldApplied:
+        $ref: '#/components/messages/LegalHoldApplied'
+      LegalHoldReleased:
+        $ref: '#/components/messages/LegalHoldReleased'
+      PolicyRetired:
+        $ref: '#/components/messages/PolicyRetired'
+      RateLimitPolicyDefined:
+        $ref: '#/components/messages/RateLimitPolicyDefined'
+      QuotaThresholdReached:
+        $ref: '#/components/messages/QuotaThresholdReached'
+      QuotaExceeded:
+        $ref: '#/components/messages/QuotaExceeded'
+      RateLimitTriggered:
+        $ref: '#/components/messages/RateLimitTriggered'
+operations:
+  receive_mission:
+    action: receive
+    channel:
+      $ref: '#/channels/mission'
+  receive_work:
+    action: receive
+    channel:
+      $ref: '#/channels/work'
+  receive_organization:
+    action: receive
+    channel:
+      $ref: '#/channels/organization'
+  receive_identity_authority:
+    action: receive
+    channel:
+      $ref: '#/channels/identity_authority'
+  receive_context:
+    action: receive
+    channel:
+      $ref: '#/channels/context'
+  receive_meeting:
+    action: receive
+    channel:
+      $ref: '#/channels/meeting'
+  receive_communication:
+    action: receive
+    channel:
+      $ref: '#/channels/communication'
+  receive_file:
+    action: receive
+    channel:
+      $ref: '#/channels/file'
+  receive_reporting_evidence:
+    action: receive
+    channel:
+      $ref: '#/channels/reporting_evidence'
+  receive_approval:
+    action: receive
+    channel:
+      $ref: '#/channels/approval'
+  receive_timeline:
+    action: receive
+    channel:
+      $ref: '#/channels/timeline'
+  receive_capacity:
+    action: receive
+    channel:
+      $ref: '#/channels/capacity'
+  receive_forecasting:
+    action: receive
+    channel:
+      $ref: '#/channels/forecasting'
+  receive_automation:
+    action: receive
+    channel:
+      $ref: '#/channels/automation'
+  receive_notification:
+    action: receive
+    channel:
+      $ref: '#/channels/notification'
+  receive_synchronization:
+    action: receive
+    channel:
+      $ref: '#/channels/synchronization'
+  receive_audit:
+    action: receive
+    channel:
+      $ref: '#/channels/audit'
+  receive_policy:
+    action: receive
+    channel:
+      $ref: '#/channels/policy'
+components:
+  messages:
+    MissionCreated:
+      name: MissionCreated
+      payload:
+        $ref: ../events/mission/MissionCreated.schema.json
+    MissionBlueprintRevisionCreated:
+      name: MissionBlueprintRevisionCreated
+      payload:
+        $ref: ../events/mission/MissionBlueprintRevisionCreated.schema.json
+    MissionBlueprintSubmitted:
+      name: MissionBlueprintSubmitted
+      payload:
+        $ref: ../events/mission/MissionBlueprintSubmitted.schema.json
+    MissionActivated:
+      name: MissionActivated
+      payload:
+        $ref: ../events/mission/MissionActivated.schema.json
+    MissionPaused:
+      name: MissionPaused
+      payload:
+        $ref: ../events/mission/MissionPaused.schema.json
+    MissionOperationallyHalted:
+      name: MissionOperationallyHalted
+      payload:
+        $ref: ../events/mission/MissionOperationallyHalted.schema.json
+    MissionResumed:
+      name: MissionResumed
+      payload:
+        $ref: ../events/mission/MissionResumed.schema.json
+    MissionRestarted:
+      name: MissionRestarted
+      payload:
+        $ref: ../events/mission/MissionRestarted.schema.json
+    MissionClosed:
+      name: MissionClosed
+      payload:
+        $ref: ../events/mission/MissionClosed.schema.json
+    MissionArchived:
+      name: MissionArchived
+      payload:
+        $ref: ../events/mission/MissionArchived.schema.json
+    MissionCancelled:
+      name: MissionCancelled
+      payload:
+        $ref: ../events/mission/MissionCancelled.schema.json
+    TaskCreated:
+      name: TaskCreated
+      payload:
+        $ref: ../events/work/TaskCreated.schema.json
+    TaskOwnerAssigned:
+      name: TaskOwnerAssigned
+      payload:
+        $ref: ../events/work/TaskOwnerAssigned.schema.json
+    TaskPriorityChanged:
+      name: TaskPriorityChanged
+      payload:
+        $ref: ../events/work/TaskPriorityChanged.schema.json
+    TaskDependencyAdded:
+      name: TaskDependencyAdded
+      payload:
+        $ref: ../events/work/TaskDependencyAdded.schema.json
+    TaskStarted:
+      name: TaskStarted
+      payload:
+        $ref: ../events/work/TaskStarted.schema.json
+    TaskPaused:
+      name: TaskPaused
+      payload:
+        $ref: ../events/work/TaskPaused.schema.json
+    TaskBlocked:
+      name: TaskBlocked
+      payload:
+        $ref: ../events/work/TaskBlocked.schema.json
+    TaskCompletionSubmitted:
+      name: TaskCompletionSubmitted
+      payload:
+        $ref: ../events/work/TaskCompletionSubmitted.schema.json
+    TaskApproved:
+      name: TaskApproved
+      payload:
+        $ref: ../events/work/TaskApproved.schema.json
+    TaskReopened:
+      name: TaskReopened
+      payload:
+        $ref: ../events/work/TaskReopened.schema.json
+    TaskClosed:
+      name: TaskClosed
+      payload:
+        $ref: ../events/work/TaskClosed.schema.json
+    TaskCancelled:
+      name: TaskCancelled
+      payload:
+        $ref: ../events/work/TaskCancelled.schema.json
+    OrganizationCreated:
+      name: OrganizationCreated
+      payload:
+        $ref: ../events/organization/OrganizationCreated.schema.json
+    WorkspaceCreated:
+      name: WorkspaceCreated
+      payload:
+        $ref: ../events/organization/WorkspaceCreated.schema.json
+    DepartmentCreated:
+      name: DepartmentCreated
+      payload:
+        $ref: ../events/organization/DepartmentCreated.schema.json
+    TeamCreated:
+      name: TeamCreated
+      payload:
+        $ref: ../events/organization/TeamCreated.schema.json
+    GroupCreated:
+      name: GroupCreated
+      payload:
+        $ref: ../events/organization/GroupCreated.schema.json
+    TeamMoved:
+      name: TeamMoved
+      payload:
+        $ref: ../events/organization/TeamMoved.schema.json
+    DepartmentArchived:
+      name: DepartmentArchived
+      payload:
+        $ref: ../events/organization/DepartmentArchived.schema.json
+    OrganizationArchived:
+      name: OrganizationArchived
+      payload:
+        $ref: ../events/organization/OrganizationArchived.schema.json
+    UserCreated:
+      name: UserCreated
+      payload:
+        $ref: ../events/identity-authority/UserCreated.schema.json
+    RoleAssigned:
+      name: RoleAssigned
+      payload:
+        $ref: ../events/identity-authority/RoleAssigned.schema.json
+    RoleRevoked:
+      name: RoleRevoked
+      payload:
+        $ref: ../events/identity-authority/RoleRevoked.schema.json
+    DeviceRegistered:
+      name: DeviceRegistered
+      payload:
+        $ref: ../events/identity-authority/DeviceRegistered.schema.json
+    DeviceRevoked:
+      name: DeviceRevoked
+      payload:
+        $ref: ../events/identity-authority/DeviceRevoked.schema.json
+    AuthorityDelegated:
+      name: AuthorityDelegated
+      payload:
+        $ref: ../events/identity-authority/AuthorityDelegated.schema.json
+    DelegationRevoked:
+      name: DelegationRevoked
+      payload:
+        $ref: ../events/identity-authority/DelegationRevoked.schema.json
+    UserDisabled:
+      name: UserDisabled
+      payload:
+        $ref: ../events/identity-authority/UserDisabled.schema.json
+    UserEnabled:
+      name: UserEnabled
+      payload:
+        $ref: ../events/identity-authority/UserEnabled.schema.json
+    ContextLinkCreated:
+      name: ContextLinkCreated
+      payload:
+        $ref: ../events/context/ContextLinkCreated.schema.json
+    ContextMetadataUpdated:
+      name: ContextMetadataUpdated
+      payload:
+        $ref: ../events/context/ContextMetadataUpdated.schema.json
+    ContextStrengthChanged:
+      name: ContextStrengthChanged
+      payload:
+        $ref: ../events/context/ContextStrengthChanged.schema.json
+    ContextLinkArchived:
+      name: ContextLinkArchived
+      payload:
+        $ref: ../events/context/ContextLinkArchived.schema.json
+    ContextLinkRestored:
+      name: ContextLinkRestored
+      payload:
+        $ref: ../events/context/ContextLinkRestored.schema.json
+    MeetingCreated:
+      name: MeetingCreated
+      payload:
+        $ref: ../events/meeting/MeetingCreated.schema.json
+    ParticipantInvited:
+      name: ParticipantInvited
+      payload:
+        $ref: ../events/meeting/ParticipantInvited.schema.json
+    ParticipantRemoved:
+      name: ParticipantRemoved
+      payload:
+        $ref: ../events/meeting/ParticipantRemoved.schema.json
+    MeetingStarted:
+      name: MeetingStarted
+      payload:
+        $ref: ../events/meeting/MeetingStarted.schema.json
+    DecisionRecorded:
+      name: DecisionRecorded
+      payload:
+        $ref: ../events/meeting/DecisionRecorded.schema.json
+    ActionItemProposed:
+      name: ActionItemProposed
+      payload:
+        $ref: ../events/meeting/ActionItemProposed.schema.json
+    MeetingEnded:
+      name: MeetingEnded
+      payload:
+        $ref: ../events/meeting/MeetingEnded.schema.json
+    MeetingCancelled:
+      name: MeetingCancelled
+      payload:
+        $ref: ../events/meeting/MeetingCancelled.schema.json
+    ConversationCreated:
+      name: ConversationCreated
+      payload:
+        $ref: ../events/communication/ConversationCreated.schema.json
+    ConversationMemberAdded:
+      name: ConversationMemberAdded
+      payload:
+        $ref: ../events/communication/ConversationMemberAdded.schema.json
+    MessagePosted:
+      name: MessagePosted
+      payload:
+        $ref: ../events/communication/MessagePosted.schema.json
+    MessageEdited:
+      name: MessageEdited
+      payload:
+        $ref: ../events/communication/MessageEdited.schema.json
+    MessageRedacted:
+      name: MessageRedacted
+      payload:
+        $ref: ../events/communication/MessageRedacted.schema.json
+    ReactionAdded:
+      name: ReactionAdded
+      payload:
+        $ref: ../events/communication/ReactionAdded.schema.json
+    ReactionRemoved:
+      name: ReactionRemoved
+      payload:
+        $ref: ../events/communication/ReactionRemoved.schema.json
+    ConversationArchived:
+      name: ConversationArchived
+      payload:
+        $ref: ../events/communication/ConversationArchived.schema.json
+    FileAssetCreated:
+      name: FileAssetCreated
+      payload:
+        $ref: ../events/file/FileAssetCreated.schema.json
+    UploadStarted:
+      name: UploadStarted
+      payload:
+        $ref: ../events/file/UploadStarted.schema.json
+    ChunkAccepted:
+      name: ChunkAccepted
+      payload:
+        $ref: ../events/file/ChunkAccepted.schema.json
+    UploadFinalized:
+      name: UploadFinalized
+      payload:
+        $ref: ../events/file/UploadFinalized.schema.json
+    FileVersionCreated:
+      name: FileVersionCreated
+      payload:
+        $ref: ../events/file/FileVersionCreated.schema.json
+    FileAccessGranted:
+      name: FileAccessGranted
+      payload:
+        $ref: ../events/file/FileAccessGranted.schema.json
+    FileAccessRevoked:
+      name: FileAccessRevoked
+      payload:
+        $ref: ../events/file/FileAccessRevoked.schema.json
+    FileQuarantined:
+      name: FileQuarantined
+      payload:
+        $ref: ../events/file/FileQuarantined.schema.json
+    FileArchived:
+      name: FileArchived
+      payload:
+        $ref: ../events/file/FileArchived.schema.json
+    ReportCreated:
+      name: ReportCreated
+      payload:
+        $ref: ../events/reporting-evidence/ReportCreated.schema.json
+    EvidenceAdded:
+      name: EvidenceAdded
+      payload:
+        $ref: ../events/reporting-evidence/EvidenceAdded.schema.json
+    ReportSubmitted:
+      name: ReportSubmitted
+      payload:
+        $ref: ../events/reporting-evidence/ReportSubmitted.schema.json
+    EvidenceVerified:
+      name: EvidenceVerified
+      payload:
+        $ref: ../events/reporting-evidence/EvidenceVerified.schema.json
+    EvidenceRejected:
+      name: EvidenceRejected
+      payload:
+        $ref: ../events/reporting-evidence/EvidenceRejected.schema.json
+    ReportApproved:
+      name: ReportApproved
+      payload:
+        $ref: ../events/reporting-evidence/ReportApproved.schema.json
+    ReportRejected:
+      name: ReportRejected
+      payload:
+        $ref: ../events/reporting-evidence/ReportRejected.schema.json
+    ReportArchived:
+      name: ReportArchived
+      payload:
+        $ref: ../events/reporting-evidence/ReportArchived.schema.json
+    ApprovalCreated:
+      name: ApprovalCreated
+      payload:
+        $ref: ../events/approval/ApprovalCreated.schema.json
+    ApproverAssigned:
+      name: ApproverAssigned
+      payload:
+        $ref: ../events/approval/ApproverAssigned.schema.json
+    ApprovalGranted:
+      name: ApprovalGranted
+      payload:
+        $ref: ../events/approval/ApprovalGranted.schema.json
+    ApprovalRejected:
+      name: ApprovalRejected
+      payload:
+        $ref: ../events/approval/ApprovalRejected.schema.json
+    ChangesRequested:
+      name: ChangesRequested
+      payload:
+        $ref: ../events/approval/ChangesRequested.schema.json
+    ApprovalDelegated:
+      name: ApprovalDelegated
+      payload:
+        $ref: ../events/approval/ApprovalDelegated.schema.json
+    ApprovalEscalated:
+      name: ApprovalEscalated
+      payload:
+        $ref: ../events/approval/ApprovalEscalated.schema.json
+    ApprovalCancelled:
+      name: ApprovalCancelled
+      payload:
+        $ref: ../events/approval/ApprovalCancelled.schema.json
+    ApprovalReversed:
+      name: ApprovalReversed
+      payload:
+        $ref: ../events/approval/ApprovalReversed.schema.json
+    ApprovalReopened:
+      name: ApprovalReopened
+      payload:
+        $ref: ../events/approval/ApprovalReopened.schema.json
+    TimelineCreated:
+      name: TimelineCreated
+      payload:
+        $ref: ../events/timeline/TimelineCreated.schema.json
+    MilestoneAdded:
+      name: MilestoneAdded
+      payload:
+        $ref: ../events/timeline/MilestoneAdded.schema.json
+    DeadlineChanged:
+      name: DeadlineChanged
+      payload:
+        $ref: ../events/timeline/DeadlineChanged.schema.json
+    DeadlineMoved:
+      name: DeadlineMoved
+      payload:
+        $ref: ../events/timeline/DeadlineMoved.schema.json
+    CriticalMarkerDefined:
+      name: CriticalMarkerDefined
+      payload:
+        $ref: ../events/timeline/CriticalMarkerDefined.schema.json
+    CriticalMarkerReached:
+      name: CriticalMarkerReached
+      payload:
+        $ref: ../events/timeline/CriticalMarkerReached.schema.json
+    DeadlineReached:
+      name: DeadlineReached
+      payload:
+        $ref: ../events/timeline/DeadlineReached.schema.json
+    PenaltyZoneActivated:
+      name: PenaltyZoneActivated
+      payload:
+        $ref: ../events/timeline/PenaltyZoneActivated.schema.json
+    ScheduleExceptionRaised:
+      name: ScheduleExceptionRaised
+      payload:
+        $ref: ../events/timeline/ScheduleExceptionRaised.schema.json
+    TimelineArchived:
+      name: TimelineArchived
+      payload:
+        $ref: ../events/timeline/TimelineArchived.schema.json
+    CapacityProfileCreated:
+      name: CapacityProfileCreated
+      payload:
+        $ref: ../events/capacity/CapacityProfileCreated.schema.json
+    AvailabilityUpdated:
+      name: AvailabilityUpdated
+      payload:
+        $ref: ../events/capacity/AvailabilityUpdated.schema.json
+    WorkloadAllocated:
+      name: WorkloadAllocated
+      payload:
+        $ref: ../events/capacity/WorkloadAllocated.schema.json
+    CapacitySnapshotCaptured:
+      name: CapacitySnapshotCaptured
+      payload:
+        $ref: ../events/capacity/CapacitySnapshotCaptured.schema.json
+    CapacityRecalculated:
+      name: CapacityRecalculated
+      payload:
+        $ref: ../events/capacity/CapacityRecalculated.schema.json
+    CapacityProfileArchived:
+      name: CapacityProfileArchived
+      payload:
+        $ref: ../events/capacity/CapacityProfileArchived.schema.json
+    ForecastGenerated:
+      name: ForecastGenerated
+      payload:
+        $ref: ../events/forecasting/ForecastGenerated.schema.json
+    ScenarioCreated:
+      name: ScenarioCreated
+      payload:
+        $ref: ../events/forecasting/ScenarioCreated.schema.json
+    ForecastRecalculated:
+      name: ForecastRecalculated
+      payload:
+        $ref: ../events/forecasting/ForecastRecalculated.schema.json
+    ForecastPublished:
+      name: ForecastPublished
+      payload:
+        $ref: ../events/forecasting/ForecastPublished.schema.json
+    ForecastArchived:
+      name: ForecastArchived
+      payload:
+        $ref: ../events/forecasting/ForecastArchived.schema.json
+    AutomationRuleCreated:
+      name: AutomationRuleCreated
+      payload:
+        $ref: ../events/automation/AutomationRuleCreated.schema.json
+    AutomationRuleEnabled:
+      name: AutomationRuleEnabled
+      payload:
+        $ref: ../events/automation/AutomationRuleEnabled.schema.json
+    AutomationRuleDisabled:
+      name: AutomationRuleDisabled
+      payload:
+        $ref: ../events/automation/AutomationRuleDisabled.schema.json
+    AutomationRuleTriggered:
+      name: AutomationRuleTriggered
+      payload:
+        $ref: ../events/automation/AutomationRuleTriggered.schema.json
+    AutomationActionExecuted:
+      name: AutomationActionExecuted
+      payload:
+        $ref: ../events/automation/AutomationActionExecuted.schema.json
+    AutomationExecutionFailed:
+      name: AutomationExecutionFailed
+      payload:
+        $ref: ../events/automation/AutomationExecutionFailed.schema.json
+    AutomationExecutionCompensated:
+      name: AutomationExecutionCompensated
+      payload:
+        $ref: ../events/automation/AutomationExecutionCompensated.schema.json
+    AutomationRuleArchived:
+      name: AutomationRuleArchived
+      payload:
+        $ref: ../events/automation/AutomationRuleArchived.schema.json
+    NotificationCreated:
+      name: NotificationCreated
+      payload:
+        $ref: ../events/notification/NotificationCreated.schema.json
+    RecipientsResolved:
+      name: RecipientsResolved
+      payload:
+        $ref: ../events/notification/RecipientsResolved.schema.json
+    NotificationSent:
+      name: NotificationSent
+      payload:
+        $ref: ../events/notification/NotificationSent.schema.json
+    NotificationDeliveryFailed:
+      name: NotificationDeliveryFailed
+      payload:
+        $ref: ../events/notification/NotificationDeliveryFailed.schema.json
+    NotificationEscalated:
+      name: NotificationEscalated
+      payload:
+        $ref: ../events/notification/NotificationEscalated.schema.json
+    NotificationAcknowledged:
+      name: NotificationAcknowledged
+      payload:
+        $ref: ../events/notification/NotificationAcknowledged.schema.json
+    NotificationArchived:
+      name: NotificationArchived
+      payload:
+        $ref: ../events/notification/NotificationArchived.schema.json
+    SynchronizationStarted:
+      name: SynchronizationStarted
+      payload:
+        $ref: ../events/synchronization/SynchronizationStarted.schema.json
+    OperationBatchOffered:
+      name: OperationBatchOffered
+      payload:
+        $ref: ../events/synchronization/OperationBatchOffered.schema.json
+    OperationBatchAccepted:
+      name: OperationBatchAccepted
+      payload:
+        $ref: ../events/synchronization/OperationBatchAccepted.schema.json
+    OperationBatchMerged:
+      name: OperationBatchMerged
+      payload:
+        $ref: ../events/synchronization/OperationBatchMerged.schema.json
+    ConflictDetected:
+      name: ConflictDetected
+      payload:
+        $ref: ../events/synchronization/ConflictDetected.schema.json
+    ConflictResolved:
+      name: ConflictResolved
+      payload:
+        $ref: ../events/synchronization/ConflictResolved.schema.json
+    ConflictEscalated:
+      name: ConflictEscalated
+      payload:
+        $ref: ../events/synchronization/ConflictEscalated.schema.json
+    SynchronizationAcknowledged:
+      name: SynchronizationAcknowledged
+      payload:
+        $ref: ../events/synchronization/SynchronizationAcknowledged.schema.json
+    SynchronizationClosed:
+      name: SynchronizationClosed
+      payload:
+        $ref: ../events/synchronization/SynchronizationClosed.schema.json
+    AuditEntryAppended:
+      name: AuditEntryAppended
+      payload:
+        $ref: ../events/audit/AuditEntryAppended.schema.json
+    AuditPartitionSealed:
+      name: AuditPartitionSealed
+      payload:
+        $ref: ../events/audit/AuditPartitionSealed.schema.json
+    AuditExportCreated:
+      name: AuditExportCreated
+      payload:
+        $ref: ../events/audit/AuditExportCreated.schema.json
+    AuditIntegrityVerified:
+      name: AuditIntegrityVerified
+      payload:
+        $ref: ../events/audit/AuditIntegrityVerified.schema.json
+    AuditPartitionArchived:
+      name: AuditPartitionArchived
+      payload:
+        $ref: ../events/audit/AuditPartitionArchived.schema.json
+    PolicyCreated:
+      name: PolicyCreated
+      payload:
+        $ref: ../events/policy/PolicyCreated.schema.json
+    PolicyVersionCreated:
+      name: PolicyVersionCreated
+      payload:
+        $ref: ../events/policy/PolicyVersionCreated.schema.json
+    PolicyVersionPublished:
+      name: PolicyVersionPublished
+      payload:
+        $ref: ../events/policy/PolicyVersionPublished.schema.json
+    PolicyEvaluated:
+      name: PolicyEvaluated
+      payload:
+        $ref: ../events/policy/PolicyEvaluated.schema.json
+    PolicyViolationDetected:
+      name: PolicyViolationDetected
+      payload:
+        $ref: ../events/policy/PolicyViolationDetected.schema.json
+    LegalHoldApplied:
+      name: LegalHoldApplied
+      payload:
+        $ref: ../events/policy/LegalHoldApplied.schema.json
+    LegalHoldReleased:
+      name: LegalHoldReleased
+      payload:
+        $ref: ../events/policy/LegalHoldReleased.schema.json
+    PolicyRetired:
+      name: PolicyRetired
+      payload:
+        $ref: ../events/policy/PolicyRetired.schema.json
+    RateLimitPolicyDefined:
+      name: RateLimitPolicyDefined
+      payload:
+        $ref: ../events/policy/RateLimitPolicyDefined.schema.json
+    QuotaThresholdReached:
+      name: QuotaThresholdReached
+      payload:
+        $ref: ../events/policy/QuotaThresholdReached.schema.json
+    QuotaExceeded:
+      name: QuotaExceeded
+      payload:
+        $ref: ../events/policy/QuotaExceeded.schema.json
+    RateLimitTriggered:
+      name: RateLimitTriggered
+      payload:
+        $ref: ../events/policy/RateLimitTriggered.schema.json

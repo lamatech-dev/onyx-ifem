@@ -1,0 +1,65 @@
+{
+  "$id": "https://contracts.onyx.local/events/work/TaskCreated.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/event-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "event_type": {
+          "const": "TaskCreated"
+        },
+        "payload": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "maxLength": 8000,
+              "type": "string"
+            },
+            "due_date_ref": {
+              "type": "object"
+            },
+            "estimate": {
+              "type": "object"
+            },
+            "mission_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "owner_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "priority": {
+              "type": "string"
+            },
+            "task_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "title": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "mission_id",
+            "title",
+            "description",
+            "owner_id",
+            "priority"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX TaskCreated",
+  "x-onyx-completeness": "FIELD_COMPLETE",
+  "x-onyx-context": "C02",
+  "x-onyx-topic": "work.events"
+}

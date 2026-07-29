@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "ActorContext": {
+      "additionalProperties": false,
+      "properties": {
+        "actor_type": {
+          "enum": [
+            "USER",
+            "SERVICE",
+            "DEVICE"
+          ]
+        },
+        "device_id": {
+          "$ref": "#/$defs/UuidV7"
+        },
+        "membership_id": {
+          "$ref": "#/$defs/UuidV7"
+        },
+        "principal_id": {
+          "$ref": "#/$defs/UuidV7"
+        }
+      },
+      "required": [
+        "principal_id",
+        "actor_type"
+      ],
+      "type": "object"
+    },
+    "ApprovalId": {
+      "$ref": "#/$defs/UuidV7"
+    },
+    "AuditMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "integrity_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "provenance": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "provenance",
+        "integrity_digest"
+      ],
+      "type": "object"
+    },
+    "AuthorityProof": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_epoch": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/UtcInstant"
+        },
+        "proof_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "scope": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "proof_ref",
+        "scope",
+        "expires_at",
+        "authority_epoch"
+      ],
+      "type": "object"
+    },
+    "BlueprintRevisionId": {
+      "$ref": "#/$defs/UuidV7"
+    },
+    "DomainObjectRef": {
+      "additionalProperties": false,
+      "properties": {
+        "aggregate_type": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "object_id": {
+          "$ref": "#/$defs/UuidV7"
+        }
+      },
+      "required": [
+        "aggregate_type",
+        "object_id"
+      ],
+      "type": "object"
+    },
+    "MissionId": {
+      "$ref": "#/$defs/UuidV7"
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "ObjectId": {
+      "$ref": "#/$defs/UuidV7"
+    },
+    "OrganizationId": {
+      "$ref": "#/$defs/UuidV7"
+    },
+    "PageRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "cursor": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "limit": {
+          "maximum": 1000,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "limit"
+      ],
+      "type": "object"
+    },
+    "PolicyId": {
+      "$ref": "#/$defs/UuidV7"
+    },
+    "TaskId": {
+      "$ref": "#/$defs/UuidV7"
+    },
+    "TimelineId": {
+      "$ref": "#/$defs/UuidV7"
+    },
+    "UserId": {
+      "$ref": "#/$defs/UuidV7"
+    },
+    "UtcInstant": {
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$",
+      "type": "string"
+    },
+    "UuidV7": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "VectorClock": {
+      "additionalProperties": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "type": "object"
+    }
+  },
+  "$id": "https://contracts.onyx.local/shared/types.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ONYX Shared Types"
+}

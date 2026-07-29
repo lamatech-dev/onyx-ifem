@@ -1,0 +1,36 @@
+import type { CreateMissionCommand } from "../src/mission/types.ts";
+
+export function createMissionCommand(overrides: Partial<CreateMissionCommand> = {}): CreateMissionCommand {
+  return {
+    actor_context: {
+      actor_type: "USER",
+      principal_id: "018f1c2a-7b3d-7abc-8def-0123456789af",
+    },
+    authority_proof: {
+      authority_epoch: 0,
+      expires_at: "2030-01-01T00:00:00.000000Z",
+      proof_ref: "proof:test",
+      scope: ["mission:create"],
+    },
+    command_id: "018f1c2a-7b3d-7abc-8def-0123456789ab",
+    command_type: "CreateMission",
+    correlation_id: "018f1c2a-7b3d-7abc-8def-0123456789b0",
+    issued_at: "2026-07-29T20:00:00.000000Z",
+    operation_id: "018f1c2a-7b3d-7abc-8def-0123456789ac",
+    organization_id: "018f1c2a-7b3d-7abc-8def-0123456789ad",
+    payload: {
+      mission_id: "018f1c2a-7b3d-7abc-8def-0123456789ae",
+      objective: "Establish an independently executable mission.",
+      owner_id: "018f1c2a-7b3d-7abc-8def-0123456789af",
+      settings: {},
+    },
+    schema_version: 1,
+    target: {
+      aggregate_type: "Mission",
+      object_id: "018f1c2a-7b3d-7abc-8def-0123456789ae",
+    },
+    vector_clock: {"replica-a": 1},
+    ...overrides,
+  };
+}
+

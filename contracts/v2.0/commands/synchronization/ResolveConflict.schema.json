@@ -1,0 +1,28 @@
+{
+  "$id": "https://contracts.onyx.local/commands/synchronization/ResolveConflict.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/command-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "command_type": {
+          "const": "ResolveConflict"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX ResolveConflict",
+  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-context": "C16",
+  "x-onyx-topic": "synchronization.events"
+}

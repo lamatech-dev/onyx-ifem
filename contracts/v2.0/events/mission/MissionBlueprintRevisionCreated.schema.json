@@ -1,0 +1,51 @@
+{
+  "$id": "https://contracts.onyx.local/events/mission/MissionBlueprintRevisionCreated.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/event-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "event_type": {
+          "const": "MissionBlueprintRevisionCreated"
+        },
+        "payload": {
+          "additionalProperties": false,
+          "properties": {
+            "base_revision_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "change_summary": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "content": {},
+            "mission_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "revision_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            }
+          },
+          "required": [
+            "mission_id",
+            "revision_id",
+            "content",
+            "change_summary"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX MissionBlueprintRevisionCreated",
+  "x-onyx-completeness": "FIELD_COMPLETE",
+  "x-onyx-context": "C01",
+  "x-onyx-topic": "mission.events"
+}

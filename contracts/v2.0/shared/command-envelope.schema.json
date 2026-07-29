@@ -1,0 +1,77 @@
+{
+  "$id": "https://contracts.onyx.local/shared/command-envelope.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actor_context": {
+      "$ref": "types.schema.json#/$defs/ActorContext"
+    },
+    "authority_proof": {
+      "$ref": "types.schema.json#/$defs/AuthorityProof"
+    },
+    "causation_id": {
+      "$ref": "types.schema.json#/$defs/UuidV7"
+    },
+    "command_id": {
+      "$ref": "types.schema.json#/$defs/UuidV7"
+    },
+    "command_type": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "correlation_id": {
+      "$ref": "types.schema.json#/$defs/UuidV7"
+    },
+    "expected_authority_epoch": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "expected_lifecycle_epoch": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "expected_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "issued_at": {
+      "$ref": "types.schema.json#/$defs/UtcInstant"
+    },
+    "operation_id": {
+      "$ref": "types.schema.json#/$defs/UuidV7"
+    },
+    "organization_id": {
+      "$ref": "types.schema.json#/$defs/OrganizationId"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "schema_version": {
+      "maximum": 65535,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "target": {
+      "$ref": "types.schema.json#/$defs/DomainObjectRef"
+    },
+    "vector_clock": {
+      "$ref": "types.schema.json#/$defs/VectorClock"
+    }
+  },
+  "required": [
+    "command_id",
+    "operation_id",
+    "command_type",
+    "schema_version",
+    "organization_id",
+    "target",
+    "actor_context",
+    "authority_proof",
+    "issued_at",
+    "vector_clock",
+    "correlation_id",
+    "payload"
+  ],
+  "title": "ONYX Canonical Command Envelope",
+  "type": "object"
+}

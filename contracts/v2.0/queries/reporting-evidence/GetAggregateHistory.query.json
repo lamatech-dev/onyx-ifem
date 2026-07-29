@@ -1,0 +1,31 @@
+{
+  "$id": "https://contracts.onyx.local/queries/reporting-evidence/GetAggregateHistory.query.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "after_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "aggregate": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+    },
+    "limit": {
+      "maximum": 1000,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "organization_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    }
+  },
+  "required": [
+    "organization_id",
+    "aggregate",
+    "limit"
+  ],
+  "title": "ONYX GetAggregateHistory Query",
+  "type": "object",
+  "x-onyx-completeness": "QUERY_FAMILY_BASELINE",
+  "x-onyx-context": "C09"
+}

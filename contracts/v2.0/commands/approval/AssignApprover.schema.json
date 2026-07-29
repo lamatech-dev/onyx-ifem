@@ -1,0 +1,28 @@
+{
+  "$id": "https://contracts.onyx.local/commands/approval/AssignApprover.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/command-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "command_type": {
+          "const": "AssignApprover"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX AssignApprover",
+  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-context": "C10",
+  "x-onyx-topic": "approval.events"
+}

@@ -1,0 +1,42 @@
+{
+  "$id": "https://contracts.onyx.local/commands/mission/ResumeMission.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/command-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "command_type": {
+          "const": "ResumeMission"
+        },
+        "payload": {
+          "additionalProperties": false,
+          "properties": {
+            "mission_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "resume_note": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "mission_id",
+            "resume_note"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX ResumeMission",
+  "x-onyx-completeness": "FIELD_COMPLETE",
+  "x-onyx-context": "C01",
+  "x-onyx-topic": "mission.events"
+}

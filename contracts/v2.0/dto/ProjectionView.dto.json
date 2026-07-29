@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "as_of_version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "data": {},
+    "projection_type": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "projection_type",
+    "data",
+    "as_of_version"
+  ],
+  "title": "ProjectionView",
+  "type": "object"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "onyx-ifem",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "check": "npm run validate:contracts && npm test",
+    "start:mission": "node --experimental-strip-types src/mission/server.ts",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "validate:contracts": "node --experimental-strip-types tools/validate-contracts.ts"
+  }
+}
+

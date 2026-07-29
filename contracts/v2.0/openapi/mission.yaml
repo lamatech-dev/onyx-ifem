@@ -1,0 +1,287 @@
+openapi: 3.1.0
+info:
+  title: ONYX Mission Command API
+  version: 1.0.0
+servers:
+- url: https://api.onyx.invalid
+paths:
+  /v1/mission/commands/CreateMission:
+    post:
+      operationId: CreateMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/CreateMission.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/CreateBlueprintRevision:
+    post:
+      operationId: CreateBlueprintRevision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/CreateBlueprintRevision.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/SubmitBlueprint:
+    post:
+      operationId: SubmitBlueprint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/SubmitBlueprint.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/ActivateMission:
+    post:
+      operationId: ActivateMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/ActivateMission.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/PauseMission:
+    post:
+      operationId: PauseMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/PauseMission.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/OperationalHaltMission:
+    post:
+      operationId: OperationalHaltMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/OperationalHaltMission.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/ResumeMission:
+    post:
+      operationId: ResumeMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/ResumeMission.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/RestartMission:
+    post:
+      operationId: RestartMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/RestartMission.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/CloseMission:
+    post:
+      operationId: CloseMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/CloseMission.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/ArchiveMission:
+    post:
+      operationId: ArchiveMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/ArchiveMission.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/mission/commands/CancelMission:
+    post:
+      operationId: CancelMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../commands/mission/CancelMission.schema.json
+      responses:
+        '202':
+          description: Command accepted
+        '400':
+          description: Contract validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      - correlation_id
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        correlation_id:
+          type: string
+          pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$

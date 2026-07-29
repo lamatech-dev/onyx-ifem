@@ -1,0 +1,113 @@
+{
+  "errors": [
+    {
+      "code": "INVALID_ARGUMENT",
+      "http_status": 400,
+      "meaning": "Field validation failure",
+      "retry_class": "NEVER"
+    },
+    {
+      "code": "SCHEMA_VERSION_UNSUPPORTED",
+      "http_status": 400,
+      "meaning": "Schema retired or unknown",
+      "retry_class": "NEVER"
+    },
+    {
+      "code": "AUTHENTICATION_REQUIRED",
+      "http_status": 401,
+      "meaning": "Actor or device not authenticated",
+      "retry_class": "AFTER_REFRESH"
+    },
+    {
+      "code": "AUTHORITY_PROOF_INVALID",
+      "http_status": 403,
+      "meaning": "Invalid, expired, revoked, or scope mismatch",
+      "retry_class": "AFTER_AUTHORITY_RENEWAL"
+    },
+    {
+      "code": "ORGANIZATION_MISMATCH",
+      "http_status": 403,
+      "meaning": "Tenant boundary violation",
+      "retry_class": "NEVER"
+    },
+    {
+      "code": "POLICY_DENIED",
+      "http_status": 403,
+      "meaning": "Policy evaluation denied operation",
+      "retry_class": "NEVER"
+    },
+    {
+      "code": "NOT_FOUND",
+      "http_status": 404,
+      "meaning": "Target not found or hidden by access policy",
+      "retry_class": "NEVER"
+    },
+    {
+      "code": "CONFLICT_PENDING",
+      "http_status": 409,
+      "meaning": "Unsafe concurrent operations require resolution",
+      "retry_class": "NEVER"
+    },
+    {
+      "code": "VERSION_CONFLICT",
+      "http_status": 409,
+      "meaning": "Expected ObjectVersion mismatch",
+      "retry_class": "AFTER_REFRESH"
+    },
+    {
+      "code": "LIFECYCLE_EPOCH_MISMATCH",
+      "http_status": 409,
+      "meaning": "Lifecycle discontinuity invalidated request",
+      "retry_class": "AFTER_REFRESH"
+    },
+    {
+      "code": "AUTHORITY_EPOCH_MISMATCH",
+      "http_status": 409,
+      "meaning": "Authority changed",
+      "retry_class": "AFTER_AUTHORITY_RENEWAL"
+    },
+    {
+      "code": "INVALID_STATE_TRANSITION",
+      "http_status": 409,
+      "meaning": "Command not valid from current state",
+      "retry_class": "NEVER"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "http_status": 422,
+      "meaning": "Aggregate invariant would be broken",
+      "retry_class": "NEVER"
+    },
+    {
+      "code": "IDEMPOTENCY_KEY_REUSE",
+      "http_status": 422,
+      "meaning": "Same command or operation id with different payload",
+      "retry_class": "NEVER"
+    },
+    {
+      "code": "RATE_LIMITED",
+      "http_status": 429,
+      "meaning": "Retry-After required",
+      "retry_class": "SAFE_BACKOFF"
+    },
+    {
+      "code": "DEPENDENCY_UNAVAILABLE",
+      "http_status": 503,
+      "meaning": "External dependency unavailable",
+      "retry_class": "SAFE_BACKOFF"
+    },
+    {
+      "code": "DEADLINE_EXCEEDED",
+      "http_status": 504,
+      "meaning": "Operation exceeded timing contract",
+      "retry_class": "SAFE_BACKOFF"
+    },
+    {
+      "code": "INTERNAL_ERROR",
+      "http_status": 500,
+      "meaning": "Redacted unexpected failure; correlation id required",
+      "retry_class": "SAFE_BACKOFF"
+    }
+  ],
+  "version": "1.0.0"
+}

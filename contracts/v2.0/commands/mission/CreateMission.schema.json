@@ -1,0 +1,58 @@
+{
+  "$id": "https://contracts.onyx.local/commands/mission/CreateMission.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/command-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "command_type": {
+          "const": "CreateMission"
+        },
+        "payload": {
+          "additionalProperties": false,
+          "properties": {
+            "initial_blueprint_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "mission_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "objective": {
+              "maxLength": 4000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "owner_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "settings": {
+              "type": "object"
+            },
+            "title": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "mission_id",
+            "objective",
+            "owner_id",
+            "settings"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX CreateMission",
+  "x-onyx-completeness": "FIELD_COMPLETE",
+  "x-onyx-context": "C01",
+  "x-onyx-topic": "mission.events"
+}

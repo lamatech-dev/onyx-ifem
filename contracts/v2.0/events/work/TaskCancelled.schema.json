@@ -1,0 +1,36 @@
+{
+  "$id": "https://contracts.onyx.local/events/work/TaskCancelled.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "$ref": "https://contracts.onyx.local/shared/event-envelope.schema.json"
+    },
+    {
+      "properties": {
+        "event_type": {
+          "const": "TaskCancelled"
+        },
+        "payload": {
+          "additionalProperties": false,
+          "properties": {
+            "new_status": {
+              "const": "CANCELLED"
+            }
+          },
+          "required": [
+            "new_status"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "ONYX TaskCancelled",
+  "x-onyx-completeness": "FIELD_COMPLETE",
+  "x-onyx-context": "C02",
+  "x-onyx-topic": "work.events"
+}

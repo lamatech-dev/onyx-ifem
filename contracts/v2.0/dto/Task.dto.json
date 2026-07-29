@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "maxLength": 8000,
+      "type": "string"
+    },
+    "mission_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "organization_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "owner_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "priority": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "READY",
+        "ACTIVE",
+        "PAUSED",
+        "BLOCKED",
+        "SUBMITTED",
+        "APPROVED",
+        "CLOSED",
+        "CANCELLED"
+      ]
+    },
+    "task_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "title": {
+      "maxLength": 200,
+      "minLength": 1,
+      "type": "string"
+    },
+    "version": {
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "task_id",
+    "organization_id",
+    "mission_id",
+    "title",
+    "description",
+    "owner_id",
+    "priority",
+    "status",
+    "version"
+  ],
+  "title": "TaskView",
+  "type": "object"
+}

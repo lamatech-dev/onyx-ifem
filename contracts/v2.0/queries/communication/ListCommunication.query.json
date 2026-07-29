@@ -1,0 +1,23 @@
+{
+  "$id": "https://contracts.onyx.local/queries/communication/ListCommunication.query.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "filter": {},
+    "organization_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "page": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/PageRequest"
+    }
+  },
+  "required": [
+    "organization_id",
+    "filter",
+    "page"
+  ],
+  "title": "ONYX ListCommunication Query",
+  "type": "object",
+  "x-onyx-completeness": "QUERY_FAMILY_BASELINE",
+  "x-onyx-context": "C07"
+}

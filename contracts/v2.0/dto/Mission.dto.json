@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "active_blueprint_revision_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "authority_epoch": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "lifecycle_epoch": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "mission_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "objective": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "type": "string"
+    },
+    "organization_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "owner_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "PLANNING",
+        "AWAITING_APPROVAL",
+        "ACTIVE",
+        "PAUSED",
+        "HALTED",
+        "REVIEW",
+        "CLOSED",
+        "ARCHIVED",
+        "CANCELLED"
+      ]
+    },
+    "timeline_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "title": {
+      "maxLength": 200,
+      "minLength": 1,
+      "type": "string"
+    },
+    "version": {
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "mission_id",
+    "organization_id",
+    "objective",
+    "owner_id",
+    "status",
+    "version",
+    "lifecycle_epoch",
+    "authority_epoch"
+  ],
+  "title": "MissionView",
+  "type": "object"
+}

@@ -1,0 +1,28 @@
+{
+  "$id": "https://contracts.onyx.local/queries/approval/GetApproval.query.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "consistency": {
+      "enum": [
+        "LOCAL",
+        "AUTHORITATIVE",
+        "AT_LEAST_VERSION"
+      ]
+    },
+    "id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    },
+    "organization_id": {
+      "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+    }
+  },
+  "required": [
+    "organization_id",
+    "id"
+  ],
+  "title": "ONYX GetApproval Query",
+  "type": "object",
+  "x-onyx-completeness": "QUERY_FAMILY_BASELINE",
+  "x-onyx-context": "C10"
+}
