@@ -6,7 +6,7 @@ ONYX exposes separate liveness and readiness signals and emits one structured co
 
 `GET /healthz` is a lightweight process-liveness probe. It does not query SQLite or external systems and should be used to decide whether the process needs restarting.
 
-`GET /readyz` verifies that the configured SQLite connection can execute a query and returns a point-in-time messaging snapshot. It reports:
+`GET /readyz` verifies that the configured SQLite connection can execute a query and returns a point-in-time messaging snapshot. Like liveness and metrics, the exact GET route is exempt from local rate/concurrency admission so overload cannot remove a healthy singleton from Kubernetes Service endpoints. Other methods on the same path are not exempt. It reports:
 
 - pending, immediately ready, actively leased, delivered, and dead-lettered outbox messages;
 - the oldest pending outbox availability timestamp;

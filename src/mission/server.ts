@@ -3,7 +3,7 @@ import { hostname } from "node:os";
 import { OnyxApplication, errorResponse, type ApiResponse } from "../api/application.ts";
 import { loadAuthenticationOptions } from "../auth/config.ts";
 import { OnyxError } from "../contracts/errors.ts";
-import { ConcurrencyGate, HttpAdmissionController, TokenBucketRateLimiter } from "../infrastructure/http/admission.ts";
+import { ConcurrencyGate, HttpAdmissionController, TokenBucketRateLimiter, isAdmissionExempt } from "../infrastructure/http/admission.ts";
 import { jsonLineLogger, resolveRequestId } from "../infrastructure/observability/logger.ts";
 import { PrometheusMetrics } from "../infrastructure/observability/metrics.ts";
 import { createHttpEventPublisher } from "../infrastructure/outbox/http-publisher.ts";
@@ -98,7 +98,7 @@ export const server = createServer({
   const requestIdHeader = request.headers["x-request-id"];
   const requestId = resolveRequestId(Array.isArray(requestIdHeader) ? undefined : requestIdHeader, () => uuidV7());
   const pathname = new URL(request.url ?? "/", "http://onyx.local").pathname;
-  const decision = pathname === "/healthz" || pathname === "/metrics" ? undefined : admission.admit(clientKey(request), Date.now());
+  const decision = isAdmissionExempt(request.method, pathname) ? undefined : admission.admit(clientKey(request), Date.now());
   if (decision && !decision.accepted) {
     const result: ApiResponse = {
       status: decision.status,

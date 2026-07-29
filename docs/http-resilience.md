@@ -1,6 +1,6 @@
 # HTTP resilience and overload protection
 
-ONYX applies bounded admission control before reading a command body. Process liveness at `/healthz` and internal telemetry at `/metrics` are exempt so an overloaded instance can still be diagnosed; every other route is subject to rate and concurrency limits. Keep the exempt metrics route restricted to the monitoring network.
+ONYX applies bounded admission control before reading a command body. Only `GET /healthz`, `GET /readyz`, and `GET /metrics` are exempt so Kubernetes probes and internal telemetry remain reliable during overload; every other method and route is subject to rate and concurrency limits. Method-aware matching prevents requests such as `POST /metrics` from bypassing admission before body parsing. Keep the exempt readiness and metrics routes restricted to the monitoring network.
 
 ## Rate limiting
 

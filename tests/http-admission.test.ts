@@ -1,9 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { ConcurrencyGate, HttpAdmissionController, TokenBucketRateLimiter } from "../src/infrastructure/http/admission.ts";
+import { ConcurrencyGate, HttpAdmissionController, TokenBucketRateLimiter, isAdmissionExempt } from "../src/infrastructure/http/admission.ts";
 import { OnyxError } from "../src/contracts/errors.ts";
 
 describe("HTTP admission control", () => {
+  it("exempts only GET infrastructure probes", () => {
+    for (const path of ["/healthz", "/readyz", "/metrics"]) assert.equal(isAdmissionExempt("GET", path), true);
+    assert.equal(isAdmissionExempt("POST", "/metrics"), false);
+    assert.equal(isAdmissionExempt("GET", "/openapi.json"), false);
+    assert.equal(isAdmissionExempt(undefined, "/healthz"), false);
+  });
+
   it("enforces a token-bucket burst and deterministic refill", () => {
     const limiter = new TokenBucketRateLimiter({capacity: 2, refillPerSecond: 1});
     assert.deepEqual(limiter.consume("client-a", 0), {allowed: true, remaining: 1, retryAfterSeconds: 0});

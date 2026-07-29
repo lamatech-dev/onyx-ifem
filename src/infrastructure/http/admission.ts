@@ -18,6 +18,11 @@ interface Bucket {
 }
 
 const OVERFLOW_KEY = "\u0000overflow";
+const INFRASTRUCTURE_GET_PATHS = new Set(["/healthz", "/readyz", "/metrics"]);
+
+export function isAdmissionExempt(method: string | undefined, pathname: string): boolean {
+  return method === "GET" && INFRASTRUCTURE_GET_PATHS.has(pathname);
+}
 
 export class TokenBucketRateLimiter {
   readonly #capacity: number;

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { mkdtemp } from "node:fs/promises";
-import { createServer } from "node:net";
+import { createConnection, createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
@@ -19,8 +19,11 @@ describe("HTTP executable", () => {
         ONYX_AUTH_MODE: "disabled",
         ONYX_DB_PATH: join(directory, "onyx.db"),
         ONYX_HOST: "127.0.0.1",
+        ONYX_MAX_IN_FLIGHT: "1",
         ONYX_OUTBOX_WEBHOOK_URL: "",
         ONYX_PORT: String(port),
+        ONYX_RATE_LIMIT_CAPACITY: "4",
+        ONYX_RATE_LIMIT_REFILL_PER_SECOND: "0.01",
       }),
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -64,6 +67,48 @@ describe("HTTP executable", () => {
       });
       assert.equal(oversized.status, 400);
       assert.equal((await oversized.json() as {message: string}).message, "command envelope exceeds 1 MiB");
+
+      const held = createConnection({host: "127.0.0.1", port});
+      let heldResponse = "";
+      held.setEncoding("utf8");
+      held.on("data", (chunk: string) => { heldResponse += chunk; });
+      await once(held, "connect");
+      held.write([
+        "POST /v1/mission/commands/CreateMission HTTP/1.1",
+        `Host: 127.0.0.1:${port}`,
+        "Content-Type: application/json",
+        "Content-Length: 9",
+        "Connection: close",
+        "",
+        "{",
+      ].join("\r\n"));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const overloaded = await fetch(`${origin}/v1/missions?organization_id=00000000-0000-7000-8000-000000000013`);
+      assert.equal(overloaded.status, 503);
+      assert.equal((await overloaded.json() as {code: string}).code, "DEPENDENCY_UNAVAILABLE");
+
+      const readyUnderConcurrency = await fetch(`${origin}/readyz`);
+      assert.equal(readyUnderConcurrency.status, 200);
+      assert.equal(readyUnderConcurrency.headers.has("x-ratelimit-remaining"), false);
+
+      held.end('"x":123}');
+      await once(held, "end");
+      assert.match(heldResponse, /^HTTP\/1\.1 400 /);
+
+      const rateLimited = await fetch(`${origin}/v1/missions?organization_id=00000000-0000-7000-8000-000000000013`);
+      assert.equal(rateLimited.status, 429);
+      assert.equal((await rateLimited.json() as {code: string}).code, "RATE_LIMITED");
+
+      const wrongMethod = await fetch(`${origin}/metrics`, {method: "POST", body: "{}"});
+      assert.equal(wrongMethod.status, 429);
+
+      assert.equal((await fetch(`${origin}/healthz`)).status, 200);
+      assert.equal((await fetch(`${origin}/readyz`)).status, 200);
+      const metricsUnderPressure = await fetch(`${origin}/metrics`);
+      assert.equal(metricsUnderPressure.status, 200);
+      assert.match(await metricsUnderPressure.text(), /onyx_http_admission_rejections_total\{reason="concurrency_limited"\} 1/);
+      assert.match(await (await fetch(`${origin}/metrics`)).text(), /onyx_http_admission_rejections_total\{reason="rate_limited"\} 2/);
 
       child.kill("SIGTERM");
       const [code, signal] = await waitForExit(child);
