@@ -2,6 +2,12 @@
 
 ONYX applies bounded admission control before reading a command body. Only `GET /healthz`, `GET /readyz`, and `GET /metrics` are exempt so Kubernetes probes and internal telemetry remain reliable during overload; every other method and route is subject to rate and concurrency limits. Method-aware matching prevents requests such as `POST /metrics` from bypassing admission before body parsing. Keep the exempt readiness and metrics routes restricted to the monitoring network.
 
+## Method and response policy
+
+Known read routes accept `GET` and `HEAD`; known command routes accept `POST`. A different method receives HTTP `405` with an `Allow` header, while an unknown route remains `404`. The transport only invokes the JSON parser for a known command route. If a rejected or wrong-method request carries an unread body, the response uses `Connection: close` so those bytes cannot be interpreted as a later request on the same connection.
+
+Every application response defaults to `Cache-Control: no-store`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; sandbox`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff`, and `X-Frame-Options: DENY`. ONYX does not enable cross-origin access. HSTS belongs at the trusted HTTPS ingress because TLS terminates there rather than in this HTTP process.
+
 ## Rate limiting
 
 The local token bucket permits a configurable burst and refills continuously. A rejected request receives HTTP `429`, canonical code `RATE_LIMITED`, `Retry-After`, `X-RateLimit-Remaining`, and its request ID.

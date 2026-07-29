@@ -16,6 +16,7 @@ import { InMemoryWorkRepository } from "../work/repository.ts";
 import { WorkService } from "../work/service.ts";
 import { SqliteWorkRepository } from "../work/sqlite-repository.ts";
 import { OPENAPI_DOCUMENT } from "./openapi.ts";
+import { allowedMethodsForPath } from "./routes.ts";
 import { uuidV7 } from "../shared/identifiers.ts";
 
 export interface ApiRequest {
@@ -161,10 +162,14 @@ export class OnyxApplication {
 
   async #dispatch(request: ApiRequest): Promise<ApiResponse> {
     const url = new URL(request.path, "http://onyx.local");
-    if (request.method === "GET" && url.pathname === "/healthz") {
+    const allowedMethods = allowedMethodsForPath(url.pathname);
+    if (allowedMethods && !allowedMethods.includes(request.method)) return methodNotAllowed(allowedMethods);
+    const method = request.method === "HEAD" ? "GET" : request.method;
+
+    if (method === "GET" && url.pathname === "/healthz") {
       return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence"]}};
     }
-    if (request.method === "GET" && url.pathname === "/readyz") {
+    if (method === "GET" && url.pathname === "/readyz") {
       if (!this.#database) {
         return {status: 200, body: {status: "ready", persistence: {mode: "memory", durable: false}, messaging: {enabled: false}}};
       }
@@ -182,10 +187,10 @@ export class OnyxApplication {
         return {status: 503, body: {status: "not_ready", persistence: {mode: "sqlite", durable: true}}};
       }
     }
-    if (request.method === "GET" && url.pathname === "/openapi.json") {
+    if (method === "GET" && url.pathname === "/openapi.json") {
       return {status: 200, body: structuredClone(OPENAPI_DOCUMENT)};
     }
-    if (request.method === "GET" && url.pathname === "/metrics") {
+    if (method === "GET" && url.pathname === "/metrics") {
       const now = this.#now();
       const messaging = this.#database?.readiness(now);
       return {
@@ -196,7 +201,7 @@ export class OnyxApplication {
     }
 
     const commandMatch = url.pathname.match(/^\/v1\/([^/]+)\/commands\/([^/]+)$/);
-    if (request.method === "POST" && commandMatch) {
+    if (method === "POST" && commandMatch) {
       const commandContext = commandMatch[1]!;
       const routeType = commandMatch[2]!;
       const execute = this.#commands.get(commandContext);
@@ -209,7 +214,7 @@ export class OnyxApplication {
       return {status: 202, body: await execute(request.body)};
     }
 
-    if (request.method === "GET") {
+    if (method === "GET") {
       const segments = url.pathname.split("/").filter(Boolean);
       if (segments[0] === "v1" && segments[1] !== undefined) {
         const resource = this.#resources.get(segments[1]);
@@ -298,6 +303,14 @@ function withRequestId(response: ApiResponse, requestId: string): ApiResponse {
 
 function notFound(): ApiResponse {
   return {status: 404, body: {code: "NOT_FOUND", message: "route not found"}};
+}
+
+function methodNotAllowed(allowedMethods: readonly string[]): ApiResponse {
+  return {
+    status: 405,
+    body: {code: "INVALID_ARGUMENT", message: "method is not allowed for route"},
+    headers: {allow: allowedMethods.join(", ")},
+  };
 }
 
 export function errorResponse(error: unknown, logError: (error: unknown) => void = console.error): ApiResponse {

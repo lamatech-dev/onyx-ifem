@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { hostname } from "node:os";
 import { OnyxApplication, errorResponse, type ApiResponse } from "../api/application.ts";
+import { acceptsJsonBody } from "../api/routes.ts";
 import { loadAuthenticationOptions } from "../auth/config.ts";
 import { ConcurrencyGate, HttpAdmissionController, TokenBucketRateLimiter, isAdmissionExempt } from "../infrastructure/http/admission.ts";
 import { readJsonBody } from "../infrastructure/http/json-body.ts";
@@ -37,6 +38,13 @@ const admission = new HttpAdmissionController(
 );
 const requestLogger = jsonLineLogger();
 const metrics = new PrometheusMetrics();
+const RESPONSE_SECURITY_HEADERS = {
+  "cache-control": "no-store",
+  "content-security-policy": "default-src 'none'; frame-ancestors 'none'; sandbox",
+  "referrer-policy": "no-referrer",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+} as const;
 const logInternalError = (error: unknown): void => {
   const errorName = error instanceof Error ? error.name : "UnknownError";
   process.stderr.write(`${JSON.stringify({
@@ -62,7 +70,11 @@ const application = new OnyxApplication({
 });
 
 function respond(response: ServerResponse, result: ApiResponse): void {
-  response.writeHead(result.status, {"content-type": "application/json; charset=utf-8", ...result.headers});
+  response.writeHead(result.status, {
+    ...RESPONSE_SECURITY_HEADERS,
+    "content-type": "application/json; charset=utf-8",
+    ...result.headers,
+  });
   response.end(serializeResponseBody(result.body));
 }
 
@@ -82,6 +94,7 @@ export const server = createServer({
   const requestIdHeader = request.headers["x-request-id"];
   const requestId = resolveRequestId(Array.isArray(requestIdHeader) ? undefined : requestIdHeader, () => uuidV7());
   const pathname = new URL(request.url ?? "/", "http://onyx.local").pathname;
+  const hasRequestBody = requestHasBody(request);
   const decision = isAdmissionExempt(request.method, pathname) ? undefined : admission.admit(clientKey(request), Date.now());
   if (decision && !decision.accepted) {
     const result: ApiResponse = {
@@ -94,7 +107,7 @@ export const server = createServer({
         "x-request-id": requestId,
         "x-ratelimit-remaining": String(decision.remaining),
         "retry-after": String(decision.retryAfterSeconds),
-        ...(decision.status === 503 ? {connection: "close"} : {}),
+        ...(decision.status === 503 || hasRequestBody ? {connection: "close"} : {}),
       },
     };
     respond(response, result);
@@ -109,19 +122,25 @@ export const server = createServer({
     return;
   }
   let completedStatus = 500;
-  let requestBodyComplete = request.method !== "POST";
+  let requestBodyComplete = !hasRequestBody;
   try {
-    const body = request.method === "POST" ? await readJsonBody(request) : undefined;
-    requestBodyComplete = true;
+    const expectsJsonBody = acceptsJsonBody(request.method, pathname);
+    const body = expectsJsonBody ? await readJsonBody(request) : undefined;
+    if (expectsJsonBody) requestBodyComplete = true;
     const result = await application.handle({
       method: request.method ?? "GET",
       path: request.url ?? "/",
       body,
       headers: {authorization: request.headers.authorization, "x-request-id": requestId},
     });
-    const completed = decision
-      ? {...result, headers: {...result.headers, "x-ratelimit-remaining": String(decision.remaining)}}
-      : result;
+    const completed = {
+      ...result,
+      headers: {
+        ...result.headers,
+        ...(decision ? {"x-ratelimit-remaining": String(decision.remaining)} : {}),
+        ...(!requestBodyComplete ? {connection: "close"} : {}),
+      },
+    };
     completedStatus = completed.status;
     respond(response, completed);
   } catch (error) {
@@ -184,6 +203,13 @@ function clientKey(request: IncomingMessage): string {
     if (first && first.length <= 128) return first;
   }
   return (request.socket.remoteAddress ?? "unknown").slice(0, 128);
+}
+
+function requestHasBody(request: IncomingMessage): boolean {
+  if (request.headers["transfer-encoding"] !== undefined) return true;
+  const contentLength = request.headers["content-length"];
+  if (Array.isArray(contentLength)) return contentLength.some((value) => Number(value) > 0);
+  return Number(contentLength ?? "0") > 0;
 }
 
 function logTransportResult(

@@ -21,6 +21,26 @@ describe("OnyxApplication", () => {
       assert.equal(health.status, 200);
       assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence"]);
 
+      const head = await application.handle({method: "HEAD", path: "/healthz"});
+      assert.equal(head.status, 200);
+      assert.deepEqual(head.body, health.body);
+
+      const wrongHealthMethod = await application.handle({method: "POST", path: "/healthz"});
+      assert.equal(wrongHealthMethod.status, 405);
+      assert.equal(wrongHealthMethod.headers?.allow, "GET, HEAD");
+      assert.equal(body(wrongHealthMethod).code, "INVALID_ARGUMENT");
+
+      const wrongReadMethod = await application.handle({method: "DELETE", path: "/v1/missions"});
+      assert.equal(wrongReadMethod.status, 405);
+      assert.equal(wrongReadMethod.headers?.allow, "GET, HEAD");
+
+      const wrongCommandMethod = await application.handle({method: "GET", path: "/v1/mission/commands/CreateMission"});
+      assert.equal(wrongCommandMethod.status, 405);
+      assert.equal(wrongCommandMethod.headers?.allow, "POST");
+
+      const unknownCommandContext = await application.handle({method: "POST", path: "/v1/unknown/commands/Anything"});
+      assert.equal(unknownCommandContext.status, 404);
+
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");

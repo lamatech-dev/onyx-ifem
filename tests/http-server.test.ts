@@ -22,7 +22,7 @@ describe("HTTP executable", () => {
         ONYX_MAX_IN_FLIGHT: "1",
         ONYX_OUTBOX_WEBHOOK_URL: "",
         ONYX_PORT: String(port),
-        ONYX_RATE_LIMIT_CAPACITY: "9",
+        ONYX_RATE_LIMIT_CAPACITY: "11",
         ONYX_RATE_LIMIT_REFILL_PER_SECOND: "0.01",
       }),
       stdio: ["ignore", "pipe", "pipe"],
@@ -39,7 +39,27 @@ describe("HTTP executable", () => {
       const health = await fetch(`${origin}/healthz`, {headers: {"x-request-id": "smoke-health"}});
       assert.equal(health.status, 200);
       assert.equal(health.headers.get("x-request-id"), "smoke-health");
+      assert.equal(health.headers.get("cache-control"), "no-store");
+      assert.equal(health.headers.get("content-security-policy"), "default-src 'none'; frame-ancestors 'none'; sandbox");
+      assert.equal(health.headers.get("referrer-policy"), "no-referrer");
+      assert.equal(health.headers.get("x-content-type-options"), "nosniff");
+      assert.equal(health.headers.get("x-frame-options"), "DENY");
+      assert.equal(health.headers.has("strict-transport-security"), false);
       assert.equal((await health.json() as {status: string}).status, "ok");
+
+      const head = await fetch(`${origin}/healthz`, {method: "HEAD"});
+      assert.equal(head.status, 200);
+      assert.equal(await head.text(), "");
+
+      const wrongHealthMethod = await fetch(`${origin}/healthz`, {
+        method: "POST",
+        headers: {"content-type": "text/plain"},
+        body: "must-not-be-parsed",
+      });
+      assert.equal(wrongHealthMethod.status, 405);
+      assert.equal(wrongHealthMethod.headers.get("allow"), "GET, HEAD");
+      assert.equal(wrongHealthMethod.headers.get("connection"), "close");
+      assert.equal((await wrongHealthMethod.json() as {code: string}).code, "INVALID_ARGUMENT");
 
       const readiness = await fetch(`${origin}/readyz`);
       assert.equal(readiness.status, 200);
@@ -138,8 +158,8 @@ describe("HTTP executable", () => {
       assert.equal(rateLimited.status, 429);
       assert.equal((await rateLimited.json() as {code: string}).code, "RATE_LIMITED");
 
-      const wrongMethod = await fetch(`${origin}/metrics`, {method: "POST", body: "{}"});
-      assert.equal(wrongMethod.status, 429);
+      const wrongMetricsMethod = await fetch(`${origin}/metrics`, {method: "POST", body: "{}"});
+      assert.equal(wrongMetricsMethod.status, 429);
 
       assert.equal((await fetch(`${origin}/healthz`)).status, 200);
       assert.equal((await fetch(`${origin}/readyz`)).status, 200);
