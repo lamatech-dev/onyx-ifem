@@ -64,6 +64,15 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   assert.match(page, /ChangeContextStrength/);
   assert.match(page, /ArchiveContextLink/);
   assert.match(page, /RestoreContextLink/);
+  assert.match(page, /MeetingPanel/);
+  assert.match(page, /CreateMeeting/);
+  assert.match(page, /InviteParticipant/);
+  assert.match(page, /RemoveParticipant/);
+  assert.match(page, /StartMeeting/);
+  assert.match(page, /RecordDecision/);
+  assert.match(page, /ProposeActionItem/);
+  assert.match(page, /EndMeeting/);
+  assert.match(page, /CancelMeeting/);
   assert.match(page, /MissionDetail/);
   assert.match(page, /RecordDetail/);
   assert.match(page, /MissionBlueprintRevisionCreated/);

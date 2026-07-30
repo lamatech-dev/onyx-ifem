@@ -631,112 +631,112 @@
       "path": "contracts/events/context/ContextLinkRestored.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "command",
       "name": "CreateMeeting",
       "path": "contracts/commands/meeting/CreateMeeting.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "command",
       "name": "InviteParticipant",
       "path": "contracts/commands/meeting/InviteParticipant.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "command",
       "name": "RemoveParticipant",
       "path": "contracts/commands/meeting/RemoveParticipant.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "command",
       "name": "StartMeeting",
       "path": "contracts/commands/meeting/StartMeeting.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "command",
       "name": "RecordDecision",
       "path": "contracts/commands/meeting/RecordDecision.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "command",
       "name": "ProposeActionItem",
       "path": "contracts/commands/meeting/ProposeActionItem.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "command",
       "name": "EndMeeting",
       "path": "contracts/commands/meeting/EndMeeting.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "command",
       "name": "CancelMeeting",
       "path": "contracts/commands/meeting/CancelMeeting.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "event",
       "name": "MeetingCreated",
       "path": "contracts/events/meeting/MeetingCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "event",
       "name": "ParticipantInvited",
       "path": "contracts/events/meeting/ParticipantInvited.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "event",
       "name": "ParticipantRemoved",
       "path": "contracts/events/meeting/ParticipantRemoved.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "event",
       "name": "MeetingStarted",
       "path": "contracts/events/meeting/MeetingStarted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "event",
       "name": "DecisionRecorded",
       "path": "contracts/events/meeting/DecisionRecorded.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "event",
       "name": "ActionItemProposed",
       "path": "contracts/events/meeting/ActionItemProposed.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "event",
       "name": "MeetingEnded",
       "path": "contracts/events/meeting/MeetingEnded.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C06",
       "kind": "event",
       "name": "MeetingCancelled",

@@ -24,6 +24,9 @@ import { SqliteIdentityRepository } from "../identity-authority/sqlite-repositor
 import { InMemoryContextLinkRepository } from "../context-link/repository.ts";
 import { ContextLinkService } from "../context-link/service.ts";
 import { SqliteContextLinkRepository } from "../context-link/sqlite-repository.ts";
+import { InMemoryMeetingRepository } from "../meeting/repository.ts";
+import { MeetingService } from "../meeting/service.ts";
+import { SqliteMeetingRepository } from "../meeting/sqlite-repository.ts";
 import { OPENAPI_DOCUMENT } from "./openapi.ts";
 import { encodeCursor, readCollectionQuery, readHistoryQuery, readItemQuery } from "./query.ts";
 import { allowedMethodsForPath } from "./routes.ts";
@@ -45,7 +48,7 @@ export interface ApiResponse {
 export interface OnyxApplicationOptions {
   databasePath?: string;
   now?: () => Date;
-  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority" | "context", string>>;
+  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority" | "context" | "meeting", string>>;
   logError?: (error: unknown) => void;
   logger?: StructuredLogger;
   monotonicNow?: () => number;
@@ -143,6 +146,7 @@ export class OnyxApplication {
         throw new OnyxError("INVALID_ARGUMENT", `unsupported context object type: ${reference.aggregate_type}`);
       },
     });
+    const meeting = new MeetingService({repository:this.#database?new SqliteMeetingRepository(this.#database):new InMemoryMeetingRepository(),...time,replicaId:options.replicaIds?.meeting??"meeting-api",requireUser:async(organizationId,userId)=>{const user=await identity.getUser(organizationId,userId);if(user.status!=="ACTIVE")throw new OnyxError("INVALID_STATE_TRANSITION","meeting participant is disabled");}});
 
     this.#commands = new Map<string, (body: unknown) => Promise<unknown>>([
       ["mission", (body) => mission.execute(body)],
@@ -152,6 +156,7 @@ export class OnyxApplication {
       ["organization", (body) => organization.execute(body)],
       ["identity-authority", (body) => identity.execute(body)],
       ["context", (body) => contextLink.execute(body)],
+      ["meeting", (body) => meeting.execute(body)],
     ]);
     this.#resources = new Map([
       ["missions", {
@@ -203,6 +208,7 @@ export class OnyxApplication {
         get: (organizationId, objectId) => contextLink.getContextLink(organizationId, objectId),
         history: (organizationId, objectId, afterVersion, limit) => contextLink.getHistory(organizationId, objectId, afterVersion, limit),
       }],
+      ["meetings", {list:async(organizationId,afterId,limit)=>page(await meeting.listMeetings(organizationId,afterId,limit+1),limit,item=>item.meeting_id),get:(organizationId,objectId)=>meeting.getMeeting(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>meeting.getHistory(organizationId,objectId,afterVersion,limit)}],
     ]);
   }
 
@@ -236,7 +242,7 @@ export class OnyxApplication {
     const method = request.method === "HEAD" ? "GET" : request.method;
 
     if (method === "GET" && url.pathname === "/healthz") {
-      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context"]}};
+      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting"]}};
     }
     if (method === "GET" && url.pathname === "/readyz") {
       if (!this.#database) {
@@ -349,6 +355,7 @@ export class OnyxApplication {
       organizations: "organization:read",
       users: "identity-authority:read",
       "context-links": "context:read",
+      meetings: "meeting:read",
     };
     if (!claims.scope.includes(requiredScope[resource]!)) {
       throw new OnyxError("AUTHORITY_PROOF_INVALID", `${requiredScope[resource]} authority is missing`);

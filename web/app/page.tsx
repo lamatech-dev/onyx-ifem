@@ -100,6 +100,7 @@ type ContextLink = {
   context_link_id: string; organization_id: string; source_ref: {aggregate_type:string;object_id:string}; target_ref: {aggregate_type:string;object_id:string};
   relation_type: string; strength: "WEAK"|"NORMAL"|"STRONG"|"CRITICAL"; metadata: Record<string,string>; status: string; version: number; lifecycle_epoch: number; authority_epoch: number;
 };
+type Meeting={meeting_id:string;organization_id:string;title:string;organizer_id:string;scheduled_start_at:string;timezone:string;status:string;started_at?:string;ended_at?:string;summary?:string;version:number;lifecycle_epoch:number;authority_epoch:number;participants:Record<string,{participant_id:string;role:string}>;decisions:Record<string,{decision_id:string;title:string;decision:string;decided_by_id:string}>;action_items:Record<string,{action_item_id:string;title:string;assignee_id:string;due_at?:string}>};
 
 type RecordSelection =
   | { kind: "task"; record: Task }
@@ -225,6 +226,7 @@ export default function Home() {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [users, setUsers] = useState<UserIdentity[]>([]);
   const [contextLinks, setContextLinks] = useState<ContextLink[]>([]);
+  const [meetings,setMeetings]=useState<Meeting[]>([]);
   const [ready, setReady] = useState<Ready | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -273,7 +275,7 @@ export default function Home() {
     setError("");
     try {
       const query = `organization_id=${encodeURIComponent(organizationId)}&limit=100`;
-      const [healthData, missionData, taskData, timelineData, reportData, organizationData, userData, contextLinkData] = await Promise.all([
+      const [healthData, missionData, taskData, timelineData, reportData, organizationData, userData, contextLinkData,meetingData] = await Promise.all([
         api<Ready>("/readyz"),
         api<ResourcePage<Mission>>(`/v1/missions?${query}`),
         api<ResourcePage<Task>>(`/v1/tasks?${query}`),
@@ -282,6 +284,7 @@ export default function Home() {
         api<ResourcePage<Organization>>(`/v1/organizations?organization_id=${encodeURIComponent(organizationId)}&limit=1`),
         api<ResourcePage<UserIdentity>>(`/v1/users?${query}`),
         api<ResourcePage<ContextLink>>(`/v1/context-links?${query}`),
+        api<ResourcePage<Meeting>>(`/v1/meetings?${query}`),
       ]);
       setReady(healthData);
       setMissions(missionData.items);
@@ -291,6 +294,7 @@ export default function Home() {
       setOrganization(organizationData.items[0] ?? null);
       setUsers(userData.items);
       setContextLinks(contextLinkData.items);
+      setMeetings(meetingData.items);
       setNextCursors({ mission: missionData.next_cursor, task: taskData.next_cursor, timeline: timelineData.next_cursor, report: reportData.next_cursor });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to reach ONYX API");
@@ -763,6 +767,9 @@ export default function Home() {
     const command=envelope(commandType,"ContextLink",id,organizationId,principalId,scope,payload);if(type!=="create"&&link){command.expected_version=link.version;command.expected_lifecycle_epoch=link.lifecycle_epoch;command.expected_authority_epoch=link.authority_epoch;}await api(`/v1/context/commands/${commandType}`,{method:"POST",body:JSON.stringify(command)});await refresh();setToast(`${commandType.replace(/([A-Z])/g," $1").trim()} completed`);
   }catch(caught){setToast(caught instanceof Error?caught.message:"Context link action failed");}finally{setActionLoading("");}}
 
+  async function runMeetingAction(type:"create"|"invite"|"remove"|"start"|"decision"|"action"|"end"|"cancel",selected?:Meeting){setActionLoading(`meeting:${type}`);try{const meeting=selected??meetings[0];let commandType:string,scope:string,id:string,payload:Record<string,unknown>;if(type==="create"){const organizer=users.find(user=>user.status==="ACTIVE");if(!organizer)throw new Error("Create an active user before scheduling a meeting");id=uuidV7();commandType="CreateMeeting";scope="meeting:create";payload={meeting_id:id,title:`Operational review ${meetings.length+1}`,organizer_id:organizer.user_id,scheduled_start_at:new Date(Date.now()+86_400_000).toISOString().replace(/Z$/,"000Z"),timezone:"Asia/Tehran"};}else{if(!meeting)throw new Error("Create a meeting first");id=meeting.meeting_id;if(type==="invite"){const participant=users.find(user=>user.status==="ACTIVE"&&!meeting.participants[user.user_id]);if(!participant)throw new Error("Create another active user to invite");commandType="InviteParticipant";scope="meeting:participant:invite";payload={meeting_id:id,participant_id:participant.user_id,role:"PARTICIPANT"};}else if(type==="remove"){const participant=Object.values(meeting.participants).find(item=>item.participant_id!==meeting.organizer_id);if(!participant)throw new Error("Invite a removable participant first");commandType="RemoveParticipant";scope="meeting:participant:remove";payload={meeting_id:id,participant_id:participant.participant_id,reason:"Availability update from ONYX Command Center"};}else if(type==="start"){commandType="StartMeeting";scope="meeting:start";payload={meeting_id:id,started_at:utcNow()};}else if(type==="decision"){commandType="RecordDecision";scope="meeting:decision:record";payload={meeting_id:id,decision_id:uuidV7(),title:"Operational decision",decision:"Proceed under the agreed controls.",decided_by_id:meeting.organizer_id};}else if(type==="action"){commandType="ProposeActionItem";scope="meeting:action-item:propose";payload={meeting_id:id,action_item_id:uuidV7(),title:"Publish meeting follow-up",assignee_id:meeting.organizer_id,due_at:new Date(Date.now()+86_400_000).toISOString().replace(/Z$/,"000Z")};}else if(type==="end"){if(!window.confirm("End this meeting and freeze its outcome?"))return;commandType="EndMeeting";scope="meeting:end";payload={meeting_id:id,ended_at:utcNow(),summary:"Meeting completed from ONYX Command Center."};}else{if(!window.confirm("Cancel this meeting?"))return;commandType="CancelMeeting";scope="meeting:cancel";payload={meeting_id:id,reason:"Cancelled from ONYX Command Center"};}}
+    const command=envelope(commandType,"Meeting",id,organizationId,principalId,scope,payload);if(type!=="create"&&meeting){command.expected_version=meeting.version;command.expected_lifecycle_epoch=meeting.lifecycle_epoch;command.expected_authority_epoch=meeting.authority_epoch;}await api(`/v1/meeting/commands/${commandType}`,{method:"POST",body:JSON.stringify(command)});await refresh();setToast(`${commandType.replace(/([A-Z])/g," $1").trim()} completed`);}catch(caught){setToast(caught instanceof Error?caught.message:"Meeting action failed");}finally{setActionLoading("");}}
+
   function saveIdentity() {
     localStorage.setItem("onyx.organization", organizationId);
     localStorage.setItem("onyx.principal", principalId);
@@ -821,6 +828,7 @@ export default function Home() {
               <OrganizationPanel organization={organization} loading={actionLoading} onAction={(type) => void runOrganizationAction(type)} />
               <IdentityPanel users={users} loading={actionLoading} onAction={(type, user) => void runIdentityAction(type, user)} />
               <ContextGraphPanel links={contextLinks} loading={actionLoading} onAction={(type, link) => void runContextLinkAction(type, link)} />
+              <MeetingPanel meetings={meetings} loading={actionLoading} onAction={(type,meeting)=>void runMeetingAction(type,meeting)}/>
 
               <section className="dashboard-grid">
                 <article className="panel mission-panel">
@@ -878,6 +886,8 @@ function IdentityPanel({ users, loading, onAction }: { users: UserIdentity[]; lo
 }
 
 function ContextGraphPanel({links,loading,onAction}:{links:ContextLink[];loading:string;onAction:(type:"create"|"metadata"|"strength"|"archive"|"restore",link?:ContextLink)=>void}){const link=links[0];return <section className="panel context-graph-panel"><div className="identity-heading"><div><p className="eyebrow">CONTEXT GRAPH</p><h2>Cross-domain relationships</h2><p>Validated edges connect existing objects without transferring aggregate ownership.</p></div><button className="primary-button" disabled={Boolean(loading)} onClick={()=>onAction("create")}>＋ Create link</button></div><div className="context-edge-grid">{links.length?links.slice(0,6).map((item)=><article key={item.context_link_id}><div className="context-node"><b>{item.source_ref.aggregate_type[0]}</b><span><strong>{item.source_ref.aggregate_type}</strong><small>{shortId(item.source_ref.object_id)}</small></span></div><div className="context-connector"><span>{item.relation_type.replaceAll("_"," ")}</span><i/><b>{item.strength}</b></div><div className="context-node"><b>{item.target_ref.aggregate_type[0]}</b><span><strong>{item.target_ref.aggregate_type}</strong><small>{shortId(item.target_ref.object_id)}</small></span></div><em className={statusClass(item.status)}>{item.status}</em></article>):<p className="organization-placeholder">No cross-domain edges exist yet.</p>}</div>{link&&<div className="organization-actions context-actions"><button disabled={Boolean(loading)||link.status!=="ACTIVE"} onClick={()=>onAction("metadata",link)}>Update metadata</button><button disabled={Boolean(loading)||link.status!=="ACTIVE"} onClick={()=>onAction("strength",link)}>Change strength</button>{link.status==="ACTIVE"?<button className="danger-control" disabled={Boolean(loading)} onClick={()=>onAction("archive",link)}>Archive link</button>:<button disabled={Boolean(loading)} onClick={()=>onAction("restore",link)}>Restore link</button>}</div>}</section>}
+
+function MeetingPanel({meetings,loading,onAction}:{meetings:Meeting[];loading:string;onAction:(type:"create"|"invite"|"remove"|"start"|"decision"|"action"|"end"|"cancel",meeting?:Meeting)=>void}){const meeting=meetings.find(item=>!["ENDED","CANCELLED"].includes(item.status))??meetings[0];return <section className="panel meeting-panel"><div className="identity-heading"><div><p className="eyebrow">MEETING OPERATIONS</p><h2>Decisions into accountable action</h2><p>Participant-bound sessions with immutable decisions and proposed follow-up.</p></div><button className="primary-button" disabled={Boolean(loading)} onClick={()=>onAction("create")}>＋ Schedule meeting</button></div>{meeting?<div className="meeting-layout"><article className="meeting-focus"><header><div><span className="meeting-date">{new Date(meeting.scheduled_start_at).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}</span><span><strong>{meeting.title}</strong><small>{new Date(meeting.scheduled_start_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})} · {meeting.timezone}</small></span></div><b className={statusClass(meeting.status)}>{meeting.status.replaceAll("_"," ")}</b></header><div className="meeting-metrics"><span><strong>{Object.keys(meeting.participants).length}</strong>participants</span><span><strong>{Object.keys(meeting.decisions).length}</strong>decisions</span><span><strong>{Object.keys(meeting.action_items).length}</strong>actions</span><span><strong>v{meeting.version}</strong>stream</span></div><div className="meeting-flow"><i className="done"/><span>Scheduled</span><i className={meeting.status!=="SCHEDULED"?"done":""}/><span>In progress</span><i className={["ENDED","CANCELLED"].includes(meeting.status)?"done":""}/><span>Outcome</span></div></article><aside><p className="eyebrow">RECENT OUTCOMES</p>{Object.values(meeting.decisions).slice(-2).map(item=><div key={item.decision_id}><strong>{item.title}</strong><small>{item.decision}</small></div>)}{Object.values(meeting.action_items).slice(-2).map(item=><div key={item.action_item_id}><strong>{item.title}</strong><small>Assigned · {shortId(item.assignee_id)}</small></div>)}{!Object.keys(meeting.decisions).length&&!Object.keys(meeting.action_items).length&&<p>No outcomes recorded yet.</p>}</aside></div>:<p className="organization-placeholder">No meetings scheduled yet.</p>}{meeting&&!['ENDED','CANCELLED'].includes(meeting.status)&&<div className="organization-actions meeting-actions">{meeting.status==="SCHEDULED"&&<><button disabled={Boolean(loading)} onClick={()=>onAction("invite",meeting)}>Invite participant</button><button disabled={Boolean(loading)} onClick={()=>onAction("remove",meeting)}>Remove participant</button><button disabled={Boolean(loading)} onClick={()=>onAction("start",meeting)}>Start meeting</button></>}{meeting.status==="IN_PROGRESS"&&<><button disabled={Boolean(loading)} onClick={()=>onAction("decision",meeting)}>Record decision</button><button disabled={Boolean(loading)} onClick={()=>onAction("action",meeting)}>Propose action</button><button disabled={Boolean(loading)} onClick={()=>onAction("end",meeting)}>End meeting</button></>}<button className="danger-control" disabled={Boolean(loading)} onClick={()=>onAction("cancel",meeting)}>Cancel meeting</button></div>}</section>}
 
 function MissionRow({ mission, index, taskCount, onOpen }: { mission: Mission; index: number; taskCount: number; onOpen: () => void }) {
   const colors = ["#7c6cf2", "#31b7c2", "#e19a43", "#59ad78", "#d76f91"];

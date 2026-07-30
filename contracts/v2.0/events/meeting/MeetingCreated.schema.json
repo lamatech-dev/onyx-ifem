@@ -11,8 +11,7 @@
           "const": "MeetingCreated"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"meeting_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"title":{"type":"string","minLength":1,"maxLength":300},"organizer_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"scheduled_start_at":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"},"timezone":{"type":"string","minLength":1,"maxLength":100}}, "required": ["meeting_id","title","organizer_id","scheduled_start_at","timezone"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX MeetingCreated",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C06",
   "x-onyx-topic": "meeting.events"
 }

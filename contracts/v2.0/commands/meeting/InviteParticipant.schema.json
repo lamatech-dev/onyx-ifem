@@ -11,8 +11,7 @@
           "const": "InviteParticipant"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"meeting_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"participant_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"role":{"type":"string","minLength":1,"maxLength":120}}, "required": ["meeting_id","participant_id","role"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX InviteParticipant",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C06",
   "x-onyx-topic": "meeting.events"
 }

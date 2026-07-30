@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 type JsonObject = Record<string, any>;
 
 interface CommandRoute {
-  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization" | "identity-authority" | "context";
+  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization" | "identity-authority" | "context" | "meeting";
   command: string;
   event: string;
 }
@@ -74,6 +74,14 @@ export const IMPLEMENTED_COMMAND_ROUTES: readonly CommandRoute[] = [
   {context: "context", command: "ChangeContextStrength", event: "ContextStrengthChanged"},
   {context: "context", command: "ArchiveContextLink", event: "ContextLinkArchived"},
   {context: "context", command: "RestoreContextLink", event: "ContextLinkRestored"},
+  {context:"meeting",command:"CreateMeeting",event:"MeetingCreated"},
+  {context:"meeting",command:"InviteParticipant",event:"ParticipantInvited"},
+  {context:"meeting",command:"RemoveParticipant",event:"ParticipantRemoved"},
+  {context:"meeting",command:"StartMeeting",event:"MeetingStarted"},
+  {context:"meeting",command:"RecordDecision",event:"DecisionRecorded"},
+  {context:"meeting",command:"ProposeActionItem",event:"ActionItemProposed"},
+  {context:"meeting",command:"EndMeeting",event:"MeetingEnded"},
+  {context:"meeting",command:"CancelMeeting",event:"MeetingCancelled"},
 ];
 
 function readSchema(path: string): JsonObject {
@@ -235,6 +243,7 @@ addResource("reports", "Report", "ReportView", IMPLEMENTED_COMMAND_ROUTES.filter
 addResource("organizations", "Organization", "OrganizationView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "organization").map((route) => route.event));
 addResource("users", "User", "UserIdentityView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "identity-authority").map((route) => route.event));
 addResource("context-links", "ContextLink", "ContextLinkView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "context").map((route) => route.event));
+addResource("meetings","Meeting","MeetingView",IMPLEMENTED_COMMAND_ROUTES.filter(route=>route.context==="meeting").map(route=>route.event));
 
 paths["/healthz"] = {
   get: {
@@ -392,6 +401,7 @@ const viewSchemas: JsonObject = {
       status: {type: "string", enum: ["ACTIVE", "ARCHIVED"]}, version: {type: "integer", minimum: 1}, lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0},
     },
   },
+  MeetingView:{type:"object",additionalProperties:false,required:["meeting_id","organization_id","title","organizer_id","scheduled_start_at","timezone","status","version","lifecycle_epoch","authority_epoch","participants","decisions","action_items"],properties:{meeting_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},organization_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},title:{type:"string"},organizer_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},scheduled_start_at:{$ref:"#/components/schemas/SharedTypes/$defs/UtcInstant"},timezone:{type:"string"},status:{type:"string",enum:["SCHEDULED","IN_PROGRESS","ENDED","CANCELLED"]},started_at:{$ref:"#/components/schemas/SharedTypes/$defs/UtcInstant"},ended_at:{$ref:"#/components/schemas/SharedTypes/$defs/UtcInstant"},summary:{type:"string"},version:{type:"integer",minimum:1},lifecycle_epoch:{type:"integer",minimum:0},authority_epoch:{type:"integer",minimum:0},participants:{type:"object"},decisions:{type:"object"},action_items:{type:"object"}}},
 };
 
 const contractSchemas: JsonObject = {

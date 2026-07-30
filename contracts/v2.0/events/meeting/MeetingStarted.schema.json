@@ -11,8 +11,7 @@
           "const": "MeetingStarted"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"meeting_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"started_at":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"}}, "required": ["meeting_id","started_at"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX MeetingStarted",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C06",
   "x-onyx-topic": "meeting.events"
 }

@@ -5,6 +5,7 @@ import type { CreateReportCommand, ReportingCommand } from "../src/reporting-evi
 import type { OrganizationCommand } from "../src/organization/types.ts";
 import type { IdentityCommand } from "../src/identity-authority/types.ts";
 import type { ContextLinkCommand } from "../src/context-link/types.ts";
+import type { MeetingCommand } from "../src/meeting/types.ts";
 
 export function testId(sequence: number): string {
   return `018f1c2a-7b3d-7abc-8def-${sequence.toString(16).padStart(12, "0")}`;
@@ -226,3 +227,5 @@ export function contextLinkCommand<TType extends ContextLinkCommand["command_typ
   const id = (payload as {context_link_id: string}).context_link_id;
   return {actor_context:{actor_type:"USER",principal_id:testId(15)},authority_proof:{authority_epoch:0,expires_at:"2030-01-01T00:00:00.000000Z",proof_ref:`proof:${type}`,scope:[scope]},command_id:testId(2_300+sequence),command_type:type,correlation_id:testId(200),expected_authority_epoch:0,expected_lifecycle_epoch:lifecycleEpoch,expected_version:expectedVersion,issued_at:"2026-07-29T20:00:00.000000Z",operation_id:testId(2_400+sequence),organization_id:testId(13),payload,schema_version:1,target:{aggregate_type:"ContextLink",object_id:id},vector_clock:{"replica-a":sequence}} as unknown as Extract<ContextLinkCommand,{command_type:TType}>;
 }
+
+export function meetingCommand<TType extends MeetingCommand["command_type"],TPayload>(type:TType,sequence:number,payload:TPayload,scope:string,expectedVersion:number,lifecycleEpoch=0):Extract<MeetingCommand,{command_type:TType}>{const id=(payload as{meeting_id:string}).meeting_id;return{actor_context:{actor_type:"USER",principal_id:testId(800)},authority_proof:{authority_epoch:0,expires_at:"2030-01-01T00:00:00.000000Z",proof_ref:`proof:${type}`,scope:[scope]},command_id:testId(2_600+sequence),command_type:type,correlation_id:testId(200),expected_authority_epoch:0,expected_lifecycle_epoch:lifecycleEpoch,expected_version:expectedVersion,issued_at:"2026-07-29T20:00:00.000000Z",operation_id:testId(2_700+sequence),organization_id:testId(13),payload,schema_version:1,target:{aggregate_type:"Meeting",object_id:id},vector_clock:{"replica-a":sequence}}as unknown as Extract<MeetingCommand,{command_type:TType}>}
