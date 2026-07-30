@@ -11,8 +11,32 @@
           "const": "RetryDelivery"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "notification_id",
+            "delivery_batch_id",
+            "retry_attempt",
+            "failure_reason"
+          ],
+          "properties": {
+            "notification_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "delivery_batch_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "retry_attempt": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "failure_reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +46,7 @@
     }
   ],
   "title": "ONYX RetryDelivery",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C15",
   "x-onyx-topic": "notification.events"
 }

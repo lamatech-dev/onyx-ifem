@@ -1625,98 +1625,98 @@
       "path": "contracts/events/automation/AutomationRuleArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "command",
       "name": "CreateNotification",
       "path": "contracts/commands/notification/CreateNotification.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "command",
       "name": "ResolveRecipients",
       "path": "contracts/commands/notification/ResolveRecipients.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "command",
       "name": "SendNotification",
       "path": "contracts/commands/notification/SendNotification.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "command",
       "name": "RetryDelivery",
       "path": "contracts/commands/notification/RetryDelivery.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "command",
       "name": "EscalateNotification",
       "path": "contracts/commands/notification/EscalateNotification.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "command",
       "name": "AcknowledgeNotification",
       "path": "contracts/commands/notification/AcknowledgeNotification.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "command",
       "name": "ArchiveNotification",
       "path": "contracts/commands/notification/ArchiveNotification.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "event",
       "name": "NotificationCreated",
       "path": "contracts/events/notification/NotificationCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "event",
       "name": "RecipientsResolved",
       "path": "contracts/events/notification/RecipientsResolved.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "event",
       "name": "NotificationSent",
       "path": "contracts/events/notification/NotificationSent.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "event",
       "name": "NotificationDeliveryFailed",
       "path": "contracts/events/notification/NotificationDeliveryFailed.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "event",
       "name": "NotificationEscalated",
       "path": "contracts/events/notification/NotificationEscalated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "event",
       "name": "NotificationAcknowledged",
       "path": "contracts/events/notification/NotificationAcknowledged.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C15",
       "kind": "event",
       "name": "NotificationArchived",

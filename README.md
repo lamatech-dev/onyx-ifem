@@ -167,6 +167,10 @@ Available endpoints:
 - `GET /v1/automation-rules?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/automation-rules/{id}?organization_id={id}`
 - `GET /v1/automation-rules/{id}/history?organization_id={id}&after_version=0&limit=100`
+- `POST /v1/notification/commands/{CommandType}`
+- `GET /v1/notifications?organization_id={id}&limit=100&cursor={opaque}`
+- `GET /v1/notifications/{id}?organization_id={id}`
+- `GET /v1/notifications/{id}/history?organization_id={id}&after_version=0&limit=100`
 - `POST /v1/mission/commands/{CommandType}`
 - `GET /v1/missions?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/missions/{id}?organization_id={id}`
@@ -228,12 +232,14 @@ The Forecast context owns horizon-bound baselines, probability-weighted scenario
 
 The Automation context owns enablement-fenced rules, trigger evaluations, action receipts, retries, compensation, and archival. See [Automation context](docs/automation-context.md).
 
+The Notification context owns recipient resolution, multi-channel delivery batches, retry failures, escalation, acknowledgement, and archival. See [Notification context](docs/notification-context.md).
+
 The HTTP adapter exposes every currently executable context. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
 
 ## Contract maturity
 
-The imported v2.0 package contains 294 command/event schemas. All 115 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
+The imported v2.0 package contains 294 command/event schemas. All 122 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
 
 The Mission context is now lifecycle-complete, including operational halt, restart with lifecycle-epoch fencing, close, and archive transitions.
 
-Organization, Identity/Authority, Context Link, Meeting, Conversation, File, Approval, Capacity, Forecast, Automation, Mission, Work, Timeline, and Reporting-Evidence are lifecycle-complete. Remaining bounded contexts are implemented next in dependency order.
+Organization, Identity/Authority, Context Link, Meeting, Conversation, File, Approval, Capacity, Forecast, Automation, Notification, Mission, Work, Timeline, and Reporting-Evidence are lifecycle-complete. Remaining bounded contexts are implemented next in dependency order.

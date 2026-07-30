@@ -11,8 +11,24 @@
           "const": "NotificationSent"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "notification_id",
+            "delivery_batch_id",
+            "sent_at"
+          ],
+          "properties": {
+            "notification_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "delivery_batch_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "sent_at": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +38,7 @@
     }
   ],
   "title": "ONYX NotificationSent",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C15",
   "x-onyx-topic": "notification.events"
 }
