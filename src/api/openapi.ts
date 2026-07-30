@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 type JsonObject = Record<string, any>;
 
 interface CommandRoute {
-  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization" | "identity-authority" | "context" | "meeting" | "communication"|"file"|"approval"|"capacity"|"forecasting"|"automation"|"notification"|"synchronization"|"audit";
+  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization" | "identity-authority" | "context" | "meeting" | "communication"|"file"|"approval"|"capacity"|"forecasting"|"automation"|"notification"|"synchronization"|"audit"|"policy";
   command: string;
   event: string;
 }
@@ -91,6 +91,7 @@ export const IMPLEMENTED_COMMAND_ROUTES: readonly CommandRoute[] = [
   {context:"notification",command:"CreateNotification",event:"NotificationCreated"},{context:"notification",command:"ResolveRecipients",event:"RecipientsResolved"},{context:"notification",command:"SendNotification",event:"NotificationSent"},{context:"notification",command:"RetryDelivery",event:"NotificationDeliveryFailed"},{context:"notification",command:"EscalateNotification",event:"NotificationEscalated"},{context:"notification",command:"AcknowledgeNotification",event:"NotificationAcknowledged"},{context:"notification",command:"ArchiveNotification",event:"NotificationArchived"},
   {context:"synchronization",command:"StartSynchronization",event:"SynchronizationStarted"},{context:"synchronization",command:"OfferOperationBatch",event:"OperationBatchOffered"},{context:"synchronization",command:"AcceptOperationBatch",event:"OperationBatchAccepted"},{context:"synchronization",command:"MergeOperationBatch",event:"OperationBatchMerged"},{context:"synchronization",command:"ResolveConflict",event:"ConflictResolved"},{context:"synchronization",command:"EscalateConflict",event:"ConflictEscalated"},{context:"synchronization",command:"AcknowledgeSynchronization",event:"SynchronizationAcknowledged"},{context:"synchronization",command:"CloseSynchronization",event:"SynchronizationClosed"},
   {context:"audit",command:"AppendAuditEntry",event:"AuditEntryAppended"},{context:"audit",command:"SealAuditPartition",event:"AuditPartitionSealed"},{context:"audit",command:"CreateAuditExport",event:"AuditExportCreated"},{context:"audit",command:"VerifyIntegrity",event:"AuditIntegrityVerified"},{context:"audit",command:"ArchiveAuditPartition",event:"AuditPartitionArchived"},
+  {context:"policy",command:"CreatePolicy",event:"PolicyCreated"},{context:"policy",command:"CreatePolicyVersion",event:"PolicyVersionCreated"},{context:"policy",command:"PublishPolicyVersion",event:"PolicyVersionPublished"},{context:"policy",command:"EvaluatePolicy",event:"PolicyEvaluated"},{context:"policy",command:"RegisterViolation",event:"PolicyViolationDetected"},{context:"policy",command:"ApplyLegalHold",event:"LegalHoldApplied"},{context:"policy",command:"ReleaseLegalHold",event:"LegalHoldReleased"},{context:"policy",command:"RetirePolicy",event:"PolicyRetired"},{context:"policy",command:"DefineRateLimitPolicy",event:"RateLimitPolicyDefined"},
 ];
 
 function readSchema(path: string): JsonObject {
@@ -247,7 +248,7 @@ function addResource(resource: string, singular: string, schema: string, events:
 
 addResource("missions", "Mission", "MissionView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "mission").map((route) => route.event));
 addResource("tasks", "Task", "TaskView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "work").map((route) => route.event));
-addResource("timelines", "Timeline", "TimelineView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "timeline").map((route) => route.event));
+addResource("timelines", "Timeline", "TimelineView", [...IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "timeline").map((route) => route.event),"DeadlineReached","CriticalMarkerReached"]);
 addResource("reports", "Report", "ReportView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "reporting-evidence").map((route) => route.event));
 addResource("organizations", "Organization", "OrganizationView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "organization").map((route) => route.event));
 addResource("users", "User", "UserIdentityView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "identity-authority").map((route) => route.event));
@@ -262,6 +263,7 @@ addResource("automation-rules","Automation rule","AutomationRuleView",IMPLEMENTE
 addResource("notifications","Notification","NotificationView",IMPLEMENTED_COMMAND_ROUTES.filter(route=>route.context==="notification").map(route=>route.event));
 addResource("synchronizations","Synchronization","SynchronizationView",[...IMPLEMENTED_COMMAND_ROUTES.filter(route=>route.context==="synchronization").map(route=>route.event),"ConflictDetected"]);
 addResource("audit-partitions","Audit partition","AuditPartitionView",IMPLEMENTED_COMMAND_ROUTES.filter(route=>route.context==="audit").map(route=>route.event));
+addResource("policies","Policy","PolicyView",[...IMPLEMENTED_COMMAND_ROUTES.filter(route=>route.context==="policy").map(route=>route.event),"QuotaThresholdReached","QuotaExceeded","RateLimitTriggered"]);
 
 paths["/healthz"] = {
   get: {
@@ -366,7 +368,7 @@ const viewSchemas: JsonObject = {
   },
   TimelineView: {
     type: "object", additionalProperties: false,
-    required: ["timeline_id", "organization_id", "subject_ref", "timezone", "version", "status", "lifecycle_epoch", "authority_epoch", "deadlines", "milestones", "critical_markers", "penalty_zones", "resolved_exception_ids"],
+    required: ["timeline_id", "organization_id", "subject_ref", "timezone", "version", "status", "lifecycle_epoch", "authority_epoch", "deadlines", "milestones", "critical_markers", "penalty_zones", "resolved_exception_ids","reached_deadline_ids","reached_marker_ids"],
     properties: {
       timeline_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
       organization_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
@@ -375,6 +377,7 @@ const viewSchemas: JsonObject = {
       status: {type: "string", enum: ["ACTIVE", "ARCHIVED"]}, lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0},
       deadlines: {type: "object"}, milestones: {type: "object"}, critical_markers: {type: "object"}, penalty_zones: {type: "object"},
       resolved_exception_ids: {type: "array", items: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, uniqueItems: true},
+      reached_deadline_ids: {type: "array", items: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, uniqueItems: true}, reached_marker_ids: {type: "array", items: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, uniqueItems: true},
     },
   },
   ReportView: {
@@ -429,6 +432,7 @@ const viewSchemas: JsonObject = {
   NotificationView:{type:"object",additionalProperties:false,required:["notification_id","organization_id","title","body","severity","created_by_id","status","version","lifecycle_epoch","authority_epoch","recipients","deliveries","escalations"],properties:{notification_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},organization_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},title:{type:"string"},body:{type:"string"},severity:{type:"string",enum:["INFO","WARNING","CRITICAL"]},created_by_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},source_ref:{$ref:"#/components/schemas/SharedTypes/$defs/DomainObjectRef"},status:{type:"string",enum:["DRAFT","READY","SENT","ARCHIVED"]},version:{type:"integer",minimum:1},lifecycle_epoch:{type:"integer",minimum:0},authority_epoch:{type:"integer",minimum:0},recipients:{type:"object"},deliveries:{type:"object"},escalations:{type:"array",items:{type:"object"}}}},
   SynchronizationView:{type:"object",additionalProperties:false,required:["synchronization_id","organization_id","subject_ref","source_replica_id","target_replica_id","vector_clock","status","version","lifecycle_epoch","authority_epoch","batches","conflicts","acknowledgements"],properties:{synchronization_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},organization_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},subject_ref:{$ref:"#/components/schemas/SharedTypes/$defs/DomainObjectRef"},source_replica_id:{type:"string"},target_replica_id:{type:"string"},vector_clock:{type:"object"},status:{type:"string",enum:["ACTIVE","CONFLICTED","SYNCHRONIZED","CLOSED"]},version:{type:"integer",minimum:1},lifecycle_epoch:{type:"integer",minimum:0},authority_epoch:{type:"integer",minimum:0},batches:{type:"object"},conflicts:{type:"object"},acknowledgements:{type:"object"}}},
   AuditPartitionView:{type:"object",additionalProperties:false,required:["audit_partition_id","organization_id","status","version","lifecycle_epoch","authority_epoch","entries","exports","verifications","root_digest"],properties:{audit_partition_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},organization_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},status:{type:"string",enum:["OPEN","SEALED","ARCHIVED"]},version:{type:"integer",minimum:1},lifecycle_epoch:{type:"integer",minimum:0},authority_epoch:{type:"integer",minimum:0},entries:{type:"array",items:{type:"object"}},exports:{type:"object"},verifications:{type:"object"},root_digest:{type:"string"},sealed_at:{$ref:"#/components/schemas/SharedTypes/$defs/UtcInstant"}}},
+  PolicyView:{type:"object",additionalProperties:false,required:["policy_id","organization_id","name","description","policy_type","owner_id","status","version","lifecycle_epoch","authority_epoch","versions","evaluations","violations","holds","rate_limits"],properties:{policy_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},organization_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},name:{type:"string"},description:{type:"string"},policy_type:{type:"string",enum:["ACCESS","RETENTION","COMPLIANCE","RATE_LIMIT"]},owner_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},status:{type:"string",enum:["DRAFT","ACTIVE","RETIRED"]},version:{type:"integer",minimum:1},lifecycle_epoch:{type:"integer",minimum:0},authority_epoch:{type:"integer",minimum:0},versions:{type:"object"},active_version_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},evaluations:{type:"object"},violations:{type:"object"},holds:{type:"object"},rate_limits:{type:"object"}}},
 };
 
 const contractSchemas: JsonObject = {
@@ -441,6 +445,8 @@ for (const route of IMPLEMENTED_COMMAND_ROUTES) {
   contractSchemas[route.event] = contractSchema("events", route.context, route.event);
 }
 contractSchemas.ConflictDetected=contractSchema("events","synchronization","ConflictDetected");
+for(const event of ["DeadlineReached","CriticalMarkerReached"])contractSchemas[event]=contractSchema("events","timeline",event);
+for(const event of ["QuotaThresholdReached","QuotaExceeded","RateLimitTriggered"])contractSchemas[event]=contractSchema("events","policy",event);
 
 function errorResponse(description: string): JsonObject {
   return {description, content: jsonContent({$ref: "#/components/schemas/Error"})};

@@ -3,10 +3,10 @@
   "identifier_format": "UUIDv7 lowercase canonical string",
   "max_envelope_bytes": 1048576,
   "payload_completeness": {
-    "FIELD_COMPLETE": "Payload fields directly supported by surfaced frozen registry.",
+    "FIELD_COMPLETE": "Payload is closed by exact required and optional fields in the current repository registry.",
     "NAME_FROZEN_PAYLOAD_OPEN": "Name and envelope are frozen; payload is permissive until exact fields are extracted."
   },
-  "registry_version": "2.0.0-artifact-baseline",
+  "registry_version": "2.0.0-complete",
   "rules": [
     {
       "change": "add_optional_field",

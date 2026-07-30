@@ -11,8 +11,39 @@
           "const": "RateLimitTriggered"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy_id",
+            "evaluation_id",
+            "rate_limit_id",
+            "observed_requests",
+            "max_requests",
+            "window_seconds"
+          ],
+          "properties": {
+            "policy_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "evaluation_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "rate_limit_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "observed_requests": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max_requests": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "window_seconds": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +53,7 @@
     }
   ],
   "title": "ONYX RateLimitTriggered",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C18",
   "x-onyx-topic": "policy.events"
 }

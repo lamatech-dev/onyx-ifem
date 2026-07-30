@@ -11,8 +11,34 @@
           "const": "ApplyLegalHold"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy_id",
+            "hold_id",
+            "subject_ref",
+            "reason",
+            "applied_by_id"
+          ],
+          "properties": {
+            "policy_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "hold_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "subject_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 5000
+            },
+            "applied_by_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +48,7 @@
     }
   ],
   "title": "ONYX ApplyLegalHold",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C18",
   "x-onyx-topic": "policy.events"
 }

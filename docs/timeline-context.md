@@ -35,5 +35,6 @@ Creation requires an unexpired authority proof containing `timeline:create`. The
 - `ActivatePenaltyZone` records late-delivery enforcement windows.
 - `ResolveScheduleException` permanently deduplicates resolved exception identifiers.
 - `ArchiveTimeline` increments the lifecycle epoch and makes the aggregate immutable.
+- A read-side due-signal sweep emits `DeadlineReached` and `CriticalMarkerReached` exactly once when their UTC instants pass. Reached identifiers are persisted with each event, so process restarts and repeated reads cannot duplicate a signal.
 
 Every mutation enforces organization ownership, authority scope, optional version/epoch fences, idempotency, and atomic event persistence in both repository adapters.

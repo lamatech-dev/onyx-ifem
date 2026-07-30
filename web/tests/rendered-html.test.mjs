@@ -98,8 +98,12 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   for(const command of ["StartSynchronization","OfferOperationBatch","AcceptOperationBatch","MergeOperationBatch","ResolveConflict","EscalateConflict","AcknowledgeSynchronization","CloseSynchronization"])assert.match(page,new RegExp(command));
   assert.match(page,/AuditPanel/);
   for(const command of ["AppendAuditEntry","SealAuditPartition","CreateAuditExport","VerifyIntegrity","ArchiveAuditPartition"])assert.match(page,new RegExp(command));
+  assert.match(page,/PolicyPanel/);
+  for(const command of ["CreatePolicy","CreatePolicyVersion","PublishPolicyVersion","EvaluatePolicy","RegisterViolation","ApplyLegalHold","ReleaseLegalHold","RetirePolicy","DefineRateLimitPolicy"])assert.match(page,new RegExp(command));
+  for(const event of ["QuotaThresholdReached","QuotaExceeded","RateLimitTriggered"])assert.match(page,new RegExp(event));
   assert.match(page, /MissionDetail/);
   assert.match(page, /RecordDetail/);
+  for(const command of ["AssignOwner","ChangePriority","AddDependency"])assert.match(page,new RegExp(command));
   assert.match(page, /MissionBlueprintRevisionCreated/);
   assert.match(page, /Approve & activate/);
   assert.match(page, /\/v1\/tasks\/\$\{id\}\/history/);

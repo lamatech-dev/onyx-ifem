@@ -11,8 +11,34 @@
           "const": "QuotaExceeded"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy_id",
+            "evaluation_id",
+            "rate_limit_id",
+            "observed_quota_percent",
+            "quota_limit"
+          ],
+          "properties": {
+            "policy_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "evaluation_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "rate_limit_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "observed_quota_percent": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quota_limit": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +48,7 @@
     }
   ],
   "title": "ONYX QuotaExceeded",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C18",
   "x-onyx-topic": "policy.events"
 }

@@ -11,8 +11,42 @@
           "const": "CreatePolicy"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy_id",
+            "name",
+            "description",
+            "policy_type",
+            "owner_id"
+          ],
+          "properties": {
+            "policy_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 5000
+            },
+            "policy_type": {
+              "type": "string",
+              "enum": [
+                "ACCESS",
+                "RETENTION",
+                "COMPLIANCE",
+                "RATE_LIMIT"
+              ]
+            },
+            "owner_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +56,7 @@
     }
   ],
   "title": "ONYX CreatePolicy",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C18",
   "x-onyx-topic": "policy.events"
 }

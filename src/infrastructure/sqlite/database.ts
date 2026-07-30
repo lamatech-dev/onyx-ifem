@@ -674,12 +674,12 @@ const EXECUTABLE_EVENT_PROFILES: Readonly<Record<string, {aggregateType: string;
     aggregateType: "Mission",
     eventTypes: new Set([
       "MissionCreated", "MissionBlueprintRevisionCreated", "MissionBlueprintSubmitted", "MissionActivated",
-      "MissionPaused", "MissionResumed", "MissionCancelled", "MissionArchived",
+      "MissionPaused", "MissionResumed", "MissionOperationallyHalted", "MissionRestarted", "MissionClosed", "MissionCancelled", "MissionArchived",
     ]),
   },
-  work: {aggregateType: "Task", eventTypes: new Set(["TaskCreated"])},
-  timeline: {aggregateType: "Timeline", eventTypes: new Set(["TimelineCreated"])},
-  "reporting-evidence": {aggregateType: "Report", eventTypes: new Set(["ReportCreated"])},
+  work: {aggregateType: "Task", eventTypes: new Set(["TaskCreated","TaskOwnerAssigned","TaskPriorityChanged","TaskDependencyAdded","TaskStarted","TaskPaused","TaskBlocked","TaskCompletionSubmitted","TaskApproved","TaskReopened","TaskClosed","TaskCancelled"])},
+  timeline: {aggregateType: "Timeline", eventTypes: new Set(["TimelineCreated","DeadlineChanged","DeadlineMoved","DeadlineReached","MilestoneAdded","CriticalMarkerDefined","CriticalMarkerReached","PenaltyZoneActivated","ScheduleExceptionRaised","TimelineArchived"])},
+  "reporting-evidence": {aggregateType: "Report", eventTypes: new Set(["ReportCreated","EvidenceAdded","EvidenceVerified","EvidenceRejected","ReportSubmitted","ReportApproved","ReportRejected","ReportArchived"])},
 };
 
 function storedEvent<TEvent>(json: string, expected: StoredEventExpectation): TEvent {

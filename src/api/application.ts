@@ -36,6 +36,7 @@ import{InMemoryAutomationRepository}from"../automation/repository.ts";import{Aut
 import{InMemoryNotificationRepository}from"../notification/repository.ts";import{NotificationService}from"../notification/service.ts";import{SqliteNotificationRepository}from"../notification/sqlite-repository.ts";
 import{InMemorySynchronizationRepository}from"../synchronization/repository.ts";import{SynchronizationService}from"../synchronization/service.ts";import{SqliteSynchronizationRepository}from"../synchronization/sqlite-repository.ts";
 import{InMemoryAuditRepository}from"../audit/repository.ts";import{AuditService}from"../audit/service.ts";import{SqliteAuditRepository}from"../audit/sqlite-repository.ts";
+import{InMemoryPolicyRepository}from"../policy/repository.ts";import{PolicyService}from"../policy/service.ts";import{SqlitePolicyRepository}from"../policy/sqlite-repository.ts";
 import { OPENAPI_DOCUMENT } from "./openapi.ts";
 import { encodeCursor, readCollectionQuery, readHistoryQuery, readItemQuery } from "./query.ts";
 import { allowedMethodsForPath } from "./routes.ts";
@@ -57,7 +58,7 @@ export interface ApiResponse {
 export interface OnyxApplicationOptions {
   databasePath?: string;
   now?: () => Date;
-  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority" | "context" | "meeting" | "communication"|"file"|"approval"|"capacity"|"forecast"|"automation"|"notification"|"synchronization"|"audit", string>>;
+  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority" | "context" | "meeting" | "communication"|"file"|"approval"|"capacity"|"forecast"|"automation"|"notification"|"synchronization"|"audit"|"policy", string>>;
   logError?: (error: unknown) => void;
   logger?: StructuredLogger;
   monotonicNow?: () => number;
@@ -165,6 +166,7 @@ export class OnyxApplication {
     const notification=new NotificationService({repository:this.#database?new SqliteNotificationRepository(this.#database):new InMemoryNotificationRepository(),...time,replicaId:options.replicaIds?.notification??"notification-api",requireUser:async(organizationId,userId)=>{const user=await identity.getUser(organizationId,userId);if(user.status!=="ACTIVE")throw new OnyxError("INVALID_STATE_TRANSITION","notification user is disabled")},requireSource:async(organizationId,reference)=>{if(reference.aggregate_type==="Mission")return void await mission.getMission(organizationId,reference.object_id);if(reference.aggregate_type==="Task")return void await work.getTask(organizationId,reference.object_id);if(reference.aggregate_type==="Approval")return void await approval.getApproval(organizationId,reference.object_id);if(reference.aggregate_type==="Forecast")return void await forecast.getForecast(organizationId,reference.object_id);if(reference.aggregate_type==="AutomationRule")return void await automation.getAutomationRule(organizationId,reference.object_id);throw new OnyxError("INVALID_ARGUMENT",`unsupported notification source type: ${reference.aggregate_type}`)}});
     const synchronization=new SynchronizationService({repository:this.#database?new SqliteSynchronizationRepository(this.#database):new InMemorySynchronizationRepository(),...time,replicaId:options.replicaIds?.synchronization??"synchronization-api",requireUser:async(organizationId,userId)=>{const user=await identity.getUser(organizationId,userId);if(user.status!=="ACTIVE")throw new OnyxError("INVALID_STATE_TRANSITION","synchronization user is disabled")},requireSubject:async(organizationId,reference)=>{if(reference.aggregate_type==="Mission")return void await mission.getMission(organizationId,reference.object_id);if(reference.aggregate_type==="Task")return void await work.getTask(organizationId,reference.object_id);if(reference.aggregate_type==="FileAsset")return void await file.getFile(organizationId,reference.object_id);if(reference.aggregate_type==="Conversation")return void await conversation.getConversation(organizationId,reference.object_id);throw new OnyxError("INVALID_ARGUMENT",`unsupported synchronization subject type: ${reference.aggregate_type}`)}});
     const audit=new AuditService(this.#database?new SqliteAuditRepository(this.#database):new InMemoryAuditRepository(),{...time,replicaId:options.replicaIds?.audit??"audit-api"});
+    const policy=new PolicyService({repository:this.#database?new SqlitePolicyRepository(this.#database):new InMemoryPolicyRepository(),...time,replicaId:options.replicaIds?.policy??"policy-api",requireUser:async(organizationId,userId)=>{const user=await identity.getUser(organizationId,userId);if(user.status!=="ACTIVE")throw new OnyxError("INVALID_STATE_TRANSITION","policy user is disabled")},requireObject:async(organizationId,reference)=>{if(reference.aggregate_type==="Mission")return void await mission.getMission(organizationId,reference.object_id);if(reference.aggregate_type==="Task")return void await work.getTask(organizationId,reference.object_id);if(reference.aggregate_type==="Timeline")return void await timeline.getTimeline(organizationId,reference.object_id);if(reference.aggregate_type==="Report")return void await reporting.getReport(organizationId,reference.object_id);if(reference.aggregate_type==="FileAsset")return void await file.getFile(organizationId,reference.object_id);if(reference.aggregate_type==="Conversation")return void await conversation.getConversation(organizationId,reference.object_id);if(reference.aggregate_type==="AuditPartition")return void await audit.getAuditPartition(organizationId,reference.object_id);if(reference.aggregate_type==="User")return void await identity.getUser(organizationId,reference.object_id);throw new OnyxError("INVALID_ARGUMENT",`unsupported policy object type: ${reference.aggregate_type}`)}});
 
     this.#commands = new Map<string, (body: unknown) => Promise<unknown>>([
       ["mission", (body) => mission.execute(body)],
@@ -184,6 +186,7 @@ export class OnyxApplication {
       ["notification",body=>notification.execute(body)],
       ["synchronization",body=>synchronization.execute(body)],
       ["audit",body=>audit.execute(body)],
+      ["policy",body=>policy.execute(body)],
     ]);
     this.#resources = new Map([
       ["missions", {
@@ -245,6 +248,7 @@ export class OnyxApplication {
       ["notifications",{list:async(organizationId,afterId,limit)=>page(await notification.listNotifications(organizationId,afterId,limit+1),limit,item=>item.notification_id),get:(organizationId,objectId)=>notification.getNotification(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>notification.getHistory(organizationId,objectId,afterVersion,limit)}],
       ["synchronizations",{list:async(organizationId,afterId,limit)=>page(await synchronization.listSynchronizations(organizationId,afterId,limit+1),limit,item=>item.synchronization_id),get:(organizationId,objectId)=>synchronization.getSynchronization(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>synchronization.getHistory(organizationId,objectId,afterVersion,limit)}],
       ["audit-partitions",{list:async(organizationId,afterId,limit)=>page(await audit.listAuditPartitions(organizationId,afterId,limit+1),limit,item=>item.audit_partition_id),get:(organizationId,objectId)=>audit.getAuditPartition(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>audit.getHistory(organizationId,objectId,afterVersion,limit)}],
+      ["policies",{list:async(organizationId,afterId,limit)=>page(await policy.listPolicies(organizationId,afterId,limit+1),limit,item=>item.policy_id),get:(organizationId,objectId)=>policy.getPolicy(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>policy.getHistory(organizationId,objectId,afterVersion,limit)}],
     ]);
   }
 
@@ -278,7 +282,7 @@ export class OnyxApplication {
     const method = request.method === "HEAD" ? "GET" : request.method;
 
     if (method === "GET" && url.pathname === "/healthz") {
-      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity","forecasting","automation","notification","synchronization","audit"]}};
+      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity","forecasting","automation","notification","synchronization","audit","policy"]}};
     }
     if (method === "GET" && url.pathname === "/readyz") {
       if (!this.#database) {
@@ -401,6 +405,7 @@ export class OnyxApplication {
       notifications: "notification:read",
       synchronizations: "synchronization:read",
       "audit-partitions": "audit:read",
+      policies: "policy:read",
     };
     if (!claims.scope.includes(requiredScope[resource]!)) {
       throw new OnyxError("AUTHORITY_PROOF_INVALID", `${requiredScope[resource]} authority is missing`);

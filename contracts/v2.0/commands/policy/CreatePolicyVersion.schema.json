@@ -11,8 +11,70 @@
           "const": "CreatePolicyVersion"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy_id",
+            "version_id",
+            "change_note",
+            "rules"
+          ],
+          "properties": {
+            "policy_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "version_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "change_note": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "rules": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 200,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "rule_id",
+                  "effect",
+                  "resource_type",
+                  "action",
+                  "condition"
+                ],
+                "properties": {
+                  "rule_id": {
+                    "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+                  },
+                  "effect": {
+                    "type": "string",
+                    "enum": [
+                      "ALLOW",
+                      "DENY"
+                    ]
+                  },
+                  "resource_type": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "action": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "condition": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +84,7 @@
     }
   ],
   "title": "ONYX CreatePolicyVersion",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C18",
   "x-onyx-topic": "policy.events"
 }

@@ -61,6 +61,8 @@ export function toTimelineView(timeline: Timeline): TimelineView {
   timeline.criticalMarkers ??= {};
   timeline.penaltyZones ??= {};
   timeline.resolvedExceptionIds ??= [];
+  timeline.reachedDeadlineIds ??= [];
+  timeline.reachedMarkerIds ??= [];
   return {
     timeline_id: timeline.timelineId,
     organization_id: timeline.organizationId,
@@ -75,5 +77,7 @@ export function toTimelineView(timeline: Timeline): TimelineView {
     critical_markers: Object.fromEntries(Object.entries(timeline.criticalMarkers).map(([id, value]) => [id, {label: value.label, trigger_at: value.triggerAt}])),
     penalty_zones: Object.fromEntries(Object.entries(timeline.penaltyZones).map(([id, value]) => [id, {starts_at: value.startsAt, reason: value.reason}])),
     resolved_exception_ids: structuredClone(timeline.resolvedExceptionIds),
+    reached_deadline_ids: structuredClone(timeline.reachedDeadlineIds),
+    reached_marker_ids: structuredClone(timeline.reachedMarkerIds),
   };
 }

@@ -2,7 +2,7 @@
 
 ONYX is an interface-first execution framework. This repository turns the IFEM v2.0 contract baseline into an executable, independently testable system.
 
-The executable baseline includes the Organization, Identity/Authority, Context Link, Meeting, Conversation, Mission, Work, Timeline, and Reporting-Evidence contexts. It implements every v2.0 command whose payload is marked `FIELD_COMPLETE`, enforces authority, optimistic concurrency, idempotency, and organization boundaries, persists state with its events, and exposes read APIs.
+The executable product includes all 18 ONYX IFEM bounded contexts and all 294 v2.0 command/event artifacts. It enforces authority, optimistic concurrency, idempotency, organization boundaries, durable state/event/outbox persistence, complete HTTP/OpenAPI access, and graphical command controls.
 
 ## Repository layout
 
@@ -179,6 +179,10 @@ Available endpoints:
 - `GET /v1/audit-partitions?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/audit-partitions/{id}?organization_id={id}`
 - `GET /v1/audit-partitions/{id}/history?organization_id={id}&after_version=0&limit=100`
+- `POST /v1/policy/commands/{CommandType}`
+- `GET /v1/policies?organization_id={id}&limit=100&cursor={opaque}`
+- `GET /v1/policies/{id}?organization_id={id}`
+- `GET /v1/policies/{id}/history?organization_id={id}&after_version=0&limit=100`
 - `POST /v1/mission/commands/{CommandType}`
 - `GET /v1/missions?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/missions/{id}?organization_id={id}`
@@ -246,12 +250,14 @@ The Synchronization context owns operation-batch exchange, vector-clock converge
 
 The Audit context owns hash-chained entries, sealed partitions, bounded exports, integrity verification, and archival. See [Audit context](docs/audit-context.md).
 
+The Policy context owns versioned decisions, violations, legal holds, quota thresholds, and rate-limit enforcement. See [Policy context](docs/policy-context.md).
+
 The HTTP adapter exposes every currently executable context. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
 
 ## Contract maturity
 
-The imported v2.0 package contains 294 command/event schemas. All 135 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
+The imported v2.0 package contains 294 command/event schemas. All 294 artifacts are `FIELD_COMPLETE`, and all 144 commands have executable handlers, persistence, HTTP/OpenAPI routes, and graphical controls.
 
 The Mission context is now lifecycle-complete, including operational halt, restart with lifecycle-epoch fencing, close, and archive transitions.
 
-Organization, Identity/Authority, Context Link, Meeting, Conversation, File, Approval, Capacity, Forecast, Automation, Notification, Synchronization, Audit, Mission, Work, Timeline, and Reporting-Evidence are lifecycle-complete. Policy is the final remaining bounded context.
+All 18 bounded contexts are lifecycle-complete: Organization, Identity/Authority, Context Link, Meeting, Conversation, File, Approval, Capacity, Forecast, Automation, Notification, Synchronization, Audit, Policy, Mission, Work, Timeline, and Reporting-Evidence.

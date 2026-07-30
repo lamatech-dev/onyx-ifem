@@ -11,8 +11,71 @@
           "const": "PolicyEvaluated"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy_id",
+            "evaluation_id",
+            "subject_ref",
+            "resource_ref",
+            "action",
+            "attributes",
+            "decision",
+            "matched_rule_ids"
+          ],
+          "properties": {
+            "policy_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "evaluation_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "subject_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "resource_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "action": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "attributes": {
+              "type": "object",
+              "maxProperties": 100,
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              }
+            },
+            "rate_limit_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "observed_requests": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "observed_quota_percent": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decision": {
+              "type": "string",
+              "enum": [
+                "ALLOW",
+                "DENY"
+              ]
+            },
+            "matched_rule_ids": {
+              "type": "array",
+              "items": {
+                "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+              },
+              "uniqueItems": true
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +85,7 @@
     }
   ],
   "title": "ONYX PolicyEvaluated",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C18",
   "x-onyx-topic": "policy.events"
 }

@@ -1912,147 +1912,147 @@
       "path": "contracts/events/audit/AuditPartitionArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "command",
       "name": "CreatePolicy",
       "path": "contracts/commands/policy/CreatePolicy.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "command",
       "name": "CreatePolicyVersion",
       "path": "contracts/commands/policy/CreatePolicyVersion.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "command",
       "name": "PublishPolicyVersion",
       "path": "contracts/commands/policy/PublishPolicyVersion.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "command",
       "name": "EvaluatePolicy",
       "path": "contracts/commands/policy/EvaluatePolicy.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "command",
       "name": "RegisterViolation",
       "path": "contracts/commands/policy/RegisterViolation.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "command",
       "name": "ApplyLegalHold",
       "path": "contracts/commands/policy/ApplyLegalHold.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "command",
       "name": "ReleaseLegalHold",
       "path": "contracts/commands/policy/ReleaseLegalHold.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "command",
       "name": "RetirePolicy",
       "path": "contracts/commands/policy/RetirePolicy.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "command",
       "name": "DefineRateLimitPolicy",
       "path": "contracts/commands/policy/DefineRateLimitPolicy.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "PolicyCreated",
       "path": "contracts/events/policy/PolicyCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "PolicyVersionCreated",
       "path": "contracts/events/policy/PolicyVersionCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "PolicyVersionPublished",
       "path": "contracts/events/policy/PolicyVersionPublished.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "PolicyEvaluated",
       "path": "contracts/events/policy/PolicyEvaluated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "PolicyViolationDetected",
       "path": "contracts/events/policy/PolicyViolationDetected.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "LegalHoldApplied",
       "path": "contracts/events/policy/LegalHoldApplied.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "LegalHoldReleased",
       "path": "contracts/events/policy/LegalHoldReleased.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "PolicyRetired",
       "path": "contracts/events/policy/PolicyRetired.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "RateLimitPolicyDefined",
       "path": "contracts/events/policy/RateLimitPolicyDefined.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "QuotaThresholdReached",
       "path": "contracts/events/policy/QuotaThresholdReached.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "QuotaExceeded",
       "path": "contracts/events/policy/QuotaExceeded.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C18",
       "kind": "event",
       "name": "RateLimitTriggered",

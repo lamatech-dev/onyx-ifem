@@ -28,6 +28,8 @@ export type TimelineEvent = TimelineCreatedEvent |
   EventEnvelope<"DeadlineMoved", {deadline_id: UuidV7; deadline_at: string}> |
   EventEnvelope<"MilestoneAdded", {milestone_id: UuidV7; title: string; due_at: string}> |
   EventEnvelope<"CriticalMarkerDefined", {marker_id: UuidV7; label: string; trigger_at: string}> |
+  EventEnvelope<"DeadlineReached", {timeline_id: UuidV7; deadline_id: UuidV7; reached_at: string}> |
+  EventEnvelope<"CriticalMarkerReached", {timeline_id: UuidV7; marker_id: UuidV7; reached_at: string}> |
   EventEnvelope<"PenaltyZoneActivated", {penalty_zone_id: UuidV7; starts_at: string}> |
   EventEnvelope<"ScheduleExceptionRaised", {exception_id: UuidV7; resolution_status: "RESOLVED"}> |
   EventEnvelope<"TimelineArchived", {new_status: "ARCHIVED"}>;
@@ -46,6 +48,8 @@ export interface Timeline {
   criticalMarkers: Record<UuidV7, {label: string; triggerAt: string}>;
   penaltyZones: Record<UuidV7, {startsAt: string; reason: string}>;
   resolvedExceptionIds: UuidV7[];
+  reachedDeadlineIds: UuidV7[];
+  reachedMarkerIds: UuidV7[];
 }
 
 export interface TimelineView {
@@ -62,4 +66,6 @@ export interface TimelineView {
   critical_markers: Record<UuidV7, {label: string; trigger_at: string}>;
   penalty_zones: Record<UuidV7, {starts_at: string; reason: string}>;
   resolved_exception_ids: UuidV7[];
+  reached_deadline_ids: UuidV7[];
+  reached_marker_ids: UuidV7[];
 }

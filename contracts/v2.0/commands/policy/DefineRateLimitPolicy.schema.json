@@ -11,8 +11,48 @@
           "const": "DefineRateLimitPolicy"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "policy_id",
+            "rate_limit_id",
+            "scope",
+            "window_seconds",
+            "max_requests",
+            "quota_limit",
+            "threshold_percent"
+          ],
+          "properties": {
+            "policy_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "rate_limit_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "window_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 86400
+            },
+            "max_requests": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "quota_limit": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "threshold_percent": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 100
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +62,7 @@
     }
   ],
   "title": "ONYX DefineRateLimitPolicy",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C18",
   "x-onyx-topic": "policy.events"
 }

@@ -19,7 +19,7 @@ describe("OnyxApplication", () => {
     try {
       const health = await application.handle({method: "GET", path: "/healthz"});
       assert.equal(health.status, 200);
-      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity","forecasting","automation","notification","synchronization","audit"]);
+      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity","forecasting","automation","notification","synchronization","audit","policy"]);
 
       const head = await application.handle({method: "HEAD", path: "/healthz"});
       assert.equal(head.status, 200);
@@ -44,7 +44,7 @@ describe("OnyxApplication", () => {
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");
-      assert.equal(Object.keys(body(openapi).paths as object).length, 190);
+      assert.equal(Object.keys(body(openapi).paths as object).length, 202);
       body(openapi).info.title = "mutated by caller";
       const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");
@@ -63,7 +63,7 @@ describe("OnyxApplication", () => {
     }
   });
 
-  it("executes the sixteen-context HTTP workflow without a network socket", async () => {
+  it("executes the eighteen-context HTTP workflow without a network socket", async () => {
     const application = new OnyxApplication({now});
     try {
       const organization = await application.handle({
@@ -92,6 +92,8 @@ describe("OnyxApplication", () => {
         body: createTaskCommand(),
       });
       const synchronizationId=testId(990),synchronizationBase=conversationCommand("CreateConversation",750,{conversation_id:synchronizationId,title:"x",creator_id:userId},"communication:create",0),synchronization=await application.handle({method:"POST",path:"/v1/synchronization/commands/StartSynchronization",body:{...synchronizationBase,command_type:"StartSynchronization",target:{aggregate_type:"Synchronization",object_id:synchronizationId},payload:{synchronization_id:synchronizationId,subject_ref:{aggregate_type:"Task",object_id:testId(400)},source_replica_id:"api",target_replica_id:"edge",base_vector_clock:{api:1}},authority_proof:{...synchronizationBase.authority_proof,scope:["synchronization:start"]}}});
+      const auditId=testId(996),auditBase=conversationCommand("CreateConversation",751,{conversation_id:auditId,title:"x",creator_id:userId},"communication:create",0),audit=await application.handle({method:"POST",path:"/v1/audit/commands/AppendAuditEntry",body:{...auditBase,command_type:"AppendAuditEntry",target:{aggregate_type:"AuditPartition",object_id:auditId},payload:{audit_partition_id:auditId,entry_id:testId(997),subject_ref:{aggregate_type:"Task",object_id:testId(400)},action:"TaskCreated",actor_id:userId,occurred_at:"2026-07-29T20:00:00.000000Z",integrity_digest:"a".repeat(64)},authority_proof:{...auditBase.authority_proof,scope:["audit:entry:append"]}}});
+      const policyId=testId(998),policyBase=conversationCommand("CreateConversation",752,{conversation_id:policyId,title:"x",creator_id:userId},"communication:create",0),policy=await application.handle({method:"POST",path:"/v1/policy/commands/CreatePolicy",body:{...policyBase,command_type:"CreatePolicy",target:{aggregate_type:"Policy",object_id:policyId},payload:{policy_id:policyId,name:"API policy",description:"API governance",policy_type:"ACCESS",owner_id:userId},authority_proof:{...policyBase.authority_proof,scope:["policy:create"]}}});
       const contextLinkId = testId(850);
       const contextLink = await application.handle({method:"POST",path:"/v1/context/commands/CreateContextLink",body:contextLinkCommand("CreateContextLink",741,{context_link_id:contextLinkId,source_ref:{aggregate_type:"Mission",object_id:testId(14)},target_ref:{aggregate_type:"Task",object_id:testId(400)},relation_type:"DELIVERS",strength:"STRONG",metadata:{origin:"api-test"}},"context:create",0)});
       const timeline = await application.handle({
@@ -109,7 +111,7 @@ describe("OnyxApplication", () => {
         body: reportCommand,
       });
 
-      assert.deepEqual([organization.status, user.status, meeting.status, conversation.status,file.status,approval.status,capacity.status,forecast.status,automation.status,notification.status,synchronization.status, mission.status, task.status, contextLink.status, timeline.status, report.status], [202, 202, 202, 202,202,202,202,202,202,202,202, 202, 202, 202, 202, 202]);
+      assert.deepEqual([organization.status, user.status, meeting.status, conversation.status,file.status,approval.status,capacity.status,forecast.status,automation.status,notification.status,synchronization.status,audit.status,policy.status, mission.status, task.status, contextLink.status, timeline.status, report.status], [202, 202, 202, 202,202,202,202,202,202,202,202,202,202, 202, 202, 202, 202, 202]);
       const organizationView = await application.handle({method: "GET", path: `/v1/organizations/${testId(13)}?organization_id=${testId(13)}`});
       assert.equal(organizationView.status, 200);
       assert.equal(body(organizationView).slug, "onyx-labs");
@@ -125,6 +127,8 @@ describe("OnyxApplication", () => {
       const automationView=await application.handle({method:"GET",path:`/v1/automation-rules/${automationId}?organization_id=${testId(13)}`});assert.equal(automationView.status,200);assert.equal(body(automationView).trigger_type,"EVENT");
       const notificationView=await application.handle({method:"GET",path:`/v1/notifications/${notificationId}?organization_id=${testId(13)}`});assert.equal(notificationView.status,200);assert.equal(body(notificationView).source_ref.aggregate_type,"AutomationRule");
       const synchronizationView=await application.handle({method:"GET",path:`/v1/synchronizations/${synchronizationId}?organization_id=${testId(13)}`});assert.equal(synchronizationView.status,200);assert.equal(body(synchronizationView).status,"ACTIVE");
+      const auditView=await application.handle({method:"GET",path:`/v1/audit-partitions/${auditId}?organization_id=${testId(13)}`});assert.equal(auditView.status,200);assert.equal(body(auditView).entries.length,1);
+      const policyView=await application.handle({method:"GET",path:`/v1/policies/${policyId}?organization_id=${testId(13)}`});assert.equal(policyView.status,200);assert.equal(body(policyView).status,"DRAFT");
       assert.equal(body(report).event_type, "ReportCreated");
       const replay = await application.handle({method: "POST", path: "/v1/reporting-evidence/commands/CreateReport", body: reportCommand});
       assert.equal(replay.status, report.status);
