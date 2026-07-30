@@ -55,7 +55,7 @@ jobs:
           node -e "const bom = JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8')); if (bom.bomFormat !== 'CycloneDX') process.exit(1)" "${asset}"
           sha256sum "${asset}" > "${asset}.sha256"
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Log in to GHCR
