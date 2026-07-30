@@ -58,6 +58,12 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   assert.match(page, /RevokeDelegation/);
   assert.match(page, /DisableUser/);
   assert.match(page, /EnableUser/);
+  assert.match(page, /ContextGraphPanel/);
+  assert.match(page, /CreateContextLink/);
+  assert.match(page, /UpdateContextMetadata/);
+  assert.match(page, /ChangeContextStrength/);
+  assert.match(page, /ArchiveContextLink/);
+  assert.match(page, /RestoreContextLink/);
   assert.match(page, /MissionDetail/);
   assert.match(page, /RecordDetail/);
   assert.match(page, /MissionBlueprintRevisionCreated/);

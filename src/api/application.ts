@@ -21,6 +21,9 @@ import { SqliteOrganizationRepository } from "../organization/sqlite-repository.
 import { InMemoryIdentityRepository } from "../identity-authority/repository.ts";
 import { IdentityService } from "../identity-authority/service.ts";
 import { SqliteIdentityRepository } from "../identity-authority/sqlite-repository.ts";
+import { InMemoryContextLinkRepository } from "../context-link/repository.ts";
+import { ContextLinkService } from "../context-link/service.ts";
+import { SqliteContextLinkRepository } from "../context-link/sqlite-repository.ts";
 import { OPENAPI_DOCUMENT } from "./openapi.ts";
 import { encodeCursor, readCollectionQuery, readHistoryQuery, readItemQuery } from "./query.ts";
 import { allowedMethodsForPath } from "./routes.ts";
@@ -42,7 +45,7 @@ export interface ApiResponse {
 export interface OnyxApplicationOptions {
   databasePath?: string;
   now?: () => Date;
-  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority", string>>;
+  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority" | "context", string>>;
   logError?: (error: unknown) => void;
   logger?: StructuredLogger;
   monotonicNow?: () => number;
@@ -126,6 +129,20 @@ export class OnyxApplication {
       this.#database ? new SqliteIdentityRepository(this.#database) : new InMemoryIdentityRepository(),
       {...time, replicaId: options.replicaIds?.identityAuthority ?? "identity-authority-api"},
     );
+    const contextLink = new ContextLinkService({
+      repository: this.#database ? new SqliteContextLinkRepository(this.#database) : new InMemoryContextLinkRepository(),
+      ...time,
+      replicaId: options.replicaIds?.context ?? "context-api",
+      requireObject: async (organizationId, reference) => {
+        if (reference.aggregate_type === "Mission") return void await mission.getMission(organizationId, reference.object_id);
+        if (reference.aggregate_type === "Task") return void await work.getTask(organizationId, reference.object_id);
+        if (reference.aggregate_type === "Timeline") return void await timeline.getTimeline(organizationId, reference.object_id);
+        if (reference.aggregate_type === "Report") return void await reporting.getReport(organizationId, reference.object_id);
+        if (reference.aggregate_type === "User") return void await identity.getUser(organizationId, reference.object_id);
+        if (reference.aggregate_type === "Organization" && organizationId === reference.object_id) return void await organization.getOrganization(reference.object_id);
+        throw new OnyxError("INVALID_ARGUMENT", `unsupported context object type: ${reference.aggregate_type}`);
+      },
+    });
 
     this.#commands = new Map<string, (body: unknown) => Promise<unknown>>([
       ["mission", (body) => mission.execute(body)],
@@ -134,6 +151,7 @@ export class OnyxApplication {
       ["reporting-evidence", (body) => reporting.execute(body)],
       ["organization", (body) => organization.execute(body)],
       ["identity-authority", (body) => identity.execute(body)],
+      ["context", (body) => contextLink.execute(body)],
     ]);
     this.#resources = new Map([
       ["missions", {
@@ -180,6 +198,11 @@ export class OnyxApplication {
         get: (organizationId, objectId) => identity.getUser(organizationId, objectId),
         history: (organizationId, objectId, afterVersion, limit) => identity.getHistory(organizationId, objectId, afterVersion, limit),
       }],
+      ["context-links", {
+        list: async (organizationId, afterId, limit) => page(await contextLink.listContextLinks(organizationId, afterId, limit + 1), limit, (item) => item.context_link_id),
+        get: (organizationId, objectId) => contextLink.getContextLink(organizationId, objectId),
+        history: (organizationId, objectId, afterVersion, limit) => contextLink.getHistory(organizationId, objectId, afterVersion, limit),
+      }],
     ]);
   }
 
@@ -213,7 +236,7 @@ export class OnyxApplication {
     const method = request.method === "HEAD" ? "GET" : request.method;
 
     if (method === "GET" && url.pathname === "/healthz") {
-      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority"]}};
+      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context"]}};
     }
     if (method === "GET" && url.pathname === "/readyz") {
       if (!this.#database) {
@@ -325,6 +348,7 @@ export class OnyxApplication {
       reports: "reporting-evidence:read",
       organizations: "organization:read",
       users: "identity-authority:read",
+      "context-links": "context:read",
     };
     if (!claims.scope.includes(requiredScope[resource]!)) {
       throw new OnyxError("AUTHORITY_PROOF_INVALID", `${requiredScope[resource]} authority is missing`);

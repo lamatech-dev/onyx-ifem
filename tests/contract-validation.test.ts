@@ -14,7 +14,8 @@ import { validateCreateReportCommand } from "../src/reporting-evidence/validatio
 import { validateCreateTimelineCommand } from "../src/timeline/validation.ts";
 import { validateCreateTaskCommand } from "../src/work/validation.ts";
 import { validateIdentityCommand } from "../src/identity-authority/validation.ts";
-import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, missionCommand, testId } from "./fixtures.ts";
+import { validateContextLinkCommand } from "../src/context-link/validation.ts";
+import { contextLinkCommand, createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, missionCommand, testId } from "./fixtures.ts";
 
 type Validator = (value: unknown) => void;
 
@@ -32,6 +33,7 @@ describe("strict command envelope validation", () => {
     validateCreateTimelineCommand(createTimelineCommand());
     validateCreateReportCommand(createReportCommand());
     validateIdentityCommand(identityCommand("CreateUser", 1, {user_id: testId(800), email: "lead@onyx.example", display_name: "Lead"}, "identity-authority:user:create", 0));
+    validateContextLinkCommand(contextLinkCommand("CreateContextLink",1,{context_link_id:testId(850),source_ref:{aggregate_type:"Mission",object_id:testId(14)},target_ref:{aggregate_type:"Task",object_id:testId(400)},relation_type:"DELIVERS",strength:"NORMAL",metadata:{}},"context:create",0));
   });
 
   it("rejects unknown envelope properties in every executable context", () => {
@@ -41,6 +43,7 @@ describe("strict command envelope validation", () => {
       [validateCreateTimelineCommand, createTimelineCommand()],
       [validateCreateReportCommand, createReportCommand()],
       [validateIdentityCommand, identityCommand("CreateUser", 1, {user_id: testId(800), email: "lead@onyx.example", display_name: "Lead"}, "identity-authority:user:create", 0)],
+      [validateContextLinkCommand, contextLinkCommand("CreateContextLink",1,{context_link_id:testId(850),source_ref:{aggregate_type:"Mission",object_id:testId(14)},target_ref:{aggregate_type:"Task",object_id:testId(400)},relation_type:"DELIVERS",strength:"NORMAL",metadata:{}},"context:create",0)],
     ];
     for (const [validator, command] of cases) rejectsInvalid(validator, {...command, extension: true});
   });

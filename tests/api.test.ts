@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 import { OnyxApplication, type ApiResponse } from "../src/api/application.ts";
 import type { RequestLogRecord } from "../src/infrastructure/observability/logger.ts";
-import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, organizationCommand, testId } from "./fixtures.ts";
+import { contextLinkCommand, createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, organizationCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -19,7 +19,7 @@ describe("OnyxApplication", () => {
     try {
       const health = await application.handle({method: "GET", path: "/healthz"});
       assert.equal(health.status, 200);
-      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority"]);
+      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context"]);
 
       const head = await application.handle({method: "HEAD", path: "/healthz"});
       assert.equal(head.status, 200);
@@ -44,7 +44,7 @@ describe("OnyxApplication", () => {
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");
-      assert.equal(Object.keys(body(openapi).paths as object).length, 78);
+      assert.equal(Object.keys(body(openapi).paths as object).length, 86);
       body(openapi).info.title = "mutated by caller";
       const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");
@@ -63,7 +63,7 @@ describe("OnyxApplication", () => {
     }
   });
 
-  it("executes the six-context HTTP workflow without a network socket", async () => {
+  it("executes the seven-context HTTP workflow without a network socket", async () => {
     const application = new OnyxApplication({now});
     try {
       const organization = await application.handle({
@@ -83,6 +83,8 @@ describe("OnyxApplication", () => {
         path: "/v1/work/commands/CreateTask",
         body: createTaskCommand(),
       });
+      const contextLinkId = testId(850);
+      const contextLink = await application.handle({method:"POST",path:"/v1/context/commands/CreateContextLink",body:contextLinkCommand("CreateContextLink",741,{context_link_id:contextLinkId,source_ref:{aggregate_type:"Mission",object_id:testId(14)},target_ref:{aggregate_type:"Task",object_id:testId(400)},relation_type:"DELIVERS",strength:"STRONG",metadata:{origin:"api-test"}},"context:create",0)});
       const timeline = await application.handle({
         method: "POST",
         path: "/v1/timeline/commands/CreateTimeline",
@@ -98,12 +100,13 @@ describe("OnyxApplication", () => {
         body: reportCommand,
       });
 
-      assert.deepEqual([organization.status, user.status, mission.status, task.status, timeline.status, report.status], [202, 202, 202, 202, 202, 202]);
+      assert.deepEqual([organization.status, user.status, mission.status, task.status, contextLink.status, timeline.status, report.status], [202, 202, 202, 202, 202, 202, 202]);
       const organizationView = await application.handle({method: "GET", path: `/v1/organizations/${testId(13)}?organization_id=${testId(13)}`});
       assert.equal(organizationView.status, 200);
       assert.equal(body(organizationView).slug, "onyx-labs");
       const userView = await application.handle({method: "GET", path: `/v1/users/${userId}?organization_id=${testId(13)}`});
       assert.equal(userView.status, 200); assert.equal(body(userView).display_name, "Operations Lead");
+      const contextView=await application.handle({method:"GET",path:`/v1/context-links/${contextLinkId}?organization_id=${testId(13)}`});assert.equal(contextView.status,200);assert.equal(body(contextView).relation_type,"DELIVERS");
       assert.equal(body(report).event_type, "ReportCreated");
       const replay = await application.handle({method: "POST", path: "/v1/reporting-evidence/commands/CreateReport", body: reportCommand});
       assert.equal(replay.status, report.status);

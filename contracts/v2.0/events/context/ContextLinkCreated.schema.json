@@ -11,8 +11,7 @@
           "const": "ContextLinkCreated"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"context_link_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "source_ref": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"}, "target_ref": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"}, "relation_type": {"type": "string", "minLength": 1, "maxLength": 120}, "strength": {"type": "string", "enum": ["WEAK", "NORMAL", "STRONG", "CRITICAL"]}, "metadata": {"type": "object", "maxProperties": 50, "propertyNames": {"pattern": "^[a-zA-Z0-9_.-]{1,100}$"}, "additionalProperties": {"type": "string", "minLength": 1, "maxLength": 1000}}}, "required": ["context_link_id", "source_ref", "target_ref", "relation_type", "strength", "metadata"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX ContextLinkCreated",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C05",
   "x-onyx-topic": "context.events"
 }

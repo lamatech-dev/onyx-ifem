@@ -1,5 +1,5 @@
-const COMMAND_CONTEXTS = new Set(["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority"]);
-const RESOURCE_NAMES = new Set(["missions", "tasks", "timelines", "reports", "organizations", "users"]);
+const COMMAND_CONTEXTS = new Set(["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context"]);
+const RESOURCE_NAMES = new Set(["missions", "tasks", "timelines", "reports", "organizations", "users", "context-links"]);
 
 const READ_METHODS = ["GET", "HEAD"] as const;
 const WRITE_METHODS = ["POST"] as const;

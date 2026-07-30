@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 type JsonObject = Record<string, any>;
 
 interface CommandRoute {
-  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization" | "identity-authority";
+  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization" | "identity-authority" | "context";
   command: string;
   event: string;
 }
@@ -69,6 +69,11 @@ export const IMPLEMENTED_COMMAND_ROUTES: readonly CommandRoute[] = [
   {context: "identity-authority", command: "RevokeDelegation", event: "DelegationRevoked"},
   {context: "identity-authority", command: "DisableUser", event: "UserDisabled"},
   {context: "identity-authority", command: "EnableUser", event: "UserEnabled"},
+  {context: "context", command: "CreateContextLink", event: "ContextLinkCreated"},
+  {context: "context", command: "UpdateContextMetadata", event: "ContextMetadataUpdated"},
+  {context: "context", command: "ChangeContextStrength", event: "ContextStrengthChanged"},
+  {context: "context", command: "ArchiveContextLink", event: "ContextLinkArchived"},
+  {context: "context", command: "RestoreContextLink", event: "ContextLinkRestored"},
 ];
 
 function readSchema(path: string): JsonObject {
@@ -229,6 +234,7 @@ addResource("timelines", "Timeline", "TimelineView", IMPLEMENTED_COMMAND_ROUTES.
 addResource("reports", "Report", "ReportView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "reporting-evidence").map((route) => route.event));
 addResource("organizations", "Organization", "OrganizationView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "organization").map((route) => route.event));
 addResource("users", "User", "UserIdentityView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "identity-authority").map((route) => route.event));
+addResource("context-links", "ContextLink", "ContextLinkView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "context").map((route) => route.event));
 
 paths["/healthz"] = {
   get: {
@@ -374,6 +380,16 @@ const viewSchemas: JsonObject = {
       email: {type: "string", format: "email"}, display_name: {type: "string"}, status: {type: "string", enum: ["ACTIVE", "DISABLED"]},
       version: {type: "integer", minimum: 1}, lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0},
       roles: {type: "object"}, devices: {type: "object"}, delegations: {type: "object"},
+    },
+  },
+  ContextLinkView: {
+    type: "object", additionalProperties: false,
+    required: ["context_link_id", "organization_id", "source_ref", "target_ref", "relation_type", "strength", "metadata", "status", "version", "lifecycle_epoch", "authority_epoch"],
+    properties: {
+      context_link_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, organization_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
+      source_ref: {$ref: "#/components/schemas/SharedTypes/$defs/DomainObjectRef"}, target_ref: {$ref: "#/components/schemas/SharedTypes/$defs/DomainObjectRef"},
+      relation_type: {type: "string"}, strength: {type: "string", enum: ["WEAK", "NORMAL", "STRONG", "CRITICAL"]}, metadata: {type: "object", additionalProperties: {type: "string"}},
+      status: {type: "string", enum: ["ACTIVE", "ARCHIVED"]}, version: {type: "integer", minimum: 1}, lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0},
     },
   },
 };

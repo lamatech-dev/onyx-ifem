@@ -561,70 +561,70 @@
       "path": "contracts/events/identity-authority/UserEnabled.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "command",
       "name": "CreateContextLink",
       "path": "contracts/commands/context/CreateContextLink.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "command",
       "name": "UpdateContextMetadata",
       "path": "contracts/commands/context/UpdateContextMetadata.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "command",
       "name": "ChangeContextStrength",
       "path": "contracts/commands/context/ChangeContextStrength.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "command",
       "name": "ArchiveContextLink",
       "path": "contracts/commands/context/ArchiveContextLink.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "command",
       "name": "RestoreContextLink",
       "path": "contracts/commands/context/RestoreContextLink.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "event",
       "name": "ContextLinkCreated",
       "path": "contracts/events/context/ContextLinkCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "event",
       "name": "ContextMetadataUpdated",
       "path": "contracts/events/context/ContextMetadataUpdated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "event",
       "name": "ContextStrengthChanged",
       "path": "contracts/events/context/ContextStrengthChanged.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "event",
       "name": "ContextLinkArchived",
       "path": "contracts/events/context/ContextLinkArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C05",
       "kind": "event",
       "name": "ContextLinkRestored",

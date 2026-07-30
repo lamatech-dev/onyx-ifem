@@ -11,13 +11,15 @@ import { OrganizationService } from "../src/organization/service.ts";
 import { SqliteOrganizationRepository } from "../src/organization/sqlite-repository.ts";
 import { IdentityService } from "../src/identity-authority/service.ts";
 import { SqliteIdentityRepository } from "../src/identity-authority/sqlite-repository.ts";
+import { ContextLinkService } from "../src/context-link/service.ts";
+import { SqliteContextLinkRepository } from "../src/context-link/sqlite-repository.ts";
 import { ReportingService } from "../src/reporting-evidence/service.ts";
 import { SqliteReportingRepository } from "../src/reporting-evidence/sqlite-repository.ts";
 import { TimelineService } from "../src/timeline/service.ts";
 import { SqliteTimelineRepository } from "../src/timeline/sqlite-repository.ts";
 import { WorkService } from "../src/work/service.ts";
 import { SqliteWorkRepository } from "../src/work/sqlite-repository.ts";
-import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, missionCommand, organizationCommand, testId } from "./fixtures.ts";
+import { contextLinkCommand, createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, missionCommand, organizationCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -231,6 +233,8 @@ describe("SQLite persistence", () => {
       secondDatabase.close();
     } finally { await rm(directory, {recursive: true, force: true}); }
   });
+
+  it("restores Context Links, history, and idempotency after restart",async()=>{const directory=await mkdtemp(join(tmpdir(),"onyx-sqlite-context-")),path=join(directory,"onyx.db"),id=testId(850);const create=contextLinkCommand("CreateContextLink",780,{context_link_id:id,source_ref:{aggregate_type:"Mission",object_id:testId(14)},target_ref:{aggregate_type:"Task",object_id:testId(400)},relation_type:"DELIVERS",strength:"STRONG",metadata:{origin:"persistence"}},"context:create",0);try{const firstDatabase=new SqliteDatabase(path),first=new ContextLinkService({repository:new SqliteContextLinkRepository(firstDatabase),now,requireObject:async()=>undefined});const created=await first.execute(create);await first.execute(contextLinkCommand("UpdateContextMetadata",781,{context_link_id:id,metadata:{origin:"restored"}},"context:metadata:update",1));firstDatabase.close();const secondDatabase=new SqliteDatabase(path),restored=new ContextLinkService({repository:new SqliteContextLinkRepository(secondDatabase),now,requireObject:async()=>undefined});assert.equal((await restored.getContextLink(testId(13),id)).metadata.origin,"restored");assert.deepEqual((await restored.getHistory(testId(13),id)).map((event)=>event.event_type),["ContextLinkCreated","ContextMetadataUpdated"]);assert.deepEqual(await restored.execute(create),created);secondDatabase.close();}finally{await rm(directory,{recursive:true,force:true});}});
 
   it("fails closed when stored event content or row metadata is corrupted", async () => {
     const directory = await mkdtemp(join(tmpdir(), "onyx-sqlite-integrity-"));

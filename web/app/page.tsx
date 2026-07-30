@@ -96,6 +96,11 @@ type UserIdentity = {
   delegations: Record<string, {delegation_id: string; delegatee_id: string; scopes: string[]; expires_at: string; status: string}>;
 };
 
+type ContextLink = {
+  context_link_id: string; organization_id: string; source_ref: {aggregate_type:string;object_id:string}; target_ref: {aggregate_type:string;object_id:string};
+  relation_type: string; strength: "WEAK"|"NORMAL"|"STRONG"|"CRITICAL"; metadata: Record<string,string>; status: string; version: number; lifecycle_epoch: number; authority_epoch: number;
+};
+
 type RecordSelection =
   | { kind: "task"; record: Task }
   | { kind: "timeline"; record: Timeline }
@@ -219,6 +224,7 @@ export default function Home() {
   const [reports, setReports] = useState<Report[]>([]);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [users, setUsers] = useState<UserIdentity[]>([]);
+  const [contextLinks, setContextLinks] = useState<ContextLink[]>([]);
   const [ready, setReady] = useState<Ready | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -267,7 +273,7 @@ export default function Home() {
     setError("");
     try {
       const query = `organization_id=${encodeURIComponent(organizationId)}&limit=100`;
-      const [healthData, missionData, taskData, timelineData, reportData, organizationData, userData] = await Promise.all([
+      const [healthData, missionData, taskData, timelineData, reportData, organizationData, userData, contextLinkData] = await Promise.all([
         api<Ready>("/readyz"),
         api<ResourcePage<Mission>>(`/v1/missions?${query}`),
         api<ResourcePage<Task>>(`/v1/tasks?${query}`),
@@ -275,6 +281,7 @@ export default function Home() {
         api<ResourcePage<Report>>(`/v1/reports?${query}`),
         api<ResourcePage<Organization>>(`/v1/organizations?organization_id=${encodeURIComponent(organizationId)}&limit=1`),
         api<ResourcePage<UserIdentity>>(`/v1/users?${query}`),
+        api<ResourcePage<ContextLink>>(`/v1/context-links?${query}`),
       ]);
       setReady(healthData);
       setMissions(missionData.items);
@@ -283,6 +290,7 @@ export default function Home() {
       setReports(reportData.items);
       setOrganization(organizationData.items[0] ?? null);
       setUsers(userData.items);
+      setContextLinks(contextLinkData.items);
       setNextCursors({ mission: missionData.next_cursor, task: taskData.next_cursor, timeline: timelineData.next_cursor, report: reportData.next_cursor });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to reach ONYX API");
@@ -749,6 +757,12 @@ export default function Home() {
     } catch (caught) { setToast(caught instanceof Error ? caught.message : "Identity action failed"); } finally { setActionLoading(""); }
   }
 
+  async function runContextLinkAction(type:"create"|"metadata"|"strength"|"archive"|"restore",selected?:ContextLink){setActionLoading(`context:${type}`);try{const link=selected??contextLinks[0];let commandType:string,scope:string,id:string,payload:Record<string,unknown>;
+    if(type==="create"){const references=[...missions.map((item)=>({aggregate_type:"Mission",object_id:item.mission_id})),...tasks.map((item)=>({aggregate_type:"Task",object_id:item.task_id})),...timelines.map((item)=>({aggregate_type:"Timeline",object_id:item.timeline_id})),...reports.map((item)=>({aggregate_type:"Report",object_id:item.report_id})),...users.map((item)=>({aggregate_type:"User",object_id:item.user_id})),...(organization?[{aggregate_type:"Organization",object_id:organization.organization_id}]:[])];if(references.length<2)throw new Error("Create at least two operational objects first");id=uuidV7();commandType="CreateContextLink";scope="context:create";payload={context_link_id:id,source_ref:references[0],target_ref:references[1],relation_type:"RELATES_TO",strength:"NORMAL",metadata:{origin:"command-center"}};
+    }else{if(!link)throw new Error("Create a context link first");id=link.context_link_id;if(type==="metadata"){commandType="UpdateContextMetadata";scope="context:metadata:update";payload={context_link_id:id,metadata:{...link.metadata,reviewed:"true"}};}else if(type==="strength"){const values=["WEAK","NORMAL","STRONG","CRITICAL"] as const,next=values[(values.indexOf(link.strength)+1)%values.length];commandType="ChangeContextStrength";scope="context:strength:change";payload={context_link_id:id,strength:next,reason:"Graph priority updated from ONYX Command Center"};}else if(type==="archive"){if(!window.confirm("Archive this context link?"))return;commandType="ArchiveContextLink";scope="context:archive";payload={context_link_id:id,reason:"Archived from ONYX Command Center"};}else{commandType="RestoreContextLink";scope="context:restore";payload={context_link_id:id,reason:"Restored from ONYX Command Center"};}}
+    const command=envelope(commandType,"ContextLink",id,organizationId,principalId,scope,payload);if(type!=="create"&&link){command.expected_version=link.version;command.expected_lifecycle_epoch=link.lifecycle_epoch;command.expected_authority_epoch=link.authority_epoch;}await api(`/v1/context/commands/${commandType}`,{method:"POST",body:JSON.stringify(command)});await refresh();setToast(`${commandType.replace(/([A-Z])/g," $1").trim()} completed`);
+  }catch(caught){setToast(caught instanceof Error?caught.message:"Context link action failed");}finally{setActionLoading("");}}
+
   function saveIdentity() {
     localStorage.setItem("onyx.organization", organizationId);
     localStorage.setItem("onyx.principal", principalId);
@@ -806,6 +820,7 @@ export default function Home() {
 
               <OrganizationPanel organization={organization} loading={actionLoading} onAction={(type) => void runOrganizationAction(type)} />
               <IdentityPanel users={users} loading={actionLoading} onAction={(type, user) => void runIdentityAction(type, user)} />
+              <ContextGraphPanel links={contextLinks} loading={actionLoading} onAction={(type, link) => void runContextLinkAction(type, link)} />
 
               <section className="dashboard-grid">
                 <article className="panel mission-panel">
@@ -861,6 +876,8 @@ function IdentityPanel({ users, loading, onAction }: { users: UserIdentity[]; lo
     {user && <div className="organization-actions identity-actions"><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("assign-role", user)}>Assign role</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("revoke-role", user)}>Revoke role</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("register-device", user)}>Register device</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("revoke-device", user)}>Revoke device</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("delegate", user)}>Delegate authority</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("revoke-delegation", user)}>Revoke delegation</button>{user.status === "ACTIVE" ? <button className="danger-control" disabled={Boolean(loading)} onClick={() => onAction("disable", user)}>Disable user</button> : <button disabled={Boolean(loading)} onClick={() => onAction("enable", user)}>Enable user</button>}</div>}
   </section>;
 }
+
+function ContextGraphPanel({links,loading,onAction}:{links:ContextLink[];loading:string;onAction:(type:"create"|"metadata"|"strength"|"archive"|"restore",link?:ContextLink)=>void}){const link=links[0];return <section className="panel context-graph-panel"><div className="identity-heading"><div><p className="eyebrow">CONTEXT GRAPH</p><h2>Cross-domain relationships</h2><p>Validated edges connect existing objects without transferring aggregate ownership.</p></div><button className="primary-button" disabled={Boolean(loading)} onClick={()=>onAction("create")}>＋ Create link</button></div><div className="context-edge-grid">{links.length?links.slice(0,6).map((item)=><article key={item.context_link_id}><div className="context-node"><b>{item.source_ref.aggregate_type[0]}</b><span><strong>{item.source_ref.aggregate_type}</strong><small>{shortId(item.source_ref.object_id)}</small></span></div><div className="context-connector"><span>{item.relation_type.replaceAll("_"," ")}</span><i/><b>{item.strength}</b></div><div className="context-node"><b>{item.target_ref.aggregate_type[0]}</b><span><strong>{item.target_ref.aggregate_type}</strong><small>{shortId(item.target_ref.object_id)}</small></span></div><em className={statusClass(item.status)}>{item.status}</em></article>):<p className="organization-placeholder">No cross-domain edges exist yet.</p>}</div>{link&&<div className="organization-actions context-actions"><button disabled={Boolean(loading)||link.status!=="ACTIVE"} onClick={()=>onAction("metadata",link)}>Update metadata</button><button disabled={Boolean(loading)||link.status!=="ACTIVE"} onClick={()=>onAction("strength",link)}>Change strength</button>{link.status==="ACTIVE"?<button className="danger-control" disabled={Boolean(loading)} onClick={()=>onAction("archive",link)}>Archive link</button>:<button disabled={Boolean(loading)} onClick={()=>onAction("restore",link)}>Restore link</button>}</div>}</section>}
 
 function MissionRow({ mission, index, taskCount, onOpen }: { mission: Mission; index: number; taskCount: number; onOpen: () => void }) {
   const colors = ["#7c6cf2", "#31b7c2", "#e19a43", "#59ad78", "#d76f91"];

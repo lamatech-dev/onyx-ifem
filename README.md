@@ -2,7 +2,7 @@
 
 ONYX is an interface-first execution framework. This repository turns the IFEM v2.0 contract baseline into an executable, independently testable system.
 
-The executable baseline includes the Organization, Identity/Authority, Mission, Work, Timeline, and Reporting-Evidence contexts. It implements every v2.0 command whose payload is marked `FIELD_COMPLETE`, enforces authority, optimistic concurrency, idempotency, and organization boundaries, persists state with its events, and exposes read APIs.
+The executable baseline includes the Organization, Identity/Authority, Context Link, Mission, Work, Timeline, and Reporting-Evidence contexts. It implements every v2.0 command whose payload is marked `FIELD_COMPLETE`, enforces authority, optimistic concurrency, idempotency, and organization boundaries, persists state with its events, and exposes read APIs.
 
 ## Repository layout
 
@@ -14,6 +14,7 @@ src/contracts/        Canonical envelope and shared runtime types
 src/infrastructure/   SQLite persistence and transactional outbox delivery
 src/organization/     Organization hierarchy domain and application service
 src/identity-authority/ User, role, device, and delegation authority service
+src/context-link/     Validated cross-domain relationship service
 src/mission/          Mission domain and application service
 src/work/             Work/Task domain and application service
 src/timeline/         Timeline domain and application service
@@ -103,7 +104,7 @@ npm run dev -- --port 3002
 
 Open `http://localhost:3002`. The web server proxies requests to
 `http://127.0.0.1:3001` by default. Set `ONYX_API_URL` to use another API origin.
-The command center provides organization hierarchy and identity-authority controls plus mission, task, timeline, and report creation, with
+The command center provides organization hierarchy, identity-authority, and context-graph controls plus mission, task, timeline, and report creation, with
 mission lifecycle actions, immutable event history, cursor-based collection
 pagination, and shareable record URLs with browser Back/Forward restoration.
 
@@ -114,7 +115,7 @@ cd web
 npm test
 ```
 
-Organization, Identity/Authority, Mission, Work, Timeline, and Reporting-Evidence keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
+Organization, Identity/Authority, Context Link, Mission, Work, Timeline, and Reporting-Evidence keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
 
 Every durable event is written to a transactional outbox in the same commit as its aggregate state. The bounded dispatcher supports exclusive leases, retry backoff, dead-lettering, and at-least-once delivery with stable event identifiers. A persistent consumer inbox adds per-consumer deduplication, tamper detection, and crash-recoverable processing leases.
 
@@ -132,6 +133,10 @@ Available endpoints:
 - `GET /v1/users?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/users/{id}?organization_id={id}`
 - `GET /v1/users/{id}/history?organization_id={id}&after_version=0&limit=100`
+- `POST /v1/context/commands/{CommandType}`
+- `GET /v1/context-links?organization_id={id}&limit=100&cursor={opaque}`
+- `GET /v1/context-links/{id}?organization_id={id}`
+- `GET /v1/context-links/{id}/history?organization_id={id}&after_version=0&limit=100`
 - `POST /v1/mission/commands/{CommandType}`
 - `GET /v1/missions?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/missions/{id}?organization_id={id}`
@@ -177,12 +182,14 @@ The Organization context owns the tenant hierarchy: workspaces, departments, tea
 
 The Identity/Authority context owns users, role assignments, registered devices, and scoped delegations. Role, device, delegation, and user-state revocation advance authority epochs so stale clients fail closed. See [Identity and authority context](docs/identity-authority-context.md).
 
+The Context Link context owns validated cross-domain edges between existing objects. It supports exact metadata replacement, strength changes, archival, and restore-time endpoint revalidation. See [Context Link context](docs/context-link-context.md).
+
 The HTTP adapter exposes every currently executable context. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
 
 ## Contract maturity
 
-The imported v2.0 package contains 294 command/event schemas. All 56 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
+The imported v2.0 package contains 294 command/event schemas. All 61 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
 
 The Mission context is now lifecycle-complete, including operational halt, restart with lifecycle-epoch fencing, close, and archive transitions.
 
-Organization, Identity/Authority, Mission, Work, Timeline, and Reporting-Evidence are lifecycle-complete. Remaining bounded contexts are implemented next in dependency order.
+Organization, Identity/Authority, Context Link, Mission, Work, Timeline, and Reporting-Evidence are lifecycle-complete. Remaining bounded contexts are implemented next in dependency order.

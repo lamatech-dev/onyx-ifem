@@ -11,8 +11,7 @@
           "const": "ContextStrengthChanged"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"context_link_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "strength": {"type": "string", "enum": ["WEAK", "NORMAL", "STRONG", "CRITICAL"]}, "reason": {"type": "string", "minLength": 1, "maxLength": 2000}}, "required": ["context_link_id", "strength", "reason"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX ContextStrengthChanged",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C05",
   "x-onyx-topic": "context.events"
 }
