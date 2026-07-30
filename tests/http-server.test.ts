@@ -22,7 +22,7 @@ describe("HTTP executable", () => {
         ONYX_MAX_IN_FLIGHT: "1",
         ONYX_OUTBOX_WEBHOOK_URL: "",
         ONYX_PORT: String(port),
-        ONYX_RATE_LIMIT_CAPACITY: "11",
+        ONYX_RATE_LIMIT_CAPACITY: "12",
         ONYX_RATE_LIMIT_REFILL_PER_SECOND: "0.01",
       }),
       stdio: ["ignore", "pipe", "pipe"],
@@ -46,6 +46,10 @@ describe("HTTP executable", () => {
       assert.equal(health.headers.get("x-frame-options"), "DENY");
       assert.equal(health.headers.has("strict-transport-security"), false);
       assert.equal((await health.json() as {status: string}).status, "ok");
+
+      const openApi = await fetch(`${origin}/openapi.json`);
+      assert.equal(openApi.status, 200);
+      assert.deepEqual((await openApi.json() as {servers: Array<{url: string}>}).servers, [{url: origin}]);
 
       const head = await fetch(`${origin}/healthz`, {method: "HEAD"});
       assert.equal(head.status, 200);

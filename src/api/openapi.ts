@@ -462,6 +462,12 @@ function retryableErrorResponse(description: string): JsonObject {
   };
 }
 
+const configuredOpenApiHost = process.env.ONYX_HOST ?? "127.0.0.1";
+const openApiHost = configuredOpenApiHost === "0.0.0.0" || configuredOpenApiHost === "::"
+  ? "127.0.0.1"
+  : configuredOpenApiHost;
+const openApiPort = process.env.ONYX_PORT ?? "3000";
+
 export const OPENAPI_DOCUMENT: JsonObject = {
   openapi: "3.1.2",
   jsonSchemaDialect: "https://json-schema.org/draft/2020-12/schema",
@@ -470,7 +476,7 @@ export const OPENAPI_DOCUMENT: JsonObject = {
     version: "0.1.0",
     description: "Executable HTTP surface for the ONYX IFEM v2.0 field-complete contract baseline.",
   },
-  servers: [{url: "http://127.0.0.1:3000"}],
+  servers: [{url: `http://${openApiHost}:${openApiPort}`}],
   tags: ["mission", "work", "timeline", "reporting-evidence", "operations"].map((name) => ({name})),
   paths,
   components: {
