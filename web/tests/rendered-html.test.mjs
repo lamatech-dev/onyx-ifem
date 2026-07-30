@@ -39,6 +39,15 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   assert.match(page, /CreateTask/);
   assert.match(page, /CreateTimeline/);
   assert.match(page, /CreateReport/);
+  assert.match(page, /CreateOrganization/);
+  assert.match(page, /CreateWorkspace/);
+  assert.match(page, /CreateDepartment/);
+  assert.match(page, /CreateTeam/);
+  assert.match(page, /CreateGroup/);
+  assert.match(page, /MoveTeam/);
+  assert.match(page, /ArchiveDepartment/);
+  assert.match(page, /ArchiveOrganization/);
+  assert.match(page, /OrganizationPanel/);
   assert.match(page, /MissionDetail/);
   assert.match(page, /RecordDetail/);
   assert.match(page, /MissionBlueprintRevisionCreated/);

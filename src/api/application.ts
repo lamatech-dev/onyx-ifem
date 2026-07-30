@@ -15,6 +15,9 @@ import { SqliteTimelineRepository } from "../timeline/sqlite-repository.ts";
 import { InMemoryWorkRepository } from "../work/repository.ts";
 import { WorkService } from "../work/service.ts";
 import { SqliteWorkRepository } from "../work/sqlite-repository.ts";
+import { InMemoryOrganizationRepository } from "../organization/repository.ts";
+import { OrganizationService } from "../organization/service.ts";
+import { SqliteOrganizationRepository } from "../organization/sqlite-repository.ts";
 import { OPENAPI_DOCUMENT } from "./openapi.ts";
 import { encodeCursor, readCollectionQuery, readHistoryQuery, readItemQuery } from "./query.ts";
 import { allowedMethodsForPath } from "./routes.ts";
@@ -36,7 +39,7 @@ export interface ApiResponse {
 export interface OnyxApplicationOptions {
   databasePath?: string;
   now?: () => Date;
-  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence", string>>;
+  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization", string>>;
   logError?: (error: unknown) => void;
   logger?: StructuredLogger;
   monotonicNow?: () => number;
@@ -112,12 +115,17 @@ export class OnyxApplication {
         throw new OnyxError("INVALID_ARGUMENT", `unsupported report subject type: ${subject.aggregate_type}`);
       },
     });
+    const organization = new OrganizationService(
+      this.#database ? new SqliteOrganizationRepository(this.#database) : new InMemoryOrganizationRepository(),
+      {...time, replicaId: options.replicaIds?.organization ?? "organization-api"},
+    );
 
     this.#commands = new Map<string, (body: unknown) => Promise<unknown>>([
       ["mission", (body) => mission.execute(body)],
       ["work", (body) => work.execute(body)],
       ["timeline", (body) => timeline.execute(body)],
       ["reporting-evidence", (body) => reporting.execute(body)],
+      ["organization", (body) => organization.execute(body)],
     ]);
     this.#resources = new Map([
       ["missions", {
@@ -147,6 +155,17 @@ export class OnyxApplication {
         ),
         get: (organizationId, objectId) => reporting.getReport(organizationId, objectId),
         history: (organizationId, objectId, afterVersion, limit) => reporting.getHistory(organizationId, objectId, afterVersion, limit),
+      }],
+      ["organizations", {
+        list: async (organizationId, afterId, limit) => page(await organization.listOrganizations(organizationId, afterId, limit + 1), limit, (item) => item.organization_id),
+        get: (organizationId, objectId) => {
+          if (organizationId !== objectId) throw new OnyxError("ORGANIZATION_MISMATCH", "organization query must match object id");
+          return organization.getOrganization(objectId);
+        },
+        history: (organizationId, objectId, afterVersion, limit) => {
+          if (organizationId !== objectId) throw new OnyxError("ORGANIZATION_MISMATCH", "organization query must match object id");
+          return organization.getHistory(objectId, afterVersion, limit);
+        },
       }],
     ]);
   }
@@ -181,7 +200,7 @@ export class OnyxApplication {
     const method = request.method === "HEAD" ? "GET" : request.method;
 
     if (method === "GET" && url.pathname === "/healthz") {
-      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence"]}};
+      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization"]}};
     }
     if (method === "GET" && url.pathname === "/readyz") {
       if (!this.#database) {
@@ -291,6 +310,7 @@ export class OnyxApplication {
       tasks: "work:read",
       timelines: "timeline:read",
       reports: "reporting-evidence:read",
+      organizations: "organization:read",
     };
     if (!claims.scope.includes(requiredScope[resource]!)) {
       throw new OnyxError("AUTHORITY_PROOF_INVALID", `${requiredScope[resource]} authority is missing`);

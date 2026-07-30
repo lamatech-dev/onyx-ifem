@@ -11,8 +11,7 @@
           "const": "TeamMoved"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"team_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "department_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}}, "required": ["team_id", "department_id"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX TeamMoved",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C03",
   "x-onyx-topic": "organization.events"
 }

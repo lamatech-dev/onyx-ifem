@@ -74,6 +74,20 @@ type Report = {
   evidence: Record<string, {evidence_id: string; evidence_type: string; uri: string; content_hash: string; description?: string; status: string}>;
 };
 
+type Organization = {
+  organization_id: string;
+  name: string;
+  slug: string;
+  status: string;
+  version: number;
+  lifecycle_epoch: number;
+  authority_epoch: number;
+  workspaces: Record<string, { workspace_id: string; name: string }>;
+  departments: Record<string, { department_id: string; name: string; parent_department_id?: string; status: string }>;
+  teams: Record<string, { team_id: string; department_id: string; name: string }>;
+  groups: Record<string, { group_id: string; name: string }>;
+};
+
 type RecordSelection =
   | { kind: "task"; record: Task }
   | { kind: "timeline"; record: Timeline }
@@ -195,6 +209,7 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [timelines, setTimelines] = useState<Timeline[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [organization, setOrganization] = useState<Organization | null>(null);
   const [ready, setReady] = useState<Ready | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -243,18 +258,20 @@ export default function Home() {
     setError("");
     try {
       const query = `organization_id=${encodeURIComponent(organizationId)}&limit=100`;
-      const [healthData, missionData, taskData, timelineData, reportData] = await Promise.all([
+      const [healthData, missionData, taskData, timelineData, reportData, organizationData] = await Promise.all([
         api<Ready>("/readyz"),
         api<ResourcePage<Mission>>(`/v1/missions?${query}`),
         api<ResourcePage<Task>>(`/v1/tasks?${query}`),
         api<ResourcePage<Timeline>>(`/v1/timelines?${query}`),
         api<ResourcePage<Report>>(`/v1/reports?${query}`),
+        api<ResourcePage<Organization>>(`/v1/organizations?organization_id=${encodeURIComponent(organizationId)}&limit=1`),
       ]);
       setReady(healthData);
       setMissions(missionData.items);
       setTasks(taskData.items);
       setTimelines(timelineData.items);
       setReports(reportData.items);
+      setOrganization(organizationData.items[0] ?? null);
       setNextCursors({ mission: missionData.next_cursor, task: taskData.next_cursor, timeline: timelineData.next_cursor, report: reportData.next_cursor });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to reach ONYX API");
@@ -639,6 +656,62 @@ export default function Home() {
     }
   }
 
+  async function runOrganizationAction(type: "initialize" | "workspace" | "department" | "team" | "group" | "move" | "archive-department" | "archive-organization") {
+    if (type === "archive-organization" && !window.confirm("Archive this organization and fence its lifecycle?")) return;
+    setActionLoading(`organization:${type}`);
+    try {
+      const activeDepartments = Object.values(organization?.departments ?? {}).filter((item) => item.status === "ACTIVE");
+      const teams = Object.values(organization?.teams ?? {});
+      let commandType: string, scope: string, aggregateType: string, objectId: string, payload: Record<string, unknown>;
+      if (type === "initialize") {
+        commandType = "CreateOrganization"; scope = "organization:create"; aggregateType = "Organization"; objectId = organizationId;
+        payload = {organization_id: organizationId, name: "ONYX Workspace", slug: `onyx-${organizationId.slice(-6).toLowerCase()}`};
+      } else if (!organization) {
+        throw new Error("Initialize the organization first");
+      } else if (type === "workspace") {
+        objectId = uuidV7(); commandType = "CreateWorkspace"; scope = "organization:workspace:create"; aggregateType = "Workspace";
+        payload = {organization_id: organizationId, workspace_id: objectId, name: `Workspace ${Object.keys(organization.workspaces).length + 1}`};
+      } else if (type === "department") {
+        objectId = uuidV7(); commandType = "CreateDepartment"; scope = "organization:department:create"; aggregateType = "Department";
+        payload = {organization_id: organizationId, department_id: objectId, name: `Department ${Object.keys(organization.departments).length + 1}`};
+      } else if (type === "team") {
+        if (!activeDepartments.length) throw new Error("Create an active department first");
+        objectId = uuidV7(); commandType = "CreateTeam"; scope = "organization:team:create"; aggregateType = "Team";
+        payload = {organization_id: organizationId, team_id: objectId, department_id: activeDepartments[0].department_id, name: `Team ${teams.length + 1}`};
+      } else if (type === "group") {
+        objectId = uuidV7(); commandType = "CreateGroup"; scope = "organization:group:create"; aggregateType = "Group";
+        payload = {organization_id: organizationId, group_id: objectId, name: `Group ${Object.keys(organization.groups).length + 1}`};
+      } else if (type === "move") {
+        if (!teams.length || activeDepartments.length < 2) throw new Error("Create a team and at least two active departments first");
+        const team = teams[0], destination = activeDepartments.find((item) => item.department_id !== team.department_id);
+        if (!destination) throw new Error("No destination department is available");
+        objectId = team.team_id; commandType = "MoveTeam"; scope = "organization:team:move"; aggregateType = "Team";
+        payload = {organization_id: organizationId, team_id: objectId, to_department_id: destination.department_id, reason: "Hierarchy update from ONYX Command Center"};
+      } else if (type === "archive-department") {
+        const department = activeDepartments.find((item) => !teams.some((team) => team.department_id === item.department_id));
+        if (!department) throw new Error("No empty active department can be archived");
+        objectId = department.department_id; commandType = "ArchiveDepartment"; scope = "organization:department:archive"; aggregateType = "Department";
+        payload = {organization_id: organizationId, department_id: objectId, reason: "Consolidated from ONYX Command Center"};
+      } else {
+        objectId = organizationId; commandType = "ArchiveOrganization"; scope = "organization:archive"; aggregateType = "Organization";
+        payload = {organization_id: organizationId, retention_policy_id: uuidV7()};
+      }
+      const command = envelope(commandType, aggregateType, objectId, organizationId, principalId, scope, payload);
+      if (organization && type !== "initialize") {
+        command.expected_version = organization.version;
+        command.expected_lifecycle_epoch = organization.lifecycle_epoch;
+        command.expected_authority_epoch = organization.authority_epoch;
+      }
+      await api(`/v1/organization/commands/${commandType}`, {method: "POST", body: JSON.stringify(command)});
+      await refresh();
+      setToast(`${commandType.replace(/([A-Z])/g, " $1").trim()} completed`);
+    } catch (caught) {
+      setToast(caught instanceof Error ? caught.message : "Organization action failed");
+    } finally {
+      setActionLoading("");
+    }
+  }
+
   function saveIdentity() {
     localStorage.setItem("onyx.organization", organizationId);
     localStorage.setItem("onyx.principal", principalId);
@@ -694,6 +767,8 @@ export default function Home() {
                 <article><div className="metric-top"><span className="metric-icon green">▤</span><span className="trend positive-text">Verified</span></div><strong>{loading ? "—" : reports.length}</strong><p>Evidence reports</p><small>{completion}% task completion</small></article>
               </section>
 
+              <OrganizationPanel organization={organization} loading={actionLoading} onAction={(type) => void runOrganizationAction(type)} />
+
               <section className="dashboard-grid">
                 <article className="panel mission-panel">
                   <div className="panel-header"><div><p className="eyebrow">MISSION PORTFOLIO</p><h2>Priority operations</h2></div><button onClick={() => navigateView("missions")}>View all <span>→</span></button></div>
@@ -726,6 +801,18 @@ export default function Home() {
       {toast && <div className="toast" role="status"><span>✓</span>{toast}</div>}
     </main>
   );
+}
+
+function OrganizationPanel({ organization, loading, onAction }: { organization: Organization | null; loading: string; onAction: (type: "initialize" | "workspace" | "department" | "team" | "group" | "move" | "archive-department" | "archive-organization") => void }) {
+  if (!organization) return <section className="panel organization-panel organization-empty"><div><p className="eyebrow">ORGANIZATION STRUCTURE</p><h2>Initialize the hierarchy</h2><p>Create the organization aggregate before adding workspaces, departments, teams, and groups.</p></div><button className="primary-button" disabled={Boolean(loading)} onClick={() => onAction("initialize")}>{loading ? "Initializing…" : "Initialize organization"}</button></section>;
+  const departments = Object.values(organization.departments), teams = Object.values(organization.teams);
+  return <section className="panel organization-panel">
+    <div className="organization-heading"><div><p className="eyebrow">ORGANIZATION STRUCTURE · V{organization.version}</p><h2>{organization.name}</h2><p>{organization.slug} · <span className={statusClass(organization.status)}>{organization.status}</span></p></div><div className="organization-counts"><span><strong>{Object.keys(organization.workspaces).length}</strong> workspaces</span><span><strong>{departments.length}</strong> departments</span><span><strong>{teams.length}</strong> teams</span><span><strong>{Object.keys(organization.groups).length}</strong> groups</span></div></div>
+    <div className="organization-tree" aria-label="Organization hierarchy">
+      {departments.length ? departments.map((department) => <article key={department.department_id}><div><span className="organization-node">◎</span><strong>{department.name}</strong><small>{department.status} · {shortId(department.department_id)}</small></div><ul>{teams.filter((team) => team.department_id === department.department_id).map((team) => <li key={team.team_id}><span>↳</span>{team.name}<small>{shortId(team.team_id)}</small></li>)}{!teams.some((team) => team.department_id === department.department_id) && <li className="empty-branch">No assigned teams</li>}</ul></article>) : <p className="organization-placeholder">Add a department to begin mapping the operating hierarchy.</p>}
+    </div>
+    {organization.status !== "ARCHIVED" && <div className="organization-actions"><button disabled={Boolean(loading)} onClick={() => onAction("workspace")}>＋ Workspace</button><button disabled={Boolean(loading)} onClick={() => onAction("department")}>＋ Department</button><button disabled={Boolean(loading)} onClick={() => onAction("team")}>＋ Team</button><button disabled={Boolean(loading)} onClick={() => onAction("group")}>＋ Group</button><button disabled={Boolean(loading)} onClick={() => onAction("move")}>Move team</button><button disabled={Boolean(loading)} onClick={() => onAction("archive-department")}>Archive department</button><button className="danger-control" disabled={Boolean(loading)} onClick={() => onAction("archive-organization")}>Archive organization</button></div>}
+  </section>;
 }
 
 function MissionRow({ mission, index, taskCount, onOpen }: { mission: Mission; index: number; taskCount: number; onOpen: () => void }) {

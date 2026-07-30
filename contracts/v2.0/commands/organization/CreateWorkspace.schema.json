@@ -11,8 +11,7 @@
           "const": "CreateWorkspace"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"organization_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "workspace_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "name": {"type": "string", "minLength": 1, "maxLength": 200}}, "required": ["organization_id", "workspace_id", "name"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX CreateWorkspace",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C03",
   "x-onyx-topic": "organization.events"
 }

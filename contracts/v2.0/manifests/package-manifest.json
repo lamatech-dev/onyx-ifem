@@ -323,112 +323,112 @@
       "path": "contracts/events/work/TaskCancelled.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "command",
       "name": "CreateOrganization",
       "path": "contracts/commands/organization/CreateOrganization.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "command",
       "name": "CreateWorkspace",
       "path": "contracts/commands/organization/CreateWorkspace.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "command",
       "name": "CreateDepartment",
       "path": "contracts/commands/organization/CreateDepartment.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "command",
       "name": "CreateTeam",
       "path": "contracts/commands/organization/CreateTeam.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "command",
       "name": "CreateGroup",
       "path": "contracts/commands/organization/CreateGroup.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "command",
       "name": "MoveTeam",
       "path": "contracts/commands/organization/MoveTeam.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "command",
       "name": "ArchiveDepartment",
       "path": "contracts/commands/organization/ArchiveDepartment.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "command",
       "name": "ArchiveOrganization",
       "path": "contracts/commands/organization/ArchiveOrganization.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "event",
       "name": "OrganizationCreated",
       "path": "contracts/events/organization/OrganizationCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "event",
       "name": "WorkspaceCreated",
       "path": "contracts/events/organization/WorkspaceCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "event",
       "name": "DepartmentCreated",
       "path": "contracts/events/organization/DepartmentCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "event",
       "name": "TeamCreated",
       "path": "contracts/events/organization/TeamCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "event",
       "name": "GroupCreated",
       "path": "contracts/events/organization/GroupCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "event",
       "name": "TeamMoved",
       "path": "contracts/events/organization/TeamMoved.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "event",
       "name": "DepartmentArchived",
       "path": "contracts/events/organization/DepartmentArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C03",
       "kind": "event",
       "name": "OrganizationArchived",

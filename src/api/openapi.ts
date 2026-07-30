@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 type JsonObject = Record<string, any>;
 
 interface CommandRoute {
-  context: "mission" | "work" | "timeline" | "reporting-evidence";
+  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization";
   command: string;
   event: string;
 }
@@ -52,6 +52,14 @@ export const IMPLEMENTED_COMMAND_ROUTES: readonly CommandRoute[] = [
   {context: "reporting-evidence", command: "ApproveReport", event: "ReportApproved"},
   {context: "reporting-evidence", command: "RejectReport", event: "ReportRejected"},
   {context: "reporting-evidence", command: "ArchiveReport", event: "ReportArchived"},
+  {context: "organization", command: "CreateOrganization", event: "OrganizationCreated"},
+  {context: "organization", command: "CreateWorkspace", event: "WorkspaceCreated"},
+  {context: "organization", command: "CreateDepartment", event: "DepartmentCreated"},
+  {context: "organization", command: "CreateTeam", event: "TeamCreated"},
+  {context: "organization", command: "CreateGroup", event: "GroupCreated"},
+  {context: "organization", command: "MoveTeam", event: "TeamMoved"},
+  {context: "organization", command: "ArchiveDepartment", event: "DepartmentArchived"},
+  {context: "organization", command: "ArchiveOrganization", event: "OrganizationArchived"},
 ];
 
 function readSchema(path: string): JsonObject {
@@ -210,6 +218,7 @@ addResource("missions", "Mission", "MissionView", IMPLEMENTED_COMMAND_ROUTES.fil
 addResource("tasks", "Task", "TaskView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "work").map((route) => route.event));
 addResource("timelines", "Timeline", "TimelineView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "timeline").map((route) => route.event));
 addResource("reports", "Report", "ReportView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "reporting-evidence").map((route) => route.event));
+addResource("organizations", "Organization", "OrganizationView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "organization").map((route) => route.event));
 
 paths["/healthz"] = {
   get: {
@@ -336,6 +345,15 @@ const viewSchemas: JsonObject = {
       title: {type: "string", minLength: 1}, version: {type: "integer", minimum: 1},
       status: {type: "string", enum: ["DRAFT", "SUBMITTED", "APPROVED", "REJECTED", "ARCHIVED"]},
       lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0}, evidence: {type: "object"},
+    },
+  },
+  OrganizationView: {
+    type: "object", additionalProperties: false,
+    required: ["organization_id", "name", "slug", "status", "version", "lifecycle_epoch", "authority_epoch", "workspaces", "departments", "teams", "groups"],
+    properties: {
+      organization_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, name: {type: "string"}, slug: {type: "string"}, status: {type: "string"},
+      version: {type: "integer", minimum: 1}, lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0},
+      workspaces: {type: "object"}, departments: {type: "object"}, teams: {type: "object"}, groups: {type: "object"},
     },
   },
 };

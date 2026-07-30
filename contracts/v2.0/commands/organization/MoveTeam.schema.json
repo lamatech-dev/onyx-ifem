@@ -11,8 +11,7 @@
           "const": "MoveTeam"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"organization_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "team_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "to_department_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "reason": {"type": "string", "minLength": 1, "maxLength": 2000}}, "required": ["organization_id", "team_id", "to_department_id", "reason"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX MoveTeam",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C03",
   "x-onyx-topic": "organization.events"
 }

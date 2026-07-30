@@ -7,13 +7,15 @@ import { describe, it } from "node:test";
 import { SqliteDatabase } from "../src/infrastructure/sqlite/database.ts";
 import { MissionService } from "../src/mission/service.ts";
 import { SqliteMissionRepository } from "../src/mission/sqlite-repository.ts";
+import { OrganizationService } from "../src/organization/service.ts";
+import { SqliteOrganizationRepository } from "../src/organization/sqlite-repository.ts";
 import { ReportingService } from "../src/reporting-evidence/service.ts";
 import { SqliteReportingRepository } from "../src/reporting-evidence/sqlite-repository.ts";
 import { TimelineService } from "../src/timeline/service.ts";
 import { SqliteTimelineRepository } from "../src/timeline/sqlite-repository.ts";
 import { WorkService } from "../src/work/service.ts";
 import { SqliteWorkRepository } from "../src/work/sqlite-repository.ts";
-import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, missionCommand, testId } from "./fixtures.ts";
+import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, missionCommand, organizationCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -182,6 +184,29 @@ describe("SQLite persistence", () => {
       assert.equal((await secondReporting.getReport(testId(13), testId(600))).title, "Mission status report");
       assert.deepEqual((await secondReporting.getHistory(testId(13), testId(600))).map((event) => event.event_type), ["ReportCreated"]);
       assert.deepEqual(await secondReporting.execute(create), created);
+      secondDatabase.close();
+    } finally {
+      await rm(directory, {recursive: true, force: true});
+    }
+  });
+
+  it("restores the Organization hierarchy, history, and idempotency after restart", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "onyx-sqlite-organization-"));
+    const path = join(directory, "onyx.db"), organizationId = testId(13), departmentId = testId(720);
+    const create = organizationCommand("CreateOrganization", 720, "Organization", organizationId, {organization_id: organizationId, name: "ONYX Labs", slug: "onyx-labs"}, "organization:create", 0);
+    try {
+      const firstDatabase = new SqliteDatabase(path);
+      const firstService = new OrganizationService(new SqliteOrganizationRepository(firstDatabase), {now});
+      const created = await firstService.execute(create);
+      await firstService.execute(organizationCommand("CreateDepartment", 721, "Department", departmentId, {organization_id: organizationId, department_id: departmentId, name: "Operations"}, "organization:department:create", 1));
+      firstDatabase.close();
+
+      const secondDatabase = new SqliteDatabase(path);
+      const restored = new OrganizationService(new SqliteOrganizationRepository(secondDatabase), {now});
+      const view = await restored.getOrganization(organizationId);
+      assert.equal(view.departments[departmentId]?.name, "Operations");
+      assert.deepEqual((await restored.getHistory(organizationId)).map((event) => event.event_type), ["OrganizationCreated", "DepartmentCreated"]);
+      assert.deepEqual(await restored.execute(create), created);
       secondDatabase.close();
     } finally {
       await rm(directory, {recursive: true, force: true});

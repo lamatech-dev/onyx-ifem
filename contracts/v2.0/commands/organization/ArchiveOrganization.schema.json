@@ -11,8 +11,7 @@
           "const": "ArchiveOrganization"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"organization_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "retention_policy_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}}, "required": ["organization_id", "retention_policy_id"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX ArchiveOrganization",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C03",
   "x-onyx-topic": "organization.events"
 }

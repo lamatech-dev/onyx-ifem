@@ -2,6 +2,7 @@ import type { CreateMissionCommand, MissionCommand } from "../src/mission/types.
 import type { CreateTaskCommand, WorkCommand } from "../src/work/types.ts";
 import type { CreateTimelineCommand, TimelineCommand } from "../src/timeline/types.ts";
 import type { CreateReportCommand, ReportingCommand } from "../src/reporting-evidence/types.ts";
+import type { OrganizationCommand } from "../src/organization/types.ts";
 
 export function testId(sequence: number): string {
   return `018f1c2a-7b3d-7abc-8def-${sequence.toString(16).padStart(12, "0")}`;
@@ -198,4 +199,13 @@ export function reportingCommand<TType extends ReportingCommand["command_type"],
     expected_version: expectedVersion, issued_at: "2026-07-29T20:00:00.000000Z", operation_id: testId(1_400 + sequence), organization_id: testId(13), payload,
     schema_version: 1, target: {aggregate_type: "Report", object_id: testId(600)}, vector_clock: {"replica-a": sequence},
   } as unknown as Extract<ReportingCommand, {command_type: TType}>;
+}
+
+export function organizationCommand<TType extends OrganizationCommand["command_type"], TPayload>(type: TType, sequence: number, aggregateType: string, objectId: string, payload: TPayload, scope: string, expectedVersion: number): Extract<OrganizationCommand, {command_type: TType}> {
+  return {
+    actor_context: {actor_type: "USER", principal_id: testId(15)}, authority_proof: {authority_epoch: 0, expires_at: "2030-01-01T00:00:00.000000Z", proof_ref: `proof:${type}`, scope: [scope]},
+    command_id: testId(1_600 + sequence), command_type: type, correlation_id: testId(200), expected_authority_epoch: 0, expected_lifecycle_epoch: 0, expected_version: expectedVersion,
+    issued_at: "2026-07-29T20:00:00.000000Z", operation_id: testId(1_700 + sequence), organization_id: testId(13), payload, schema_version: 1,
+    target: {aggregate_type: aggregateType, object_id: objectId}, vector_clock: {"replica-a": sequence},
+  } as unknown as Extract<OrganizationCommand, {command_type: TType}>;
 }

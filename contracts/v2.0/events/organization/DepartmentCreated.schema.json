@@ -11,8 +11,7 @@
           "const": "DepartmentCreated"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"organization_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "department_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "name": {"type": "string", "minLength": 1, "maxLength": 200}, "parent_department_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}}, "required": ["organization_id", "department_id", "name"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX DepartmentCreated",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C03",
   "x-onyx-topic": "organization.events"
 }
