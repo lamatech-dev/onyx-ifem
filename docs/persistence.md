@@ -34,6 +34,8 @@ A command commit runs inside `BEGIN IMMEDIATE` and writes:
 
 Any failed statement rolls the transaction back. Updates also compare the stored aggregate version with the immediately preceding version, providing a persistence-level optimistic concurrency guard in addition to application validation.
 
+For executable contexts, events read from aggregate history, the operation-idempotency store, or the outbox are revalidated against their canonical envelope and integrity digest. Row metadata such as event ID, type, organization, aggregate identity, version, and operation ID must agree with the event body. Corruption fails closed as an internal storage error; outbox rows are validated before lease acquisition so a damaged message is not hidden behind a fresh lease.
+
 ## Recovery behavior
 
 Restart tests close the database, construct new repository and service instances, and verify:

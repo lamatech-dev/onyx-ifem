@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { validateEventEnvelope } from "../../contracts/validation.ts";
 
 export const SQLITE_SCHEMA_VERSION = 4;
 
@@ -134,13 +135,18 @@ export class SqliteDatabase {
 
   getEvents<TEvent>(context: string, aggregateId: string, afterVersion: number, limit: number): TEvent[] {
     const rows = this.#database.prepare(`
-      SELECT event_json
+      SELECT aggregate_version, event_id, event_json
       FROM onyx_events
       WHERE context = ? AND aggregate_id = ? AND aggregate_version > ?
       ORDER BY aggregate_version
       LIMIT ?
-    `).all(context, aggregateId, afterVersion, limit) as Array<{event_json: string}>;
-    return rows.map((row) => JSON.parse(row.event_json) as TEvent);
+    `).all(context, aggregateId, afterVersion, limit) as Array<{aggregate_version: number; event_id: string; event_json: string}>;
+    return rows.map((row) => storedEvent<TEvent>(row.event_json, {
+      context,
+      aggregateId,
+      aggregateVersion: row.aggregate_version,
+      eventId: row.event_id,
+    }));
   }
 
   getOperation<TEvent>(context: string, operationId: string): StoredOperation<TEvent> | undefined {
@@ -149,7 +155,7 @@ export class SqliteDatabase {
       FROM onyx_operations
       WHERE context = ? AND operation_id = ?
     `).get(context, operationId) as {fingerprint: string; event_json: string} | undefined;
-    return row && {fingerprint: row.fingerprint, event: JSON.parse(row.event_json) as TEvent};
+    return row && {fingerprint: row.fingerprint, event: storedEvent<TEvent>(row.event_json, {context, operationId})};
   }
 
   getOutboxMessage<TEvent>(eventId: string): OutboxMessage<TEvent> | undefined {
@@ -327,6 +333,7 @@ export class SqliteDatabase {
         ORDER BY available_at, context, aggregate_id, aggregate_version, event_id
         LIMIT ?
       `).all(now, now, options.limit) as unknown as OutboxRow[];
+      const messages = rows.map((row) => toOutboxMessage<TEvent>(row));
       const claim = this.#database.prepare(`
         UPDATE onyx_outbox
         SET lease_owner = ?, lease_expires_at = ?, attempt_count = attempt_count + 1
@@ -334,11 +341,11 @@ export class SqliteDatabase {
       `);
       for (const row of rows) claim.run(options.workerId, leaseExpiresAt, row.event_id);
       this.#database.exec("COMMIT");
-      return rows.map((row) => toOutboxMessage<TEvent>({
-        ...row,
-        attempt_count: row.attempt_count + 1,
-        lease_owner: options.workerId,
-        lease_expires_at: leaseExpiresAt,
+      return messages.map((message) => ({
+        ...message,
+        attemptCount: message.attemptCount + 1,
+        leaseOwner: options.workerId,
+        leaseExpiresAt,
       }));
     } catch (error) {
       this.#database.exec("ROLLBACK");
@@ -634,7 +641,14 @@ function toOutboxMessage<TEvent>(row: OutboxRow): OutboxMessage<TEvent> {
     aggregateVersion: row.aggregate_version,
     organizationId: row.organization_id,
     eventType: row.event_type,
-    event: JSON.parse(row.event_json) as TEvent,
+    event: storedEvent<TEvent>(row.event_json, {
+      context: row.context,
+      aggregateId: row.aggregate_id,
+      aggregateVersion: row.aggregate_version,
+      organizationId: row.organization_id,
+      eventId: row.event_id,
+      eventType: row.event_type,
+    }),
     attemptCount: row.attempt_count,
     availableAt: row.available_at,
     ...(row.lease_owner !== null ? {leaseOwner: row.lease_owner} : {}),
@@ -643,6 +657,58 @@ function toOutboxMessage<TEvent>(row: OutboxRow): OutboxMessage<TEvent> {
     ...(row.dead_lettered_at !== null ? {deadLetteredAt: row.dead_lettered_at} : {}),
     ...(row.last_error !== null ? {lastError: row.last_error} : {}),
   };
+}
+
+interface StoredEventExpectation {
+  context: string;
+  aggregateId?: string;
+  aggregateVersion?: number;
+  organizationId?: string;
+  eventId?: string;
+  eventType?: string;
+  operationId?: string;
+}
+
+const EXECUTABLE_EVENT_PROFILES: Readonly<Record<string, {aggregateType: string; eventTypes: ReadonlySet<string>}>> = {
+  mission: {
+    aggregateType: "Mission",
+    eventTypes: new Set([
+      "MissionCreated", "MissionBlueprintRevisionCreated", "MissionBlueprintSubmitted", "MissionActivated",
+      "MissionPaused", "MissionResumed", "MissionCancelled", "MissionArchived",
+    ]),
+  },
+  work: {aggregateType: "Task", eventTypes: new Set(["TaskCreated"])},
+  timeline: {aggregateType: "Timeline", eventTypes: new Set(["TimelineCreated"])},
+  "reporting-evidence": {aggregateType: "Report", eventTypes: new Set(["ReportCreated"])},
+};
+
+function storedEvent<TEvent>(json: string, expected: StoredEventExpectation): TEvent {
+  let value: unknown;
+  try {
+    value = JSON.parse(json) as unknown;
+    const profile = EXECUTABLE_EVENT_PROFILES[expected.context];
+    if (!profile) return value as TEvent;
+    const event = value as Record<string, any>;
+    if (!profile.eventTypes.has(event?.event_type)) throw new Error("stored event type is not executable for its context");
+    validateEventEnvelope(event, event.event_type, profile.aggregateType);
+    if (expected.eventId !== undefined && event.event_id !== expected.eventId) throw new Error("stored event id does not match its row");
+    if (expected.eventType !== undefined && event.event_type !== expected.eventType) throw new Error("stored event type does not match its row");
+    if (expected.organizationId !== undefined && event.organization_id !== expected.organizationId) {
+      throw new Error("stored event organization does not match its row");
+    }
+    if (expected.aggregateId !== undefined && event.aggregate?.object_id !== expected.aggregateId) {
+      throw new Error("stored event aggregate does not match its row");
+    }
+    if (expected.aggregateVersion !== undefined && event.aggregate_version !== expected.aggregateVersion) {
+      throw new Error("stored event version does not match its row");
+    }
+    if (expected.operationId !== undefined && event.operation_id !== expected.operationId) {
+      throw new Error("stored event operation does not match its row");
+    }
+    return value as TEvent;
+  } catch (cause) {
+    throw new Error("stored event failed integrity validation", {cause});
+  }
 }
 
 function toInboxReceipt(row: InboxRow): InboxReceipt {

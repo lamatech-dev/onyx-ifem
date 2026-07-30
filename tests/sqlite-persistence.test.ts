@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { describe, it } from "node:test";
 import { SqliteDatabase } from "../src/infrastructure/sqlite/database.ts";
 import { MissionService } from "../src/mission/service.ts";
@@ -182,6 +183,50 @@ describe("SQLite persistence", () => {
       assert.deepEqual((await secondReporting.getHistory(testId(13), testId(600))).map((event) => event.event_type), ["ReportCreated"]);
       assert.deepEqual(await secondReporting.execute(create), created);
       secondDatabase.close();
+    } finally {
+      await rm(directory, {recursive: true, force: true});
+    }
+  });
+
+  it("fails closed when stored event content or row metadata is corrupted", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "onyx-sqlite-integrity-"));
+    const path = join(directory, "onyx.db");
+    try {
+      const command = createMissionCommand();
+      const initial = new SqliteDatabase(path);
+      const service = new MissionService({repository: new SqliteMissionRepository(initial), now});
+      const event = await service.execute(command);
+      initial.close();
+
+      const raw = new DatabaseSync(path);
+      raw.exec(`
+        UPDATE onyx_events
+        SET event_json = json_set(event_json, '$.payload.objective', 'corrupted');
+        UPDATE onyx_operations
+        SET event_json = json_set(event_json, '$.payload.objective', 'corrupted');
+        UPDATE onyx_outbox
+        SET event_type = 'MissionPaused';
+      `);
+      raw.close();
+
+      const corrupted = new SqliteDatabase(path);
+      const restored = new MissionService({repository: new SqliteMissionRepository(corrupted), now});
+      await assert.rejects(restored.getHistory(testId(13), testId(14)), /stored event failed integrity validation/);
+      await assert.rejects(restored.execute(command), /stored event failed integrity validation/);
+      assert.throws(
+        () => corrupted.getOutboxMessage(event.event_id),
+        /stored event failed integrity validation/,
+      );
+      assert.throws(
+        () => corrupted.claimOutbox({workerId: "worker-a", now: new Date("2030-01-01"), leaseDurationMs: 1_000, limit: 1}),
+        /stored event failed integrity validation/,
+      );
+      corrupted.close();
+
+      const verifyLease = new DatabaseSync(path, {readOnly: true});
+      const attempt = verifyLease.prepare("SELECT attempt_count FROM onyx_outbox").get() as {attempt_count: number};
+      assert.equal(attempt.attempt_count, 0);
+      verifyLease.close();
     } finally {
       await rm(directory, {recursive: true, force: true});
     }
