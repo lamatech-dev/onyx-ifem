@@ -435,126 +435,126 @@
       "path": "contracts/events/organization/OrganizationArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "command",
       "name": "CreateUser",
       "path": "contracts/commands/identity-authority/CreateUser.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "command",
       "name": "AssignRole",
       "path": "contracts/commands/identity-authority/AssignRole.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "command",
       "name": "RevokeRole",
       "path": "contracts/commands/identity-authority/RevokeRole.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "command",
       "name": "RegisterDevice",
       "path": "contracts/commands/identity-authority/RegisterDevice.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "command",
       "name": "RevokeDevice",
       "path": "contracts/commands/identity-authority/RevokeDevice.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "command",
       "name": "DelegateAuthority",
       "path": "contracts/commands/identity-authority/DelegateAuthority.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "command",
       "name": "RevokeDelegation",
       "path": "contracts/commands/identity-authority/RevokeDelegation.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "command",
       "name": "DisableUser",
       "path": "contracts/commands/identity-authority/DisableUser.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "command",
       "name": "EnableUser",
       "path": "contracts/commands/identity-authority/EnableUser.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "event",
       "name": "UserCreated",
       "path": "contracts/events/identity-authority/UserCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "event",
       "name": "RoleAssigned",
       "path": "contracts/events/identity-authority/RoleAssigned.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "event",
       "name": "RoleRevoked",
       "path": "contracts/events/identity-authority/RoleRevoked.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "event",
       "name": "DeviceRegistered",
       "path": "contracts/events/identity-authority/DeviceRegistered.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "event",
       "name": "DeviceRevoked",
       "path": "contracts/events/identity-authority/DeviceRevoked.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "event",
       "name": "AuthorityDelegated",
       "path": "contracts/events/identity-authority/AuthorityDelegated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "event",
       "name": "DelegationRevoked",
       "path": "contracts/events/identity-authority/DelegationRevoked.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "event",
       "name": "UserDisabled",
       "path": "contracts/events/identity-authority/UserDisabled.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C04",
       "kind": "event",
       "name": "UserEnabled",

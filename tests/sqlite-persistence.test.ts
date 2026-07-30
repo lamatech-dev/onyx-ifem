@@ -9,13 +9,15 @@ import { MissionService } from "../src/mission/service.ts";
 import { SqliteMissionRepository } from "../src/mission/sqlite-repository.ts";
 import { OrganizationService } from "../src/organization/service.ts";
 import { SqliteOrganizationRepository } from "../src/organization/sqlite-repository.ts";
+import { IdentityService } from "../src/identity-authority/service.ts";
+import { SqliteIdentityRepository } from "../src/identity-authority/sqlite-repository.ts";
 import { ReportingService } from "../src/reporting-evidence/service.ts";
 import { SqliteReportingRepository } from "../src/reporting-evidence/sqlite-repository.ts";
 import { TimelineService } from "../src/timeline/service.ts";
 import { SqliteTimelineRepository } from "../src/timeline/sqlite-repository.ts";
 import { WorkService } from "../src/work/service.ts";
 import { SqliteWorkRepository } from "../src/work/sqlite-repository.ts";
-import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, missionCommand, organizationCommand, testId } from "./fixtures.ts";
+import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, missionCommand, organizationCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -211,6 +213,23 @@ describe("SQLite persistence", () => {
     } finally {
       await rm(directory, {recursive: true, force: true});
     }
+  });
+
+  it("restores Identity authority state, history, and idempotency after restart", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "onyx-sqlite-identity-"));
+    const path = join(directory, "onyx.db"), userId = testId(800);
+    const create = identityCommand("CreateUser", 760, {user_id: userId, email: "lead@onyx.example", display_name: "Lead"}, "identity-authority:user:create", 0);
+    try {
+      const firstDatabase = new SqliteDatabase(path), first = new IdentityService(new SqliteIdentityRepository(firstDatabase), {now});
+      const created = await first.execute(create);
+      await first.execute(identityCommand("AssignRole", 761, {user_id: userId, role_id: "operator"}, "identity-authority:role:assign", 1));
+      firstDatabase.close();
+      const secondDatabase = new SqliteDatabase(path), restored = new IdentityService(new SqliteIdentityRepository(secondDatabase), {now});
+      assert.equal((await restored.getUser(testId(13), userId)).roles.operator?.role_id, "operator");
+      assert.deepEqual((await restored.getHistory(testId(13), userId)).map((event) => event.event_type), ["UserCreated", "RoleAssigned"]);
+      assert.deepEqual(await restored.execute(create), created);
+      secondDatabase.close();
+    } finally { await rm(directory, {recursive: true, force: true}); }
   });
 
   it("fails closed when stored event content or row metadata is corrupted", async () => {

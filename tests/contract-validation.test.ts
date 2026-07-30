@@ -13,7 +13,8 @@ import {
 import { validateCreateReportCommand } from "../src/reporting-evidence/validation.ts";
 import { validateCreateTimelineCommand } from "../src/timeline/validation.ts";
 import { validateCreateTaskCommand } from "../src/work/validation.ts";
-import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, missionCommand, testId } from "./fixtures.ts";
+import { validateIdentityCommand } from "../src/identity-authority/validation.ts";
+import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, missionCommand, testId } from "./fixtures.ts";
 
 type Validator = (value: unknown) => void;
 
@@ -30,6 +31,7 @@ describe("strict command envelope validation", () => {
     validateCreateTaskCommand(createTaskCommand());
     validateCreateTimelineCommand(createTimelineCommand());
     validateCreateReportCommand(createReportCommand());
+    validateIdentityCommand(identityCommand("CreateUser", 1, {user_id: testId(800), email: "lead@onyx.example", display_name: "Lead"}, "identity-authority:user:create", 0));
   });
 
   it("rejects unknown envelope properties in every executable context", () => {
@@ -38,6 +40,7 @@ describe("strict command envelope validation", () => {
       [validateCreateTaskCommand, createTaskCommand()],
       [validateCreateTimelineCommand, createTimelineCommand()],
       [validateCreateReportCommand, createReportCommand()],
+      [validateIdentityCommand, identityCommand("CreateUser", 1, {user_id: testId(800), email: "lead@onyx.example", display_name: "Lead"}, "identity-authority:user:create", 0)],
     ];
     for (const [validator, command] of cases) rejectsInvalid(validator, {...command, extension: true});
   });

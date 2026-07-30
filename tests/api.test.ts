@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 import { OnyxApplication, type ApiResponse } from "../src/api/application.ts";
 import type { RequestLogRecord } from "../src/infrastructure/observability/logger.ts";
-import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, organizationCommand, testId } from "./fixtures.ts";
+import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, organizationCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -19,7 +19,7 @@ describe("OnyxApplication", () => {
     try {
       const health = await application.handle({method: "GET", path: "/healthz"});
       assert.equal(health.status, 200);
-      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization"]);
+      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority"]);
 
       const head = await application.handle({method: "HEAD", path: "/healthz"});
       assert.equal(head.status, 200);
@@ -44,7 +44,7 @@ describe("OnyxApplication", () => {
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");
-      assert.equal(Object.keys(body(openapi).paths as object).length, 66);
+      assert.equal(Object.keys(body(openapi).paths as object).length, 78);
       body(openapi).info.title = "mutated by caller";
       const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");
@@ -63,7 +63,7 @@ describe("OnyxApplication", () => {
     }
   });
 
-  it("executes the five-context HTTP workflow without a network socket", async () => {
+  it("executes the six-context HTTP workflow without a network socket", async () => {
     const application = new OnyxApplication({now});
     try {
       const organization = await application.handle({
@@ -71,6 +71,8 @@ describe("OnyxApplication", () => {
         path: "/v1/organization/commands/CreateOrganization",
         body: organizationCommand("CreateOrganization", 740, "Organization", testId(13), {organization_id: testId(13), name: "ONYX Labs", slug: "onyx-labs"}, "organization:create", 0),
       });
+      const userId = testId(800);
+      const user = await application.handle({method: "POST", path: "/v1/identity-authority/commands/CreateUser", body: identityCommand("CreateUser", 740, {user_id: userId, email: "lead@onyx.example", display_name: "Operations Lead"}, "identity-authority:user:create", 0)});
       const mission = await application.handle({
         method: "POST",
         path: "/v1/mission/commands/CreateMission",
@@ -96,10 +98,12 @@ describe("OnyxApplication", () => {
         body: reportCommand,
       });
 
-      assert.deepEqual([organization.status, mission.status, task.status, timeline.status, report.status], [202, 202, 202, 202, 202]);
+      assert.deepEqual([organization.status, user.status, mission.status, task.status, timeline.status, report.status], [202, 202, 202, 202, 202, 202]);
       const organizationView = await application.handle({method: "GET", path: `/v1/organizations/${testId(13)}?organization_id=${testId(13)}`});
       assert.equal(organizationView.status, 200);
       assert.equal(body(organizationView).slug, "onyx-labs");
+      const userView = await application.handle({method: "GET", path: `/v1/users/${userId}?organization_id=${testId(13)}`});
+      assert.equal(userView.status, 200); assert.equal(body(userView).display_name, "Operations Lead");
       assert.equal(body(report).event_type, "ReportCreated");
       const replay = await application.handle({method: "POST", path: "/v1/reporting-evidence/commands/CreateReport", body: reportCommand});
       assert.equal(replay.status, report.status);

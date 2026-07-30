@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 type JsonObject = Record<string, any>;
 
 interface CommandRoute {
-  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization";
+  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization" | "identity-authority";
   command: string;
   event: string;
 }
@@ -60,6 +60,15 @@ export const IMPLEMENTED_COMMAND_ROUTES: readonly CommandRoute[] = [
   {context: "organization", command: "MoveTeam", event: "TeamMoved"},
   {context: "organization", command: "ArchiveDepartment", event: "DepartmentArchived"},
   {context: "organization", command: "ArchiveOrganization", event: "OrganizationArchived"},
+  {context: "identity-authority", command: "CreateUser", event: "UserCreated"},
+  {context: "identity-authority", command: "AssignRole", event: "RoleAssigned"},
+  {context: "identity-authority", command: "RevokeRole", event: "RoleRevoked"},
+  {context: "identity-authority", command: "RegisterDevice", event: "DeviceRegistered"},
+  {context: "identity-authority", command: "RevokeDevice", event: "DeviceRevoked"},
+  {context: "identity-authority", command: "DelegateAuthority", event: "AuthorityDelegated"},
+  {context: "identity-authority", command: "RevokeDelegation", event: "DelegationRevoked"},
+  {context: "identity-authority", command: "DisableUser", event: "UserDisabled"},
+  {context: "identity-authority", command: "EnableUser", event: "UserEnabled"},
 ];
 
 function readSchema(path: string): JsonObject {
@@ -219,6 +228,7 @@ addResource("tasks", "Task", "TaskView", IMPLEMENTED_COMMAND_ROUTES.filter((rout
 addResource("timelines", "Timeline", "TimelineView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "timeline").map((route) => route.event));
 addResource("reports", "Report", "ReportView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "reporting-evidence").map((route) => route.event));
 addResource("organizations", "Organization", "OrganizationView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "organization").map((route) => route.event));
+addResource("users", "User", "UserIdentityView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "identity-authority").map((route) => route.event));
 
 paths["/healthz"] = {
   get: {
@@ -354,6 +364,16 @@ const viewSchemas: JsonObject = {
       organization_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, name: {type: "string"}, slug: {type: "string"}, status: {type: "string"},
       version: {type: "integer", minimum: 1}, lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0},
       workspaces: {type: "object"}, departments: {type: "object"}, teams: {type: "object"}, groups: {type: "object"},
+    },
+  },
+  UserIdentityView: {
+    type: "object", additionalProperties: false,
+    required: ["user_id", "organization_id", "email", "display_name", "status", "version", "lifecycle_epoch", "authority_epoch", "roles", "devices", "delegations"],
+    properties: {
+      user_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, organization_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
+      email: {type: "string", format: "email"}, display_name: {type: "string"}, status: {type: "string", enum: ["ACTIVE", "DISABLED"]},
+      version: {type: "integer", minimum: 1}, lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0},
+      roles: {type: "object"}, devices: {type: "object"}, delegations: {type: "object"},
     },
   },
 };

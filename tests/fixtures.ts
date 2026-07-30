@@ -3,6 +3,7 @@ import type { CreateTaskCommand, WorkCommand } from "../src/work/types.ts";
 import type { CreateTimelineCommand, TimelineCommand } from "../src/timeline/types.ts";
 import type { CreateReportCommand, ReportingCommand } from "../src/reporting-evidence/types.ts";
 import type { OrganizationCommand } from "../src/organization/types.ts";
+import type { IdentityCommand } from "../src/identity-authority/types.ts";
 
 export function testId(sequence: number): string {
   return `018f1c2a-7b3d-7abc-8def-${sequence.toString(16).padStart(12, "0")}`;
@@ -208,4 +209,14 @@ export function organizationCommand<TType extends OrganizationCommand["command_t
     issued_at: "2026-07-29T20:00:00.000000Z", operation_id: testId(1_700 + sequence), organization_id: testId(13), payload, schema_version: 1,
     target: {aggregate_type: aggregateType, object_id: objectId}, vector_clock: {"replica-a": sequence},
   } as unknown as Extract<OrganizationCommand, {command_type: TType}>;
+}
+
+export function identityCommand<TType extends IdentityCommand["command_type"], TPayload>(type: TType, sequence: number, payload: TPayload, scope: string, expectedVersion: number, lifecycleEpoch = 0, authorityEpoch = 0): Extract<IdentityCommand, {command_type: TType}> {
+  const userId = (payload as {user_id: string}).user_id;
+  return {
+    actor_context: {actor_type: "USER", principal_id: testId(15)}, authority_proof: {authority_epoch: authorityEpoch, expires_at: "2030-01-01T00:00:00.000000Z", proof_ref: `proof:${type}`, scope: [scope]},
+    command_id: testId(2_000 + sequence), command_type: type, correlation_id: testId(200), expected_authority_epoch: authorityEpoch, expected_lifecycle_epoch: lifecycleEpoch, expected_version: expectedVersion,
+    issued_at: "2026-07-29T20:00:00.000000Z", operation_id: testId(2_100 + sequence), organization_id: testId(13), payload, schema_version: 1,
+    target: {aggregate_type: "User", object_id: userId}, vector_clock: {"replica-a": sequence},
+  } as unknown as Extract<IdentityCommand, {command_type: TType}>;
 }

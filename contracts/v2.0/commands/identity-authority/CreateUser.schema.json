@@ -11,8 +11,7 @@
           "const": "CreateUser"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"user_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "email": {"type": "string", "format": "email", "maxLength": 320}, "display_name": {"type": "string", "minLength": 1, "maxLength": 200}}, "required": ["user_id", "email", "display_name"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX CreateUser",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C04",
   "x-onyx-topic": "identity-authority.events"
 }

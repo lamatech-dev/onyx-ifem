@@ -11,8 +11,7 @@
           "const": "RegisterDevice"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"user_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "device_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "name": {"type": "string", "minLength": 1, "maxLength": 200}, "public_key_thumbprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}, "required": ["user_id", "device_id", "name", "public_key_thumbprint"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX RegisterDevice",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C04",
   "x-onyx-topic": "identity-authority.events"
 }

@@ -88,6 +88,14 @@ type Organization = {
   groups: Record<string, { group_id: string; name: string }>;
 };
 
+type UserIdentity = {
+  user_id: string; organization_id: string; email: string; display_name: string; status: string;
+  version: number; lifecycle_epoch: number; authority_epoch: number;
+  roles: Record<string, {role_id: string; assigned_at: string}>;
+  devices: Record<string, {device_id: string; name: string; public_key_thumbprint: string; status: string}>;
+  delegations: Record<string, {delegation_id: string; delegatee_id: string; scopes: string[]; expires_at: string; status: string}>;
+};
+
 type RecordSelection =
   | { kind: "task"; record: Task }
   | { kind: "timeline"; record: Timeline }
@@ -210,6 +218,7 @@ export default function Home() {
   const [timelines, setTimelines] = useState<Timeline[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [users, setUsers] = useState<UserIdentity[]>([]);
   const [ready, setReady] = useState<Ready | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -258,13 +267,14 @@ export default function Home() {
     setError("");
     try {
       const query = `organization_id=${encodeURIComponent(organizationId)}&limit=100`;
-      const [healthData, missionData, taskData, timelineData, reportData, organizationData] = await Promise.all([
+      const [healthData, missionData, taskData, timelineData, reportData, organizationData, userData] = await Promise.all([
         api<Ready>("/readyz"),
         api<ResourcePage<Mission>>(`/v1/missions?${query}`),
         api<ResourcePage<Task>>(`/v1/tasks?${query}`),
         api<ResourcePage<Timeline>>(`/v1/timelines?${query}`),
         api<ResourcePage<Report>>(`/v1/reports?${query}`),
         api<ResourcePage<Organization>>(`/v1/organizations?organization_id=${encodeURIComponent(organizationId)}&limit=1`),
+        api<ResourcePage<UserIdentity>>(`/v1/users?${query}`),
       ]);
       setReady(healthData);
       setMissions(missionData.items);
@@ -272,6 +282,7 @@ export default function Home() {
       setTimelines(timelineData.items);
       setReports(reportData.items);
       setOrganization(organizationData.items[0] ?? null);
+      setUsers(userData.items);
       setNextCursors({ mission: missionData.next_cursor, task: taskData.next_cursor, timeline: timelineData.next_cursor, report: reportData.next_cursor });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to reach ONYX API");
@@ -712,6 +723,32 @@ export default function Home() {
     }
   }
 
+  async function runIdentityAction(type: "create" | "assign-role" | "revoke-role" | "register-device" | "revoke-device" | "delegate" | "revoke-delegation" | "disable" | "enable", selectedUser?: UserIdentity) {
+    setActionLoading(`identity:${type}`);
+    try {
+      const user = selectedUser ?? users[0];
+      let commandType: string, scope: string, userId: string, payload: Record<string, unknown>;
+      if (type === "create") {
+        userId = uuidV7(); commandType = "CreateUser"; scope = "identity-authority:user:create";
+        payload = {user_id: userId, email: `user-${userId.slice(-8)}@onyx.local`, display_name: `ONYX User ${users.length + 1}`};
+      } else {
+        if (!user) throw new Error("Create a user first"); userId = user.user_id;
+        if (type === "assign-role") { commandType = "AssignRole"; scope = "identity-authority:role:assign"; payload = {user_id: userId, role_id: `operator-${Object.keys(user.roles).length + 1}`}; }
+        else if (type === "revoke-role") { const role = Object.values(user.roles)[0]; if (!role) throw new Error("Assign a role first"); commandType = "RevokeRole"; scope = "identity-authority:role:revoke"; payload = {user_id: userId, role_id: role.role_id, reason: "Role rotation from ONYX Command Center"}; }
+        else if (type === "register-device") { commandType = "RegisterDevice"; scope = "identity-authority:device:register"; payload = {user_id: userId, device_id: uuidV7(), name: `Secure device ${Object.keys(user.devices).length + 1}`, public_key_thumbprint: Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) => byte.toString(16).padStart(2, "0")).join("")}; }
+        else if (type === "revoke-device") { const device = Object.values(user.devices).find((item) => item.status === "ACTIVE"); if (!device) throw new Error("Register an active device first"); commandType = "RevokeDevice"; scope = "identity-authority:device:revoke"; payload = {user_id: userId, device_id: device.device_id, reason: "Device retired from ONYX Command Center"}; }
+        else if (type === "delegate") { commandType = "DelegateAuthority"; scope = "identity-authority:delegate"; payload = {user_id: userId, delegation_id: uuidV7(), delegatee_id: uuidV7(), scopes: ["mission:read", "work:create"], expires_at: new Date(Date.now() + 7 * 86_400_000).toISOString().replace(/Z$/, "000Z")}; }
+        else if (type === "revoke-delegation") { const delegation = Object.values(user.delegations).find((item) => item.status === "ACTIVE"); if (!delegation) throw new Error("Create an active delegation first"); commandType = "RevokeDelegation"; scope = "identity-authority:delegation:revoke"; payload = {user_id: userId, delegation_id: delegation.delegation_id, reason: "Delegation closed from ONYX Command Center"}; }
+        else if (type === "disable") { if (!window.confirm("Disable this user and invalidate current authority?")) return; commandType = "DisableUser"; scope = "identity-authority:user:disable"; payload = {user_id: userId, reason: "Disabled from ONYX Command Center"}; }
+        else { commandType = "EnableUser"; scope = "identity-authority:user:enable"; payload = {user_id: userId, reason: "Re-enabled from ONYX Command Center"}; }
+      }
+      const command = envelope(commandType, "User", userId, organizationId, principalId, scope, payload);
+      if (type !== "create" && user) { command.expected_version = user.version; command.expected_lifecycle_epoch = user.lifecycle_epoch; command.expected_authority_epoch = user.authority_epoch; command.authority_proof = {...command.authority_proof as object, authority_epoch: user.authority_epoch}; }
+      await api(`/v1/identity-authority/commands/${commandType}`, {method: "POST", body: JSON.stringify(command)}); await refresh();
+      setToast(`${commandType.replace(/([A-Z])/g, " $1").trim()} completed`);
+    } catch (caught) { setToast(caught instanceof Error ? caught.message : "Identity action failed"); } finally { setActionLoading(""); }
+  }
+
   function saveIdentity() {
     localStorage.setItem("onyx.organization", organizationId);
     localStorage.setItem("onyx.principal", principalId);
@@ -768,6 +805,7 @@ export default function Home() {
               </section>
 
               <OrganizationPanel organization={organization} loading={actionLoading} onAction={(type) => void runOrganizationAction(type)} />
+              <IdentityPanel users={users} loading={actionLoading} onAction={(type, user) => void runIdentityAction(type, user)} />
 
               <section className="dashboard-grid">
                 <article className="panel mission-panel">
@@ -812,6 +850,15 @@ function OrganizationPanel({ organization, loading, onAction }: { organization: 
       {departments.length ? departments.map((department) => <article key={department.department_id}><div><span className="organization-node">◎</span><strong>{department.name}</strong><small>{department.status} · {shortId(department.department_id)}</small></div><ul>{teams.filter((team) => team.department_id === department.department_id).map((team) => <li key={team.team_id}><span>↳</span>{team.name}<small>{shortId(team.team_id)}</small></li>)}{!teams.some((team) => team.department_id === department.department_id) && <li className="empty-branch">No assigned teams</li>}</ul></article>) : <p className="organization-placeholder">Add a department to begin mapping the operating hierarchy.</p>}
     </div>
     {organization.status !== "ARCHIVED" && <div className="organization-actions"><button disabled={Boolean(loading)} onClick={() => onAction("workspace")}>＋ Workspace</button><button disabled={Boolean(loading)} onClick={() => onAction("department")}>＋ Department</button><button disabled={Boolean(loading)} onClick={() => onAction("team")}>＋ Team</button><button disabled={Boolean(loading)} onClick={() => onAction("group")}>＋ Group</button><button disabled={Boolean(loading)} onClick={() => onAction("move")}>Move team</button><button disabled={Boolean(loading)} onClick={() => onAction("archive-department")}>Archive department</button><button className="danger-control" disabled={Boolean(loading)} onClick={() => onAction("archive-organization")}>Archive organization</button></div>}
+  </section>;
+}
+
+function IdentityPanel({ users, loading, onAction }: { users: UserIdentity[]; loading: string; onAction: (type: "create" | "assign-role" | "revoke-role" | "register-device" | "revoke-device" | "delegate" | "revoke-delegation" | "disable" | "enable", user?: UserIdentity) => void }) {
+  const user = users[0];
+  return <section className="panel identity-panel">
+    <div className="identity-heading"><div><p className="eyebrow">IDENTITY & AUTHORITY</p><h2>Users, credentials, and delegated scope</h2><p>Epoch-fenced access control with immutable authority history.</p></div><button className="primary-button" disabled={Boolean(loading)} onClick={() => onAction("create")}>＋ Create user</button></div>
+    <div className="identity-users">{users.length ? users.slice(0, 5).map((item) => <article key={item.user_id} className={item.user_id === user?.user_id ? "selected" : ""}><span>{item.display_name.split(/\s+/).map((word) => word[0]).join("").slice(0,2).toUpperCase()}</span><div><strong>{item.display_name}</strong><small>{item.email} · v{item.version}</small></div><b className={statusClass(item.status)}>{item.status}</b><div className="identity-stats"><small>{Object.keys(item.roles).length} roles</small><small>{Object.values(item.devices).filter((device) => device.status === "ACTIVE").length} devices</small><small>{Object.values(item.delegations).filter((delegation) => delegation.status === "ACTIVE").length} delegations</small></div></article>) : <p className="organization-placeholder">No users exist in this organization yet.</p>}</div>
+    {user && <div className="organization-actions identity-actions"><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("assign-role", user)}>Assign role</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("revoke-role", user)}>Revoke role</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("register-device", user)}>Register device</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("revoke-device", user)}>Revoke device</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("delegate", user)}>Delegate authority</button><button disabled={Boolean(loading) || user.status === "DISABLED"} onClick={() => onAction("revoke-delegation", user)}>Revoke delegation</button>{user.status === "ACTIVE" ? <button className="danger-control" disabled={Boolean(loading)} onClick={() => onAction("disable", user)}>Disable user</button> : <button disabled={Boolean(loading)} onClick={() => onAction("enable", user)}>Enable user</button>}</div>}
   </section>;
 }
 
