@@ -47,7 +47,15 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   assert.match(page, /\/v1\/timelines\/\$\{id\}\/history/);
   assert.match(page, /\/v1\/reports\/\$\{id\}\/history/);
   assert.match(page, /Contract-governed record/);
+  assert.match(page, /parseSubjectRef/);
+  assert.match(page, /Operational subject/);
+  assert.match(page, /Timeline:\$\{timeline\.timeline_id\}/);
+  assert.match(page, /CONNECTED RECORDS/);
+  assert.match(page, /DOWNSTREAM RECORDS/);
   assert.match(layout, /ONYX — IFEM Operations Command Center/);
+  assert.match(layout, /generateMetadata/);
+  assert.match(layout, /x-forwarded-host/);
+  assert.match(layout, /\/og\.png/);
   assert.match(route, /ALLOWED_PREFIXES/);
   assert.match(route, /http:\/\/127\.0\.0\.1:3001/);
   assert.match(packageJson, /"name": "onyx-ifem-console"/);
