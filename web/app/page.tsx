@@ -68,6 +68,10 @@ type Report = {
   title: string;
   author_id: string;
   version: number;
+  status: string;
+  lifecycle_epoch: number;
+  authority_epoch: number;
+  evidence: Record<string, {evidence_id: string; evidence_type: string; uri: string; content_hash: string; description?: string; status: string}>;
 };
 
 type RecordSelection =
@@ -531,6 +535,30 @@ export default function Home() {
     } catch (caught) { setToast(caught instanceof Error ? caught.message : "Timeline action failed"); } finally { setActionLoading(""); }
   }
 
+  async function runReportAction(type: "evidence" | "verify" | "reject-evidence" | "submit" | "approve" | "reject" | "archive") {
+    if (!selectedRecord || selectedRecord.kind !== "report") return;
+    const report = selectedRecord.record, evidenceId = Object.keys(report.evidence)[0];
+    if (["verify", "reject-evidence"].includes(type) && !evidenceId) { setToast("Add evidence first"); return; }
+    if (type === "submit" && !Object.values(report.evidence).some((item) => item.status === "VERIFIED")) { setToast("Verify at least one evidence item first"); return; }
+    if (["reject", "archive"].includes(type) && !window.confirm(`${type === "reject" ? "Reject" : "Archive"} this report?`)) return;
+    setActionLoading(type);
+    try {
+      const config = {
+        evidence: ["AddEvidence", "reporting-evidence:evidence:add", {report_id: report.report_id, evidence_id: uuidV7(), evidence_type: "DOCUMENT", uri: `urn:onyx:evidence:${uuidV7()}`, content_hash: "a".repeat(64), description: "Evidence captured from ONYX Command Center"}],
+        verify: ["VerifyEvidence", "reporting-evidence:evidence:verify", {report_id: report.report_id, evidence_id: evidenceId, verification_note: "Evidence provenance verified"}],
+        "reject-evidence": ["RejectEvidence", "reporting-evidence:evidence:reject", {report_id: report.report_id, evidence_id: evidenceId, reason_code: "UNVERIFIED", reason: "Evidence rejected from ONYX Command Center"}],
+        submit: ["SubmitReport", "reporting-evidence:submit", {report_id: report.report_id, submission_note: "Submitted from ONYX Command Center"}],
+        approve: ["ApproveReport", "reporting-evidence:approve", {report_id: report.report_id, approval_note: "Approved from ONYX Command Center"}],
+        reject: ["RejectReport", "reporting-evidence:reject", {report_id: report.report_id, reason_code: "REVISION_REQUIRED", reason: "Report returned for revision"}],
+        archive: ["ArchiveReport", "reporting-evidence:archive", {report_id: report.report_id, retention_policy_id: uuidV7()}],
+      } as const;
+      const [commandType, scope, payload] = config[type]; const command = envelope(commandType, "Report", report.report_id, organizationId, principalId, scope, payload);
+      command.expected_version = report.version; command.expected_lifecycle_epoch = report.lifecycle_epoch; command.expected_authority_epoch = report.authority_epoch;
+      await api(`/v1/reporting-evidence/commands/${commandType}`, {method: "POST", body: JSON.stringify(command)}); await refresh();
+      const updated = await api<Report>(`/v1/reports/${report.report_id}?organization_id=${organizationId}`); await openRecord({kind: "report", record: updated}, false); setToast(`${commandType.replace(/([A-Z])/g, " $1").trim()} completed`);
+    } catch (caught) { setToast(caught instanceof Error ? caught.message : "Report action failed"); } finally { setActionLoading(""); }
+  }
+
   const activeMissions = missions.filter((item) => item.status === "ACTIVE").length;
   const openTasks = tasks.filter((item) => !["CLOSED", "CANCELLED"].includes(item.status)).length;
   const completion = tasks.length ? Math.round(((tasks.length - openTasks) / tasks.length) * 100) : 0;
@@ -694,7 +722,7 @@ export default function Home() {
 
       {createKind && <CreateModal kind={createKind} missions={missions} tasks={tasks} timelines={timelines} submitting={submitting} onClose={() => setCreateKind(null)} onSubmit={submitCreate} />}
       {selectedMission && <MissionDetail mission={selectedMission} history={missionHistory} tasks={tasks.filter((task) => task.mission_id === selectedMission.mission_id)} timelines={timelines.filter((timeline) => timeline.subject_ref.object_id === selectedMission.mission_id)} reports={reports.filter((report) => report.subject_ref.object_id === selectedMission.mission_id)} loading={detailLoading} actionLoading={actionLoading} onAction={(type) => void runMissionAction(type)} onOpenRecord={(selection) => void openRecord(selection)} onClose={closeDetails} />}
-      {selectedRecord && <><RecordDetail selection={selectedRecord} history={recordHistory} missions={missions} tasks={tasks} timelines={timelines} reports={reports} loading={detailLoading} actionLoading={actionLoading} onTaskAction={(type) => void runTaskAction(type)} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(nextSelection) => void openRecord(nextSelection)} onClose={closeDetails} />{selectedRecord.kind === "timeline" && selectedRecord.record.status !== "ARCHIVED" && <TimelineActionPanel loading={actionLoading} onAction={(type) => void runTimelineAction(type)} />}</>}
+      {selectedRecord && <><RecordDetail selection={selectedRecord} history={recordHistory} missions={missions} tasks={tasks} timelines={timelines} reports={reports} loading={detailLoading} actionLoading={actionLoading} onTaskAction={(type) => void runTaskAction(type)} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(nextSelection) => void openRecord(nextSelection)} onClose={closeDetails} />{selectedRecord.kind === "timeline" && selectedRecord.record.status !== "ARCHIVED" && <TimelineActionPanel loading={actionLoading} onAction={(type) => void runTimelineAction(type)} />}{selectedRecord.kind === "report" && selectedRecord.record.status !== "ARCHIVED" && <ReportActionPanel report={selectedRecord.record} loading={actionLoading} onAction={(type) => void runReportAction(type)} />}</>}
       {toast && <div className="toast" role="status"><span>✓</span>{toast}</div>}
     </main>
   );
@@ -790,6 +818,14 @@ function RecordDetail({ selection, history, missions, tasks, timelines, reports,
 function TimelineActionPanel({ loading, onAction }: { loading: string; onAction: (type: "deadline" | "move" | "milestone" | "marker" | "penalty" | "resolve" | "archive") => void }) {
   const actions = [["deadline", "Set deadline"], ["move", "Move deadline"], ["milestone", "Add milestone"], ["marker", "Critical marker"], ["penalty", "Penalty zone"], ["resolve", "Resolve exception"], ["archive", "Archive"]] as const;
   return <section className="timeline-action-panel" aria-label="Timeline contract operations"><strong>Schedule control</strong><div>{actions.map(([action, label]) => <button key={action} disabled={Boolean(loading)} onClick={() => onAction(action)}>{loading === action ? "Working…" : label}</button>)}</div></section>;
+}
+
+function ReportActionPanel({ report, loading, onAction }: { report: Report; loading: string; onAction: (type: "evidence" | "verify" | "reject-evidence" | "submit" | "approve" | "reject" | "archive") => void }) {
+  const actions = report.status === "DRAFT" || report.status === "REJECTED"
+    ? [["evidence", "Add evidence"], ["verify", "Verify evidence"], ["reject-evidence", "Reject evidence"], ["submit", "Submit report"]] as const
+    : report.status === "SUBMITTED" ? [["approve", "Approve"], ["reject", "Reject"]] as const
+    : report.status === "APPROVED" ? [["archive", "Archive"]] as const : [];
+  return <section className="timeline-action-panel" aria-label="Report contract operations"><strong>Evidence control</strong><div>{actions.map(([action, label]) => <button key={action} disabled={Boolean(loading)} onClick={() => onAction(action)}>{loading === action ? "Working…" : label}</button>)}</div></section>;
 }
 
 function CreateModal({ kind, missions, tasks, timelines, submitting, onClose, onSubmit }: { kind: CreateKind; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; submitting: boolean; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {

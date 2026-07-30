@@ -988,49 +988,49 @@
       "path": "contracts/commands/reporting-evidence/CreateReport.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "command",
       "name": "AddEvidence",
       "path": "contracts/commands/reporting-evidence/AddEvidence.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "command",
       "name": "SubmitReport",
       "path": "contracts/commands/reporting-evidence/SubmitReport.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "command",
       "name": "VerifyEvidence",
       "path": "contracts/commands/reporting-evidence/VerifyEvidence.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "command",
       "name": "RejectEvidence",
       "path": "contracts/commands/reporting-evidence/RejectEvidence.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "command",
       "name": "ApproveReport",
       "path": "contracts/commands/reporting-evidence/ApproveReport.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "command",
       "name": "RejectReport",
       "path": "contracts/commands/reporting-evidence/RejectReport.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "command",
       "name": "ArchiveReport",
@@ -1044,49 +1044,49 @@
       "path": "contracts/events/reporting-evidence/ReportCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "event",
       "name": "EvidenceAdded",
       "path": "contracts/events/reporting-evidence/EvidenceAdded.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "event",
       "name": "ReportSubmitted",
       "path": "contracts/events/reporting-evidence/ReportSubmitted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "event",
       "name": "EvidenceVerified",
       "path": "contracts/events/reporting-evidence/EvidenceVerified.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "event",
       "name": "EvidenceRejected",
       "path": "contracts/events/reporting-evidence/EvidenceRejected.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "event",
       "name": "ReportApproved",
       "path": "contracts/events/reporting-evidence/ReportApproved.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "event",
       "name": "ReportRejected",
       "path": "contracts/events/reporting-evidence/ReportRejected.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C09",
       "kind": "event",
       "name": "ReportArchived",

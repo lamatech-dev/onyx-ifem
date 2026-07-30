@@ -45,6 +45,13 @@ export const IMPLEMENTED_COMMAND_ROUTES: readonly CommandRoute[] = [
   {context: "timeline", command: "ResolveScheduleException", event: "ScheduleExceptionRaised"},
   {context: "timeline", command: "ArchiveTimeline", event: "TimelineArchived"},
   {context: "reporting-evidence", command: "CreateReport", event: "ReportCreated"},
+  {context: "reporting-evidence", command: "AddEvidence", event: "EvidenceAdded"},
+  {context: "reporting-evidence", command: "VerifyEvidence", event: "EvidenceVerified"},
+  {context: "reporting-evidence", command: "RejectEvidence", event: "EvidenceRejected"},
+  {context: "reporting-evidence", command: "SubmitReport", event: "ReportSubmitted"},
+  {context: "reporting-evidence", command: "ApproveReport", event: "ReportApproved"},
+  {context: "reporting-evidence", command: "RejectReport", event: "ReportRejected"},
+  {context: "reporting-evidence", command: "ArchiveReport", event: "ReportArchived"},
 ];
 
 function readSchema(path: string): JsonObject {
@@ -202,7 +209,7 @@ function addResource(resource: string, singular: string, schema: string, events:
 addResource("missions", "Mission", "MissionView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "mission").map((route) => route.event));
 addResource("tasks", "Task", "TaskView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "work").map((route) => route.event));
 addResource("timelines", "Timeline", "TimelineView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "timeline").map((route) => route.event));
-addResource("reports", "Report", "ReportView", ["ReportCreated"]);
+addResource("reports", "Report", "ReportView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "reporting-evidence").map((route) => route.event));
 
 paths["/healthz"] = {
   get: {
@@ -320,13 +327,15 @@ const viewSchemas: JsonObject = {
   },
   ReportView: {
     type: "object", additionalProperties: false,
-    required: ["report_id", "organization_id", "report_type", "subject_ref", "author_id", "title", "version"],
+    required: ["report_id", "organization_id", "report_type", "subject_ref", "author_id", "title", "version", "status", "lifecycle_epoch", "authority_epoch", "evidence"],
     properties: {
       report_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
       organization_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, report_type: {type: "string"},
       subject_ref: {$ref: "#/components/schemas/SharedTypes/$defs/DomainObjectRef"},
       author_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
       title: {type: "string", minLength: 1}, version: {type: "integer", minimum: 1},
+      status: {type: "string", enum: ["DRAFT", "SUBMITTED", "APPROVED", "REJECTED", "ARCHIVED"]},
+      lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0}, evidence: {type: "object"},
     },
   },
 };

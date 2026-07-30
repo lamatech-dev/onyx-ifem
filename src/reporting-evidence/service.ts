@@ -1,113 +1,41 @@
-import type { DomainObjectRef } from "../contracts/envelopes.ts";
+import type { DomainObjectRef, VectorClock } from "../contracts/envelopes.ts";
 import { OnyxError } from "../contracts/errors.ts";
 import { assertEmittedEvent } from "../contracts/validation.ts";
 import { sha256 } from "../shared/canonical-json.ts";
 import { utcInstant, uuidV7 } from "../shared/identifiers.ts";
 import { toReportView, type ReportingRepository } from "./repository.ts";
-import type { Report, ReportCreatedEvent, ReportView } from "./types.ts";
-import { validateCreateReportCommand } from "./validation.ts";
+import type { CreateReportCommand, Report, ReportingCommand, ReportingEvent, ReportView } from "./types.ts";
+import { validateReportingCommand } from "./validation.ts";
 
-export interface ReportingServiceOptions {
-  repository: ReportingRepository;
-  requireSubject: (organizationId: string, subject: DomainObjectRef) => Promise<void>;
-  now?: () => Date;
-  replicaId?: string;
-}
+export interface ReportingServiceOptions { repository: ReportingRepository; requireSubject: (organizationId: string, subject: DomainObjectRef) => Promise<void>; now?: () => Date; replicaId?: string }
+type MutationCommand = Exclude<ReportingCommand, CreateReportCommand>;
 
 export class ReportingService {
-  readonly #repository: ReportingRepository;
-  readonly #requireSubject: ReportingServiceOptions["requireSubject"];
-  readonly #now: () => Date;
-  readonly #replicaId: string;
-
-  constructor(options: ReportingServiceOptions) {
-    this.#repository = options.repository;
-    this.#requireSubject = options.requireSubject;
-    this.#now = options.now ?? (() => new Date());
-    this.#replicaId = options.replicaId ?? "reporting-evidence-service";
-  }
-
-  async execute(input: unknown): Promise<ReportCreatedEvent> {
-    if ((input as {command_type?: string})?.command_type !== "CreateReport") {
-      throw new OnyxError("INVALID_ARGUMENT", "command is not implemented because its payload is not frozen");
+  readonly #repository: ReportingRepository; readonly #requireSubject: ReportingServiceOptions["requireSubject"]; readonly #now: () => Date; readonly #replicaId: string;
+  constructor(options: ReportingServiceOptions) { this.#repository = options.repository; this.#requireSubject = options.requireSubject; this.#now = options.now ?? (() => new Date()); this.#replicaId = options.replicaId ?? "reporting-evidence-service"; }
+  async execute(input: unknown): Promise<ReportingEvent> {
+    validateReportingCommand(input); const command = input; const replay = await this.#replay(command); if (replay) return replay;
+    switch (command.command_type) {
+      case "CreateReport": return this.#create(command);
+      case "AddEvidence": return this.#mutate(command, "reporting-evidence:evidence:add", ["DRAFT", "REJECTED"], "EvidenceAdded", (report) => { if (report.evidence[command.payload.evidence_id]) throw new OnyxError("VERSION_CONFLICT", "evidence already exists"); report.evidence[command.payload.evidence_id] = {evidenceId: command.payload.evidence_id, evidenceType: command.payload.evidence_type, uri: command.payload.uri, contentHash: command.payload.content_hash, ...(command.payload.description !== undefined ? {description: command.payload.description} : {}), status: "ADDED"}; return structuredClone(command.payload); });
+      case "VerifyEvidence": return this.#mutate(command, "reporting-evidence:evidence:verify", ["DRAFT", "REJECTED"], "EvidenceVerified", (report) => { const evidence = report.evidence[command.payload.evidence_id]; if (!evidence) throw new OnyxError("NOT_FOUND", "evidence not found"); evidence.status = "VERIFIED"; return {evidence_id: evidence.evidenceId, verification_status: "VERIFIED" as const}; });
+      case "RejectEvidence": return this.#mutate(command, "reporting-evidence:evidence:reject", ["DRAFT", "REJECTED"], "EvidenceRejected", (report) => { const evidence = report.evidence[command.payload.evidence_id]; if (!evidence) throw new OnyxError("NOT_FOUND", "evidence not found"); evidence.status = "REJECTED"; return {evidence_id: evidence.evidenceId, verification_status: "REJECTED" as const}; });
+      case "SubmitReport": return this.#mutate(command, "reporting-evidence:submit", ["DRAFT", "REJECTED"], "ReportSubmitted", (report) => { if (!Object.values(report.evidence).some((item) => item.status === "VERIFIED")) throw new OnyxError("INVALID_STATE_TRANSITION", "at least one verified evidence item is required"); report.status = "SUBMITTED"; return {new_status: "SUBMITTED" as const}; });
+      case "ApproveReport": return this.#mutate(command, "reporting-evidence:approve", ["SUBMITTED"], "ReportApproved", (report) => { report.status = "APPROVED"; return {new_status: "APPROVED" as const}; });
+      case "RejectReport": return this.#mutate(command, "reporting-evidence:reject", ["SUBMITTED"], "ReportRejected", (report) => { report.status = "REJECTED"; report.lifecycleEpoch += 1; return {new_status: "REJECTED" as const}; });
+      case "ArchiveReport": return this.#mutate(command, "reporting-evidence:archive", ["APPROVED", "REJECTED"], "ReportArchived", (report) => { report.status = "ARCHIVED"; report.lifecycleEpoch += 1; return {new_status: "ARCHIVED" as const}; });
     }
-    return this.createReport(input);
   }
-
-  async createReport(input: unknown): Promise<ReportCreatedEvent> {
-    validateCreateReportCommand(input);
-    const command = input;
-    const fingerprint = sha256(command);
-    const prior = await this.#repository.findOperation(command.operation_id);
-    if (prior) {
-      if (prior.fingerprint !== fingerprint) throw new OnyxError("IDEMPOTENCY_KEY_REUSE", "operation_id was reused with a different command");
-      return structuredClone(prior.event);
-    }
-    if (!command.authority_proof.scope.includes("reporting-evidence:create") || Date.parse(command.authority_proof.expires_at) <= this.#now().getTime()) {
-      throw new OnyxError("AUTHORITY_PROOF_INVALID", "reporting-evidence:create authority is missing or expired");
-    }
-    if (command.expected_version !== undefined && command.expected_version !== 0) {
-      throw new OnyxError("VERSION_CONFLICT", "a new report must expect version 0");
-    }
-    if (await this.#repository.find(command.payload.report_id)) throw new OnyxError("VERSION_CONFLICT", "report already exists");
-    await this.#requireSubject(command.organization_id, command.payload.subject_ref);
-
-    const report: Report = {
-      reportId: command.payload.report_id,
-      organizationId: command.organization_id,
-      reportType: command.payload.report_type,
-      subjectRef: structuredClone(command.payload.subject_ref),
-      authorId: command.payload.author_id,
-      title: command.payload.title,
-      version: 1,
-    };
-    const now = this.#now();
-    const occurredAt = utcInstant(now);
-    const eventWithoutDigest = {
-      event_id: uuidV7(now),
-      event_type: "ReportCreated" as const,
-      schema_version: 1 as const,
-      organization_id: command.organization_id,
-      aggregate: {aggregate_type: "Report", object_id: command.payload.report_id},
-      aggregate_version: 1,
-      lifecycle_epoch: 0,
-      authority_epoch: command.authority_proof.authority_epoch,
-      operation_id: command.operation_id,
-      actor_context: command.actor_context,
-      occurred_at: occurredAt,
-      recorded_at: occurredAt,
-      vector_clock: {
-        ...command.vector_clock,
-        [this.#replicaId]: (command.vector_clock[this.#replicaId] ?? 0) + 1,
-      },
-      correlation_id: command.correlation_id,
-      causation_id: command.command_id,
-      payload: structuredClone(command.payload),
-    };
-    const event: ReportCreatedEvent = {
-      ...eventWithoutDigest,
-      audit: {provenance: "CreateReport@1", integrity_digest: sha256(eventWithoutDigest)},
-    };
-    assertEmittedEvent(event, "ReportCreated", "Report");
-    await this.#repository.commit(report, event, command.operation_id, {fingerprint, event});
-    return structuredClone(event);
-  }
-
-  async getReport(organizationId: string, reportId: string): Promise<ReportView> {
-    const report = await this.#repository.find(reportId);
-    if (!report || report.organizationId !== organizationId) throw new OnyxError("NOT_FOUND", "report not found");
-    return toReportView(report);
-  }
-
-  async listReports(organizationId: string, afterId?: string, limit = 100): Promise<ReportView[]> {
-    return (await this.#repository.list(organizationId, afterId, limit)).map(toReportView);
-  }
-
-  async getHistory(organizationId: string, reportId: string, afterVersion = 0, limit = 100): Promise<ReportCreatedEvent[]> {
-    await this.getReport(organizationId, reportId);
-    if (!Number.isInteger(afterVersion) || afterVersion < 0 || !Number.isInteger(limit) || limit < 1 || limit > 1_000) {
-      throw new OnyxError("INVALID_ARGUMENT", "history bounds are invalid");
-    }
-    return this.#repository.history(reportId, afterVersion, limit);
-  }
+  async createReport(input: unknown): Promise<ReportingEvent> { validateReportingCommand(input); if (input.command_type !== "CreateReport") throw new OnyxError("INVALID_ARGUMENT", "CreateReport is required"); const replay = await this.#replay(input); return replay ?? this.#create(input); }
+  async #create(command: CreateReportCommand): Promise<ReportingEvent> { this.#authorize(command, "reporting-evidence:create"); if (command.expected_version !== undefined && command.expected_version !== 0) throw new OnyxError("VERSION_CONFLICT", "a new report must expect version 0"); if (await this.#repository.find(command.payload.report_id)) throw new OnyxError("VERSION_CONFLICT", "report already exists"); await this.#requireSubject(command.organization_id, command.payload.subject_ref); const report: Report = {reportId: command.payload.report_id, organizationId: command.organization_id, reportType: command.payload.report_type, subjectRef: structuredClone(command.payload.subject_ref), authorId: command.payload.author_id, title: command.payload.title, version: 1, status: "DRAFT", lifecycleEpoch: 0, authorityEpoch: command.authority_proof.authority_epoch, evidence: {}}; return this.#publish(command, report, "ReportCreated", structuredClone(command.payload), true); }
+  async #mutate(command: MutationCommand, scope: string, allowed: Report["status"][], eventType: ReportingEvent["event_type"], change: (report: Report) => unknown): Promise<ReportingEvent> { const report = await this.#load(command, scope, allowed); const payload = change(report); report.version += 1; return this.#publish(command, report, eventType, payload, false); }
+  async #load(command: MutationCommand, scope: string, allowed: Report["status"][]): Promise<Report> { this.#authorize(command, scope); const report = await this.#repository.find(command.payload.report_id); if (!report || report.organizationId !== command.organization_id) throw new OnyxError("NOT_FOUND", "report not found"); this.#normalize(report); if (!allowed.includes(report.status)) throw new OnyxError("INVALID_STATE_TRANSITION", `${command.command_type} is not valid from ${report.status}`); if (command.expected_version !== undefined && command.expected_version !== report.version) throw new OnyxError("VERSION_CONFLICT", "expected_version does not match"); if (command.expected_lifecycle_epoch !== undefined && command.expected_lifecycle_epoch !== report.lifecycleEpoch) throw new OnyxError("LIFECYCLE_EPOCH_MISMATCH", "expected_lifecycle_epoch does not match"); if (command.expected_authority_epoch !== undefined && command.expected_authority_epoch !== report.authorityEpoch) throw new OnyxError("AUTHORITY_EPOCH_MISMATCH", "expected_authority_epoch does not match"); return report; }
+  #normalize(report: Report): void { report.status ??= "DRAFT"; report.lifecycleEpoch ??= 0; report.authorityEpoch ??= 0; report.evidence ??= {}; }
+  #authorize(command: ReportingCommand, scope: string): void { if (!command.authority_proof.scope.includes(scope) || Date.parse(command.authority_proof.expires_at) <= this.#now().getTime()) throw new OnyxError("AUTHORITY_PROOF_INVALID", `${scope} authority is missing or expired`); }
+  async #replay(command: ReportingCommand): Promise<ReportingEvent | undefined> { const prior = await this.#repository.findOperation(command.operation_id); if (!prior) return undefined; if (prior.fingerprint !== sha256(command)) throw new OnyxError("IDEMPOTENCY_KEY_REUSE", "operation_id was reused with a different command"); return prior.event; }
+  async #publish(command: ReportingCommand, report: Report, eventType: ReportingEvent["event_type"], payload: unknown, create: boolean): Promise<ReportingEvent> { const now = this.#now(), occurredAt = utcInstant(now); const unsigned = {event_id: uuidV7(now), event_type: eventType, schema_version: 1 as const, organization_id: command.organization_id, aggregate: {aggregate_type: "Report", object_id: report.reportId}, aggregate_version: report.version, lifecycle_epoch: report.lifecycleEpoch, authority_epoch: report.authorityEpoch, operation_id: command.operation_id, actor_context: command.actor_context, occurred_at: occurredAt, recorded_at: occurredAt, vector_clock: this.#advance(command.vector_clock), correlation_id: command.correlation_id, causation_id: command.command_id, payload}; const event = {...unsigned, audit: {provenance: `${command.command_type}@1`, integrity_digest: sha256(unsigned)}} as ReportingEvent; assertEmittedEvent(event, eventType, "Report"); await this.#repository.commit(report, event, command.operation_id, {fingerprint: sha256(command), event}, create); return structuredClone(event); }
+  #advance(clock: VectorClock): VectorClock { return {...clock, [this.#replicaId]: (clock[this.#replicaId] ?? 0) + 1}; }
+  async getReport(organizationId: string, reportId: string): Promise<ReportView> { const report = await this.#repository.find(reportId); if (!report || report.organizationId !== organizationId) throw new OnyxError("NOT_FOUND", "report not found"); this.#normalize(report); return toReportView(report); }
+  async listReports(organizationId: string, afterId?: string, limit = 100): Promise<ReportView[]> { return (await this.#repository.list(organizationId, afterId, limit)).map((report) => { this.#normalize(report); return toReportView(report); }); }
+  async getHistory(organizationId: string, reportId: string, afterVersion = 0, limit = 100): Promise<ReportingEvent[]> { await this.getReport(organizationId, reportId); if (!Number.isInteger(afterVersion) || afterVersion < 0 || !Number.isInteger(limit) || limit < 1 || limit > 1_000) throw new OnyxError("INVALID_ARGUMENT", "history bounds are invalid"); return this.#repository.history(reportId, afterVersion, limit); }
 }

@@ -44,7 +44,7 @@ describe("OnyxApplication", () => {
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");
-      assert.equal(Object.keys(body(openapi).paths as object).length, 48);
+      assert.equal(Object.keys(body(openapi).paths as object).length, 55);
       body(openapi).info.title = "mutated by caller";
       const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");

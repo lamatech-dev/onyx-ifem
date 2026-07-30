@@ -11,8 +11,7 @@
           "const": "ReportArchived"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"new_status": {"const": "ARCHIVED"}}, "required": ["new_status"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX ReportArchived",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C09",
   "x-onyx-topic": "reporting-evidence.events"
 }

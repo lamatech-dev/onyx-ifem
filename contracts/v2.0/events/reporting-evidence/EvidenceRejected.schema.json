@@ -11,8 +11,7 @@
           "const": "EvidenceRejected"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"evidence_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "verification_status": {"const": "REJECTED"}}, "required": ["evidence_id", "verification_status"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX EvidenceRejected",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C09",
   "x-onyx-topic": "reporting-evidence.events"
 }

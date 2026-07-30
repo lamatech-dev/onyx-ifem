@@ -1,6 +1,6 @@
 import { SqliteDatabase } from "../infrastructure/sqlite/database.ts";
 import type { ReportingOperationRecord, ReportingRepository } from "./repository.ts";
-import type { Report, ReportCreatedEvent } from "./types.ts";
+import type { Report, ReportingEvent } from "./types.ts";
 
 const CONTEXT = "reporting-evidence";
 
@@ -19,15 +19,15 @@ export class SqliteReportingRepository implements ReportingRepository {
     return this.#database.listStates<Report>(CONTEXT, organizationId, afterId, limit);
   }
 
-  async history(reportId: string, afterVersion = 0, limit = 100): Promise<ReportCreatedEvent[]> {
-    return this.#database.getEvents<ReportCreatedEvent>(CONTEXT, reportId, afterVersion, limit);
+  async history(reportId: string, afterVersion = 0, limit = 100): Promise<ReportingEvent[]> {
+    return this.#database.getEvents<ReportingEvent>(CONTEXT, reportId, afterVersion, limit);
   }
 
   async findOperation(operationId: string): Promise<ReportingOperationRecord | undefined> {
-    return this.#database.getOperation<ReportCreatedEvent>(CONTEXT, operationId);
+    return this.#database.getOperation<ReportingEvent>(CONTEXT, operationId);
   }
 
-  async commit(report: Report, event: ReportCreatedEvent, operationId: string, record: ReportingOperationRecord): Promise<void> {
+  async commit(report: Report, event: ReportingEvent, operationId: string, record: ReportingOperationRecord, create: boolean): Promise<void> {
     this.#database.commit({
       context: CONTEXT,
       aggregateId: report.reportId,
@@ -39,7 +39,7 @@ export class SqliteReportingRepository implements ReportingRepository {
       event,
       operationId,
       fingerprint: record.fingerprint,
-      create: true,
+      create,
     });
   }
 }

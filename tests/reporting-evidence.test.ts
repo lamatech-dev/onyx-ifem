@@ -10,7 +10,7 @@ import { InMemoryTimelineRepository } from "../src/timeline/repository.ts";
 import { TimelineService } from "../src/timeline/service.ts";
 import { InMemoryWorkRepository } from "../src/work/repository.ts";
 import { WorkService } from "../src/work/service.ts";
-import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, testId } from "./fixtures.ts";
+import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, reportingCommand, testId } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -74,6 +74,8 @@ describe("ReportingService.createReport", () => {
       target: {aggregate_type: "Report", object_id: testId(605)},
     }));
 
+    assert.equal(taskReport.event_type, "ReportCreated"); assert.equal(timelineReport.event_type, "ReportCreated");
+    if (taskReport.event_type !== "ReportCreated" || timelineReport.event_type !== "ReportCreated") throw new Error("unexpected event");
     assert.equal(taskReport.payload.subject_ref.aggregate_type, "Task");
     assert.equal(timelineReport.payload.subject_ref.aggregate_type, "Timeline");
   });
@@ -127,5 +129,28 @@ describe("ReportingService.createReport", () => {
       reporting.execute(createReportCommand({target: {aggregate_type: "Report", object_id: testId(999)}})),
       (error: unknown) => error instanceof OnyxError && error.code === "INVALID_ARGUMENT",
     );
+  });
+
+  it("verifies evidence and completes the report lifecycle", async () => {
+    const {reporting} = await fixture(); await reporting.execute(createReportCommand()); const reportId = testId(600), evidenceId = testId(620);
+    const events = [];
+    events.push(await reporting.execute(reportingCommand("AddEvidence", 1, {report_id: reportId, evidence_id: evidenceId, evidence_type: "DOCUMENT", uri: "urn:onyx:evidence:620", content_hash: "a".repeat(64), description: "Signed acceptance"}, "reporting-evidence:evidence:add", 1)));
+    events.push(await reporting.execute(reportingCommand("VerifyEvidence", 2, {report_id: reportId, evidence_id: evidenceId, verification_note: "Digest and provenance verified"}, "reporting-evidence:evidence:verify", 2)));
+    events.push(await reporting.execute(reportingCommand("SubmitReport", 3, {report_id: reportId, submission_note: "Ready for approval"}, "reporting-evidence:submit", 3)));
+    events.push(await reporting.execute(reportingCommand("ApproveReport", 4, {report_id: reportId, approval_note: "Accepted"}, "reporting-evidence:approve", 4)));
+    events.push(await reporting.execute(reportingCommand("ArchiveReport", 5, {report_id: reportId, retention_policy_id: testId(621)}, "reporting-evidence:archive", 5)));
+    assert.deepEqual(events.map((event) => event.event_type), ["EvidenceAdded", "EvidenceVerified", "ReportSubmitted", "ReportApproved", "ReportArchived"]);
+    const view = await reporting.getReport(testId(13), reportId); assert.equal(view.status, "ARCHIVED"); assert.equal(view.version, 6); assert.equal(view.lifecycle_epoch, 1); assert.equal(view.evidence[evidenceId]?.status, "VERIFIED");
+  });
+
+  it("rejects and resubmits a report with epoch fencing", async () => {
+    const {reporting} = await fixture(); await reporting.execute(createReportCommand()); const reportId = testId(600), evidenceId = testId(622);
+    await reporting.execute(reportingCommand("AddEvidence", 10, {report_id: reportId, evidence_id: evidenceId, evidence_type: "LINK", uri: "https://example.invalid/evidence", content_hash: "b".repeat(64)}, "reporting-evidence:evidence:add", 1));
+    await reporting.execute(reportingCommand("RejectEvidence", 11, {report_id: reportId, evidence_id: evidenceId, reason_code: "UNVERIFIED", reason: "Source missing"}, "reporting-evidence:evidence:reject", 2));
+    await reporting.execute(reportingCommand("VerifyEvidence", 12, {report_id: reportId, evidence_id: evidenceId, verification_note: "Source restored"}, "reporting-evidence:evidence:verify", 3));
+    await reporting.execute(reportingCommand("SubmitReport", 13, {report_id: reportId, submission_note: "Review requested"}, "reporting-evidence:submit", 4));
+    await reporting.execute(reportingCommand("RejectReport", 14, {report_id: reportId, reason_code: "REVISION", reason: "Clarify conclusion"}, "reporting-evidence:reject", 5));
+    const resubmit = reportingCommand("SubmitReport", 15, {report_id: reportId, submission_note: "Conclusion clarified"}, "reporting-evidence:submit", 6); resubmit.expected_lifecycle_epoch = 1;
+    const event = await reporting.execute(resubmit); assert.equal(event.event_type, "ReportSubmitted");
   });
 });

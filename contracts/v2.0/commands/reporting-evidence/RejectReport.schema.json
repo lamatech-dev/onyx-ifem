@@ -11,8 +11,7 @@
           "const": "RejectReport"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"report_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "reason_code": {"type": "string", "minLength": 1, "maxLength": 200}, "reason": {"type": "string", "minLength": 1, "maxLength": 4000}}, "required": ["report_id", "reason_code", "reason"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX RejectReport",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C09",
   "x-onyx-topic": "reporting-evidence.events"
 }

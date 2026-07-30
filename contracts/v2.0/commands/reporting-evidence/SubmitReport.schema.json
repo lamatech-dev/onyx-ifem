@@ -11,8 +11,7 @@
           "const": "SubmitReport"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"report_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "submission_note": {"type": "string", "minLength": 1, "maxLength": 4000}}, "required": ["report_id", "submission_note"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX SubmitReport",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C09",
   "x-onyx-topic": "reporting-evidence.events"
 }

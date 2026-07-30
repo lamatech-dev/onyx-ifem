@@ -11,8 +11,7 @@
           "const": "AddEvidence"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"report_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "evidence_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "evidence_type": {"type": "string", "minLength": 1, "maxLength": 100}, "uri": {"type": "string", "minLength": 1, "maxLength": 2000}, "content_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "description": {"type": "string", "minLength": 1, "maxLength": 4000}}, "required": ["report_id", "evidence_id", "evidence_type", "uri", "content_hash"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX AddEvidence",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C09",
   "x-onyx-topic": "reporting-evidence.events"
 }

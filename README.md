@@ -161,14 +161,14 @@ The Work context implements the complete Task lifecycle plus owner, priority, an
 
 The Timeline context implements creation, deadlines, milestones, critical markers, penalty zones, schedule-exception resolution, and archival. A timeline may target an existing Mission or Task inside the same organization boundary. See [Timeline context](docs/timeline-context.md).
 
-The Reporting-Evidence context implements `CreateReport`. A report may currently target an existing Mission, Task, or Timeline inside the same organization boundary. See [Reporting-Evidence context](docs/reporting-evidence-context.md).
+The Reporting-Evidence context implements report creation, evidence verification/rejection, review approval/rejection, resubmission, and archival. Reports may target an existing Mission, Task, or Timeline. See [Reporting-Evidence context](docs/reporting-evidence-context.md).
 
 The HTTP adapter exposes every currently executable context. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
 
 ## Contract maturity
 
-The imported v2.0 package contains 294 command/event schemas. All 32 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
+The imported v2.0 package contains 294 command/event schemas. All 39 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
 
 The Mission context is now lifecycle-complete, including operational halt, restart with lifecycle-epoch fencing, close, and archive transitions.
 
-Mission, Work, and Timeline are lifecycle-complete. Reporting-Evidence is the next contract group being completed.
+Mission, Work, Timeline, and Reporting-Evidence are lifecycle-complete. Remaining bounded contexts are implemented next in dependency order.

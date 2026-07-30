@@ -1,6 +1,6 @@
 # Reporting-Evidence context
 
-The Reporting-Evidence context owns Report aggregates. The initial vertical slice implements `CreateReport`, the only command in this context whose v2.0 payload is marked `FIELD_COMPLETE`.
+The Reporting-Evidence context owns Report aggregates and implements every v2.0 command in the context with exact payload schemas.
 
 ## Contract mapping
 
@@ -27,6 +27,12 @@ Creation requires an unexpired authority proof containing `reporting-evidence:cr
 - list Reports inside an organization;
 - read aggregate event history using `after_version` and `limit` bounds.
 
-## Deferred evidence lifecycle
+## Evidence and review lifecycle
 
-Adding and verifying evidence, submission, approval, rejection, and archival remain unavailable because their command payload schemas are `NAME_FROZEN_PAYLOAD_OPEN`. The implementation does not invent their fields or state transitions.
+- Evidence records carry a stable identifier, type, URI, SHA-256 digest, and verification state.
+- Evidence may be added, verified, or rejected while a report is editable.
+- Submission requires at least one verified evidence item.
+- Submitted reports may be approved or rejected; rejected reports can be revised and resubmitted using a new lifecycle epoch.
+- Approved or rejected reports may be archived, after which they are immutable.
+
+Every mutation enforces authority scope, organization ownership, version and epoch fences, idempotency, and atomic state/event persistence.
