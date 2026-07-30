@@ -73,7 +73,21 @@ ONYX_DB_PATH=./data/onyx.db npm start
 
 ## Run the web command center
 
-Run the API on port 3001, then start the graphical command center in a second terminal:
+Start the complete local product with one command after installing both package sets:
+
+```bash
+npm ci
+npm ci --prefix web
+npm run dev:stack
+```
+
+Open `http://localhost:3002`. The launcher starts the durable API on port 3001,
+the graphical command center on port 3002, waits for both readiness checks, and
+stops both processes together on `Ctrl+C`. Override the defaults with
+`ONYX_PORT`, `ONYX_WEB_PORT`, and `ONYX_DB_PATH`.
+
+To run each process separately, run the API on port 3001, then start the
+graphical command center in a second terminal:
 
 ```bash
 ONYX_HOST=127.0.0.1 ONYX_PORT=3001 ONYX_DB_PATH=./data/onyx.db npm start

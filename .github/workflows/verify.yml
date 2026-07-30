@@ -60,6 +60,9 @@ jobs:
         run: npm test
       - name: Type-check the operations console
         run: npm run lint
+      - name: Smoke-test the complete local stack
+        working-directory: .
+        run: npm run test:stack
       - name: Audit web dependencies
         run: npm audit --audit-level=high
 
