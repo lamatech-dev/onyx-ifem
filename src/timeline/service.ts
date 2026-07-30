@@ -1,111 +1,47 @@
-import type { DomainObjectRef } from "../contracts/envelopes.ts";
+import type { DomainObjectRef, VectorClock } from "../contracts/envelopes.ts";
 import { OnyxError } from "../contracts/errors.ts";
 import { assertEmittedEvent } from "../contracts/validation.ts";
 import { sha256 } from "../shared/canonical-json.ts";
 import { utcInstant, uuidV7 } from "../shared/identifiers.ts";
 import { toTimelineView, type TimelineRepository } from "./repository.ts";
-import type { Timeline, TimelineCreatedEvent, TimelineView } from "./types.ts";
-import { validateCreateTimelineCommand } from "./validation.ts";
+import type { CreateTimelineCommand, Timeline, TimelineCommand, TimelineEvent, TimelineView } from "./types.ts";
+import { validateTimelineCommand } from "./validation.ts";
 
-export interface TimelineServiceOptions {
-  repository: TimelineRepository;
-  requireSubject: (organizationId: string, subject: DomainObjectRef) => Promise<void>;
-  now?: () => Date;
-  replicaId?: string;
-}
+export interface TimelineServiceOptions { repository: TimelineRepository; requireSubject: (organizationId: string, subject: DomainObjectRef) => Promise<void>; now?: () => Date; replicaId?: string }
+type MutationCommand = Exclude<TimelineCommand, CreateTimelineCommand>;
 
 export class TimelineService {
-  readonly #repository: TimelineRepository;
-  readonly #requireSubject: TimelineServiceOptions["requireSubject"];
-  readonly #now: () => Date;
-  readonly #replicaId: string;
+  readonly #repository: TimelineRepository; readonly #requireSubject: TimelineServiceOptions["requireSubject"]; readonly #now: () => Date; readonly #replicaId: string;
+  constructor(options: TimelineServiceOptions) { this.#repository = options.repository; this.#requireSubject = options.requireSubject; this.#now = options.now ?? (() => new Date()); this.#replicaId = options.replicaId ?? "timeline-service"; }
 
-  constructor(options: TimelineServiceOptions) {
-    this.#repository = options.repository;
-    this.#requireSubject = options.requireSubject;
-    this.#now = options.now ?? (() => new Date());
-    this.#replicaId = options.replicaId ?? "timeline-service";
-  }
-
-  async execute(input: unknown): Promise<TimelineCreatedEvent> {
-    if ((input as {command_type?: string})?.command_type !== "CreateTimeline") {
-      throw new OnyxError("INVALID_ARGUMENT", "command is not implemented because its payload is not frozen");
+  async execute(input: unknown): Promise<TimelineEvent> {
+    validateTimelineCommand(input); const command = input; const replay = await this.#replay(command); if (replay) return replay;
+    switch (command.command_type) {
+      case "CreateTimeline": return this.#create(command);
+      case "SetDeadline": return this.#mutate(command, "timeline:deadline:set", "DeadlineChanged", (timeline) => { if (timeline.deadlines[command.payload.deadline_id]) throw new OnyxError("VERSION_CONFLICT", "deadline already exists"); timeline.deadlines[command.payload.deadline_id] = {deadlineAt: command.payload.deadline_at, label: command.payload.label}; return {deadline_id: command.payload.deadline_id, deadline_at: command.payload.deadline_at, label: command.payload.label}; });
+      case "MoveDeadline": return this.#mutate(command, "timeline:deadline:move", "DeadlineMoved", (timeline) => { const deadline = timeline.deadlines[command.payload.deadline_id]; if (!deadline) throw new OnyxError("NOT_FOUND", "deadline not found"); deadline.deadlineAt = command.payload.new_deadline_at; return {deadline_id: command.payload.deadline_id, deadline_at: command.payload.new_deadline_at}; });
+      case "AddMilestone": return this.#mutate(command, "timeline:milestone:add", "MilestoneAdded", (timeline) => { if (timeline.milestones[command.payload.milestone_id]) throw new OnyxError("VERSION_CONFLICT", "milestone already exists"); timeline.milestones[command.payload.milestone_id] = {title: command.payload.title, dueAt: command.payload.due_at}; return {milestone_id: command.payload.milestone_id, title: command.payload.title, due_at: command.payload.due_at}; });
+      case "DefineCriticalMarker": return this.#mutate(command, "timeline:marker:define", "CriticalMarkerDefined", (timeline) => { if (timeline.criticalMarkers[command.payload.marker_id]) throw new OnyxError("VERSION_CONFLICT", "critical marker already exists"); timeline.criticalMarkers[command.payload.marker_id] = {label: command.payload.label, triggerAt: command.payload.trigger_at}; return {marker_id: command.payload.marker_id, label: command.payload.label, trigger_at: command.payload.trigger_at}; });
+      case "ActivatePenaltyZone": return this.#mutate(command, "timeline:penalty-zone:activate", "PenaltyZoneActivated", (timeline) => { if (timeline.penaltyZones[command.payload.penalty_zone_id]) throw new OnyxError("VERSION_CONFLICT", "penalty zone already exists"); timeline.penaltyZones[command.payload.penalty_zone_id] = {startsAt: command.payload.starts_at, reason: command.payload.reason}; return {penalty_zone_id: command.payload.penalty_zone_id, starts_at: command.payload.starts_at}; });
+      case "ResolveScheduleException": return this.#mutate(command, "timeline:exception:resolve", "ScheduleExceptionRaised", (timeline) => { if (timeline.resolvedExceptionIds.includes(command.payload.exception_id)) throw new OnyxError("VERSION_CONFLICT", "schedule exception already resolved"); timeline.resolvedExceptionIds.push(command.payload.exception_id); return {exception_id: command.payload.exception_id, resolution_status: "RESOLVED" as const}; });
+      case "ArchiveTimeline": return this.#mutate(command, "timeline:archive", "TimelineArchived", (timeline) => { timeline.status = "ARCHIVED"; timeline.lifecycleEpoch += 1; return {new_status: "ARCHIVED" as const}; });
     }
-    return this.createTimeline(input);
   }
 
-  async createTimeline(input: unknown): Promise<TimelineCreatedEvent> {
-    validateCreateTimelineCommand(input);
-    const command = input;
-    const fingerprint = sha256(command);
-    const prior = await this.#repository.findOperation(command.operation_id);
-    if (prior) {
-      if (prior.fingerprint !== fingerprint) throw new OnyxError("IDEMPOTENCY_KEY_REUSE", "operation_id was reused with a different command");
-      return structuredClone(prior.event);
-    }
-    if (!command.authority_proof.scope.includes("timeline:create") || Date.parse(command.authority_proof.expires_at) <= this.#now().getTime()) {
-      throw new OnyxError("AUTHORITY_PROOF_INVALID", "timeline:create authority is missing or expired");
-    }
-    if (command.expected_version !== undefined && command.expected_version !== 0) {
-      throw new OnyxError("VERSION_CONFLICT", "a new timeline must expect version 0");
-    }
-    if (await this.#repository.find(command.payload.timeline_id)) throw new OnyxError("VERSION_CONFLICT", "timeline already exists");
-    await this.#requireSubject(command.organization_id, command.payload.subject_ref);
-
-    const timeline: Timeline = {
-      timelineId: command.payload.timeline_id,
-      organizationId: command.organization_id,
-      subjectRef: structuredClone(command.payload.subject_ref),
-      timezone: command.payload.timezone,
-      version: 1,
-    };
-    const now = this.#now();
-    const occurredAt = utcInstant(now);
-    const eventWithoutDigest = {
-      event_id: uuidV7(now),
-      event_type: "TimelineCreated" as const,
-      schema_version: 1 as const,
-      organization_id: command.organization_id,
-      aggregate: {aggregate_type: "Timeline", object_id: command.payload.timeline_id},
-      aggregate_version: 1,
-      lifecycle_epoch: 0,
-      authority_epoch: command.authority_proof.authority_epoch,
-      operation_id: command.operation_id,
-      actor_context: command.actor_context,
-      occurred_at: occurredAt,
-      recorded_at: occurredAt,
-      vector_clock: {
-        ...command.vector_clock,
-        [this.#replicaId]: (command.vector_clock[this.#replicaId] ?? 0) + 1,
-      },
-      correlation_id: command.correlation_id,
-      causation_id: command.command_id,
-      payload: structuredClone(command.payload),
-    };
-    const event: TimelineCreatedEvent = {
-      ...eventWithoutDigest,
-      audit: {provenance: "CreateTimeline@1", integrity_digest: sha256(eventWithoutDigest)},
-    };
-    assertEmittedEvent(event, "TimelineCreated", "Timeline");
-    await this.#repository.commit(timeline, event, command.operation_id, {fingerprint, event});
-    return structuredClone(event);
+  async createTimeline(input: unknown): Promise<TimelineEvent> { validateTimelineCommand(input); if (input.command_type !== "CreateTimeline") throw new OnyxError("INVALID_ARGUMENT", "CreateTimeline is required"); const replay = await this.#replay(input); return replay ?? this.#create(input); }
+  async #create(command: CreateTimelineCommand): Promise<TimelineEvent> {
+    this.#authorize(command, "timeline:create"); if (command.expected_version !== undefined && command.expected_version !== 0) throw new OnyxError("VERSION_CONFLICT", "a new timeline must expect version 0"); if (await this.#repository.find(command.payload.timeline_id)) throw new OnyxError("VERSION_CONFLICT", "timeline already exists"); await this.#requireSubject(command.organization_id, command.payload.subject_ref);
+    const timeline: Timeline = {timelineId: command.payload.timeline_id, organizationId: command.organization_id, subjectRef: structuredClone(command.payload.subject_ref), timezone: command.payload.timezone, version: 1, status: "ACTIVE", lifecycleEpoch: 0, authorityEpoch: command.authority_proof.authority_epoch, deadlines: {}, milestones: {}, criticalMarkers: {}, penaltyZones: {}, resolvedExceptionIds: []};
+    return this.#publish(command, timeline, "TimelineCreated", structuredClone(command.payload), true);
   }
-
-  async getTimeline(organizationId: string, timelineId: string): Promise<TimelineView> {
-    const timeline = await this.#repository.find(timelineId);
-    if (!timeline || timeline.organizationId !== organizationId) throw new OnyxError("NOT_FOUND", "timeline not found");
-    return toTimelineView(timeline);
-  }
-
-  async listTimelines(organizationId: string, afterId?: string, limit = 100): Promise<TimelineView[]> {
-    return (await this.#repository.list(organizationId, afterId, limit)).map(toTimelineView);
-  }
-
-  async getHistory(organizationId: string, timelineId: string, afterVersion = 0, limit = 100): Promise<TimelineCreatedEvent[]> {
-    await this.getTimeline(organizationId, timelineId);
-    if (!Number.isInteger(afterVersion) || afterVersion < 0 || !Number.isInteger(limit) || limit < 1 || limit > 1_000) {
-      throw new OnyxError("INVALID_ARGUMENT", "history bounds are invalid");
-    }
-    return this.#repository.history(timelineId, afterVersion, limit);
-  }
+  async #mutate(command: MutationCommand, scope: string, eventType: TimelineEvent["event_type"], change: (timeline: Timeline) => unknown): Promise<TimelineEvent> { const timeline = await this.#load(command, scope); const payload = change(timeline); timeline.version += 1; return this.#publish(command, timeline, eventType, payload, false); }
+  async #load(command: MutationCommand, scope: string): Promise<Timeline> { this.#authorize(command, scope); const timeline = await this.#repository.find(command.payload.timeline_id); if (!timeline || timeline.organizationId !== command.organization_id) throw new OnyxError("NOT_FOUND", "timeline not found"); this.#normalize(timeline); if (timeline.status === "ARCHIVED") throw new OnyxError("INVALID_STATE_TRANSITION", "archived timelines are immutable"); if (command.expected_version !== undefined && command.expected_version !== timeline.version) throw new OnyxError("VERSION_CONFLICT", "expected_version does not match"); if (command.expected_lifecycle_epoch !== undefined && command.expected_lifecycle_epoch !== timeline.lifecycleEpoch) throw new OnyxError("LIFECYCLE_EPOCH_MISMATCH", "expected_lifecycle_epoch does not match"); if (command.expected_authority_epoch !== undefined && command.expected_authority_epoch !== timeline.authorityEpoch) throw new OnyxError("AUTHORITY_EPOCH_MISMATCH", "expected_authority_epoch does not match"); return timeline; }
+  #normalize(timeline: Timeline): void { timeline.status ??= "ACTIVE"; timeline.lifecycleEpoch ??= 0; timeline.authorityEpoch ??= 0; timeline.deadlines ??= {}; timeline.milestones ??= {}; timeline.criticalMarkers ??= {}; timeline.penaltyZones ??= {}; timeline.resolvedExceptionIds ??= []; }
+  #authorize(command: TimelineCommand, scope: string): void { if (!command.authority_proof.scope.includes(scope) || Date.parse(command.authority_proof.expires_at) <= this.#now().getTime()) throw new OnyxError("AUTHORITY_PROOF_INVALID", `${scope} authority is missing or expired`); }
+  async #replay(command: TimelineCommand): Promise<TimelineEvent | undefined> { const prior = await this.#repository.findOperation(command.operation_id); if (!prior) return undefined; if (prior.fingerprint !== sha256(command)) throw new OnyxError("IDEMPOTENCY_KEY_REUSE", "operation_id was reused with a different command"); return prior.event; }
+  async #publish(command: TimelineCommand, timeline: Timeline, eventType: TimelineEvent["event_type"], payload: unknown, create: boolean): Promise<TimelineEvent> { const now = this.#now(), occurredAt = utcInstant(now); const unsigned = {event_id: uuidV7(now), event_type: eventType, schema_version: 1 as const, organization_id: command.organization_id, aggregate: {aggregate_type: "Timeline", object_id: timeline.timelineId}, aggregate_version: timeline.version, lifecycle_epoch: timeline.lifecycleEpoch, authority_epoch: timeline.authorityEpoch, operation_id: command.operation_id, actor_context: command.actor_context, occurred_at: occurredAt, recorded_at: occurredAt, vector_clock: this.#advance(command.vector_clock), correlation_id: command.correlation_id, causation_id: command.command_id, payload}; const event = {...unsigned, audit: {provenance: `${command.command_type}@1`, integrity_digest: sha256(unsigned)}} as TimelineEvent; assertEmittedEvent(event, eventType, "Timeline"); await this.#repository.commit(timeline, event, command.operation_id, {fingerprint: sha256(command), event}, create); return structuredClone(event); }
+  #advance(clock: VectorClock): VectorClock { return {...clock, [this.#replicaId]: (clock[this.#replicaId] ?? 0) + 1}; }
+  async getTimeline(organizationId: string, timelineId: string): Promise<TimelineView> { const timeline = await this.#repository.find(timelineId); if (!timeline || timeline.organizationId !== organizationId) throw new OnyxError("NOT_FOUND", "timeline not found"); this.#normalize(timeline); return toTimelineView(timeline); }
+  async listTimelines(organizationId: string, afterId?: string, limit = 100): Promise<TimelineView[]> { return (await this.#repository.list(organizationId, afterId, limit)).map((timeline) => { this.#normalize(timeline); return toTimelineView(timeline); }); }
+  async getHistory(organizationId: string, timelineId: string, afterVersion = 0, limit = 100): Promise<TimelineEvent[]> { await this.getTimeline(organizationId, timelineId); if (!Number.isInteger(afterVersion) || afterVersion < 0 || !Number.isInteger(limit) || limit < 1 || limit > 1_000) throw new OnyxError("INVALID_ARGUMENT", "history bounds are invalid"); return this.#repository.history(timelineId, afterVersion, limit); }
 }

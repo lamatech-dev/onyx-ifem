@@ -11,8 +11,7 @@
           "const": "DeadlineReached"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"timeline_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "deadline_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "reached_at": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"}}, "required": ["timeline_id", "deadline_id", "reached_at"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX DeadlineReached",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C11",
   "x-onyx-topic": "timeline.events"
 }

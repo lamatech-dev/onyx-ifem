@@ -11,8 +11,9 @@
           "const": "ResolveScheduleException"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false,
+          "properties": {"timeline_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "exception_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "resolution_note": {"type": "string", "minLength": 1, "maxLength": 4000}},
+          "required": ["timeline_id", "exception_id", "resolution_note"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +23,7 @@
     }
   ],
   "title": "ONYX ResolveScheduleException",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C11",
   "x-onyx-topic": "timeline.events"
 }

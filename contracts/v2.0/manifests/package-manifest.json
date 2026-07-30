@@ -1240,49 +1240,49 @@
       "path": "contracts/commands/timeline/CreateTimeline.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "command",
       "name": "AddMilestone",
       "path": "contracts/commands/timeline/AddMilestone.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "command",
       "name": "SetDeadline",
       "path": "contracts/commands/timeline/SetDeadline.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "command",
       "name": "MoveDeadline",
       "path": "contracts/commands/timeline/MoveDeadline.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "command",
       "name": "DefineCriticalMarker",
       "path": "contracts/commands/timeline/DefineCriticalMarker.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "command",
       "name": "ActivatePenaltyZone",
       "path": "contracts/commands/timeline/ActivatePenaltyZone.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "command",
       "name": "ResolveScheduleException",
       "path": "contracts/commands/timeline/ResolveScheduleException.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "command",
       "name": "ArchiveTimeline",
@@ -1296,63 +1296,63 @@
       "path": "contracts/events/timeline/TimelineCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "event",
       "name": "MilestoneAdded",
       "path": "contracts/events/timeline/MilestoneAdded.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "event",
       "name": "DeadlineChanged",
       "path": "contracts/events/timeline/DeadlineChanged.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "event",
       "name": "DeadlineMoved",
       "path": "contracts/events/timeline/DeadlineMoved.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "event",
       "name": "CriticalMarkerDefined",
       "path": "contracts/events/timeline/CriticalMarkerDefined.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "event",
       "name": "CriticalMarkerReached",
       "path": "contracts/events/timeline/CriticalMarkerReached.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "event",
       "name": "DeadlineReached",
       "path": "contracts/events/timeline/DeadlineReached.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "event",
       "name": "PenaltyZoneActivated",
       "path": "contracts/events/timeline/PenaltyZoneActivated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "event",
       "name": "ScheduleExceptionRaised",
       "path": "contracts/events/timeline/ScheduleExceptionRaised.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C11",
       "kind": "event",
       "name": "TimelineArchived",

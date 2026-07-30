@@ -11,8 +11,7 @@
           "const": "ScheduleExceptionRaised"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"exception_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "resolution_status": {"const": "RESOLVED"}}, "required": ["exception_id", "resolution_status"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX ScheduleExceptionRaised",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C11",
   "x-onyx-topic": "timeline.events"
 }

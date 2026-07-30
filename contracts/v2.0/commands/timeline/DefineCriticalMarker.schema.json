@@ -11,8 +11,9 @@
           "const": "DefineCriticalMarker"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false,
+          "properties": {"timeline_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "marker_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}, "label": {"type": "string", "minLength": 1, "maxLength": 200}, "trigger_at": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"}},
+          "required": ["timeline_id", "marker_id", "label", "trigger_at"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +23,7 @@
     }
   ],
   "title": "ONYX DefineCriticalMarker",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C11",
   "x-onyx-topic": "timeline.events"
 }

@@ -1,6 +1,6 @@
 import { SqliteDatabase } from "../infrastructure/sqlite/database.ts";
 import type { TimelineOperationRecord, TimelineRepository } from "./repository.ts";
-import type { Timeline, TimelineCreatedEvent } from "./types.ts";
+import type { Timeline, TimelineEvent } from "./types.ts";
 
 const CONTEXT = "timeline";
 
@@ -19,15 +19,15 @@ export class SqliteTimelineRepository implements TimelineRepository {
     return this.#database.listStates<Timeline>(CONTEXT, organizationId, afterId, limit);
   }
 
-  async history(timelineId: string, afterVersion = 0, limit = 100): Promise<TimelineCreatedEvent[]> {
-    return this.#database.getEvents<TimelineCreatedEvent>(CONTEXT, timelineId, afterVersion, limit);
+  async history(timelineId: string, afterVersion = 0, limit = 100): Promise<TimelineEvent[]> {
+    return this.#database.getEvents<TimelineEvent>(CONTEXT, timelineId, afterVersion, limit);
   }
 
   async findOperation(operationId: string): Promise<TimelineOperationRecord | undefined> {
-    return this.#database.getOperation<TimelineCreatedEvent>(CONTEXT, operationId);
+    return this.#database.getOperation<TimelineEvent>(CONTEXT, operationId);
   }
 
-  async commit(timeline: Timeline, event: TimelineCreatedEvent, operationId: string, record: TimelineOperationRecord): Promise<void> {
+  async commit(timeline: Timeline, event: TimelineEvent, operationId: string, record: TimelineOperationRecord, create: boolean): Promise<void> {
     this.#database.commit({
       context: CONTEXT,
       aggregateId: timeline.timelineId,
@@ -39,7 +39,7 @@ export class SqliteTimelineRepository implements TimelineRepository {
       event,
       operationId,
       fingerprint: record.fingerprint,
-      create: true,
+      create,
     });
   }
 }

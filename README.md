@@ -159,7 +159,7 @@ All command handlers share strict validation of the canonical v2.0 envelope befo
 
 The Work context implements the complete Task lifecycle plus owner, priority, and dependency mutations. A task may be created only when its referenced Mission exists inside the same organization boundary. See [Work context](docs/work-context.md).
 
-The Timeline context implements `CreateTimeline`. A timeline may currently target an existing Mission or Task inside the same organization boundary. See [Timeline context](docs/timeline-context.md).
+The Timeline context implements creation, deadlines, milestones, critical markers, penalty zones, schedule-exception resolution, and archival. A timeline may target an existing Mission or Task inside the same organization boundary. See [Timeline context](docs/timeline-context.md).
 
 The Reporting-Evidence context implements `CreateReport`. A report may currently target an existing Mission, Task, or Timeline inside the same organization boundary. See [Reporting-Evidence context](docs/reporting-evidence-context.md).
 
@@ -167,8 +167,8 @@ The HTTP adapter exposes every currently executable context. Other bounded conte
 
 ## Contract maturity
 
-The imported v2.0 package contains 294 command/event schemas. All 25 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
+The imported v2.0 package contains 294 command/event schemas. All 32 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
 
 The Mission context is now lifecycle-complete, including operational halt, restart with lifecycle-epoch fencing, close, and archive transitions.
 
-The Work context is lifecycle-complete from creation through execution, completion approval, closure, reopening, and cancellation. Timeline scheduling commands are the next contract group being completed.
+Mission, Work, and Timeline are lifecycle-complete. Reporting-Evidence is the next contract group being completed.

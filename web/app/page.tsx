@@ -50,6 +50,14 @@ type Timeline = {
   subject_ref: { aggregate_type: string; object_id: string };
   timezone: string;
   version: number;
+  status: string;
+  lifecycle_epoch: number;
+  authority_epoch: number;
+  deadlines: Record<string, {deadline_at: string; label: string}>;
+  milestones: Record<string, {title: string; due_at: string}>;
+  critical_markers: Record<string, {label: string; trigger_at: string}>;
+  penalty_zones: Record<string, {starts_at: string; reason: string}>;
+  resolved_exception_ids: string[];
 };
 
 type Report = {
@@ -496,6 +504,33 @@ export default function Home() {
     }
   }
 
+  async function runTimelineAction(type: "deadline" | "move" | "milestone" | "marker" | "penalty" | "resolve" | "archive") {
+    if (!selectedRecord || selectedRecord.kind !== "timeline") return;
+    const timeline = selectedRecord.record;
+    if (type === "archive" && !window.confirm("Archive this timeline?")) return;
+    setActionLoading(type);
+    try {
+      const instant = (hours: number) => new Date(Date.now() + hours * 3_600_000).toISOString().replace(/Z$/, "000Z");
+      const deadlineId = Object.keys(timeline.deadlines)[0];
+      if (type === "move" && !deadlineId) throw new Error("Set a deadline before moving it");
+      const config = {
+        deadline: ["SetDeadline", "timeline:deadline:set", {timeline_id: timeline.timeline_id, deadline_id: uuidV7(), deadline_at: instant(72), label: "Operational deadline"}],
+        move: ["MoveDeadline", "timeline:deadline:move", {timeline_id: timeline.timeline_id, deadline_id: deadlineId, new_deadline_at: instant(96), reason: "Schedule adjustment from ONYX Command Center"}],
+        milestone: ["AddMilestone", "timeline:milestone:add", {timeline_id: timeline.timeline_id, milestone_id: uuidV7(), title: "Operational milestone", due_at: instant(48)}],
+        marker: ["DefineCriticalMarker", "timeline:marker:define", {timeline_id: timeline.timeline_id, marker_id: uuidV7(), label: "Critical decision point", trigger_at: instant(36)}],
+        penalty: ["ActivatePenaltyZone", "timeline:penalty-zone:activate", {timeline_id: timeline.timeline_id, penalty_zone_id: uuidV7(), starts_at: instant(120), reason: "Late-delivery boundary"}],
+        resolve: ["ResolveScheduleException", "timeline:exception:resolve", {timeline_id: timeline.timeline_id, exception_id: uuidV7(), resolution_note: "Schedule variance resolved from ONYX Command Center"}],
+        archive: ["ArchiveTimeline", "timeline:archive", {timeline_id: timeline.timeline_id, retention_policy_id: uuidV7()}],
+      } as const;
+      const [commandType, scope, payload] = config[type];
+      const command = envelope(commandType, "Timeline", timeline.timeline_id, organizationId, principalId, scope, payload);
+      command.expected_version = timeline.version; command.expected_lifecycle_epoch = timeline.lifecycle_epoch; command.expected_authority_epoch = timeline.authority_epoch;
+      await api(`/v1/timeline/commands/${commandType}`, {method: "POST", body: JSON.stringify(command)});
+      await refresh(); const updated = await api<Timeline>(`/v1/timelines/${timeline.timeline_id}?organization_id=${organizationId}`); await openRecord({kind: "timeline", record: updated}, false);
+      setToast(`${commandType.replace(/([A-Z])/g, " $1").trim()} completed`);
+    } catch (caught) { setToast(caught instanceof Error ? caught.message : "Timeline action failed"); } finally { setActionLoading(""); }
+  }
+
   const activeMissions = missions.filter((item) => item.status === "ACTIVE").length;
   const openTasks = tasks.filter((item) => !["CLOSED", "CANCELLED"].includes(item.status)).length;
   const completion = tasks.length ? Math.round(((tasks.length - openTasks) / tasks.length) * 100) : 0;
@@ -659,7 +694,7 @@ export default function Home() {
 
       {createKind && <CreateModal kind={createKind} missions={missions} tasks={tasks} timelines={timelines} submitting={submitting} onClose={() => setCreateKind(null)} onSubmit={submitCreate} />}
       {selectedMission && <MissionDetail mission={selectedMission} history={missionHistory} tasks={tasks.filter((task) => task.mission_id === selectedMission.mission_id)} timelines={timelines.filter((timeline) => timeline.subject_ref.object_id === selectedMission.mission_id)} reports={reports.filter((report) => report.subject_ref.object_id === selectedMission.mission_id)} loading={detailLoading} actionLoading={actionLoading} onAction={(type) => void runMissionAction(type)} onOpenRecord={(selection) => void openRecord(selection)} onClose={closeDetails} />}
-      {selectedRecord && <RecordDetail selection={selectedRecord} history={recordHistory} missions={missions} tasks={tasks} timelines={timelines} reports={reports} loading={detailLoading} actionLoading={actionLoading} onTaskAction={(type) => void runTaskAction(type)} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(nextSelection) => void openRecord(nextSelection)} onClose={closeDetails} />}
+      {selectedRecord && <><RecordDetail selection={selectedRecord} history={recordHistory} missions={missions} tasks={tasks} timelines={timelines} reports={reports} loading={detailLoading} actionLoading={actionLoading} onTaskAction={(type) => void runTaskAction(type)} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(nextSelection) => void openRecord(nextSelection)} onClose={closeDetails} />{selectedRecord.kind === "timeline" && selectedRecord.record.status !== "ARCHIVED" && <TimelineActionPanel loading={actionLoading} onAction={(type) => void runTimelineAction(type)} />}</>}
       {toast && <div className="toast" role="status"><span>✓</span>{toast}</div>}
     </main>
   );
@@ -750,6 +785,11 @@ function RecordDetail({ selection, history, missions, tasks, timelines, reports,
   const kindLabel = selection.kind === "task" ? "WORK RECORD" : selection.kind === "timeline" ? "TIMELINE RECORD" : "EVIDENCE RECORD";
   const taskAction = selection.kind === "task" ? (selection.record.status === "DRAFT" ? ["start", "Start task"] : ["PAUSED", "BLOCKED"].includes(selection.record.status) ? ["start", "Resume task"] : selection.record.status === "ACTIVE" ? ["submit", "Submit completion"] : selection.record.status === "SUBMITTED" ? ["approve", "Approve completion"] : selection.record.status === "APPROVED" ? ["close", "Close task"] : selection.record.status === "CLOSED" ? ["reopen", "Reopen task"] : null) : null;
   return <div className="drawer-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="mission-drawer" role="dialog" aria-modal="true" aria-label={`${selection.kind} details`}><header><div><p className="eyebrow">{kindLabel}</p><h2>{title}</h2></div><button onClick={onClose} aria-label={`Close ${selection.kind} details`}>×</button></header><div className="drawer-scroll"><div className="mission-identity"><span className={selection.kind === "task" ? statusClass(badge) : "status neutral"}>{badge.replaceAll("_", " ")}</span><code>{id}</code><p>{description}</p></div><div className="detail-metrics"><div><strong>v{version}</strong><small>Aggregate version</small></div><div><strong>{history.length}</strong><small>Immutable events</small></div><div><strong>{relatedTimelines}</strong><small>Child timelines</small></div><div><strong>{relatedReports}</strong><small>Evidence links</small></div></div><section className="relationship-card"><div><p className="eyebrow">OPERATIONAL CONTEXT</p><h3>{subject.aggregate_type} · {shortId(subject.object_id)}</h3>{subjectTask && <small>{subjectTask.title}</small>}{subjectTimeline && <small>{subjectTimeline.timezone} timeline</small>}</div><div className="relationship-actions">{subjectTask && <button onClick={() => onOpenRecord({ kind: "task", record: subjectTask })}>Open task</button>}{subjectTimeline && <button onClick={() => onOpenRecord({ kind: "timeline", record: subjectTimeline })}>Open timeline</button>}{mission && <button onClick={() => onOpenMission(mission)}>Open mission <span>→</span></button>}</div></section>{(childTimelines.length > 0 || childReports.length > 0) && <section className="related-section compact"><div className="panel-header"><div><p className="eyebrow">DOWNSTREAM RECORDS</p><h3>Connected evidence</h3></div></div><div className="related-grid">{childTimelines.map((timeline) => <button key={timeline.timeline_id} onClick={() => onOpenRecord({ kind: "timeline", record: timeline })}><span className="metric-icon amber">◷</span><div><strong>{timeline.timezone}</strong><small>Timeline · {shortId(timeline.timeline_id)}</small></div><b>›</b></button>)}{childReports.map((report) => <button key={report.report_id} onClick={() => onOpenRecord({ kind: "report", record: report })}><span className="metric-icon green">▤</span><div><strong>{report.title}</strong><small>{report.report_type.replaceAll("_", " ")}</small></div><b>›</b></button>)}</div></section>}{selection.kind === "task" && <><section className="lifecycle-card"><div><p className="eyebrow">LIFECYCLE CONTROL</p><h3>Available operation</h3></div>{taskAction ? <button className="primary-button" disabled={Boolean(actionLoading)} onClick={() => onTaskAction(taskAction[0] as "start" | "submit" | "approve" | "close" | "reopen")}>{actionLoading === taskAction[0] ? "Working…" : taskAction[1]}</button> : <span className="status neutral">No transition</span>}</section>{selection.record.status === "ACTIVE" && <button className="danger-action" disabled={Boolean(actionLoading)} onClick={() => onTaskAction("pause")}>Pause task</button>}{["DRAFT", "ACTIVE", "PAUSED", "BLOCKED", "SUBMITTED", "APPROVED"].includes(selection.record.status) && <button className="danger-action" disabled={Boolean(actionLoading)} onClick={() => onTaskAction("cancel")}>Cancel task</button>}</>}<section className="history-section"><div className="panel-header"><div><p className="eyebrow">IMMUTABLE HISTORY</p><h3>Event timeline</h3></div><small>{history.length} events</small></div>{loading ? <LoadingRows /> : <div className="event-timeline">{[...history].reverse().map((event) => <article key={event.event_id}><i /><div><strong>{event.event_type.replace(/([A-Z])/g, " $1").trim()}</strong><p>Aggregate version {event.aggregate_version}</p><small>{new Date(event.occurred_at).toLocaleString()}</small></div><code>{event.audit?.integrity_digest ? `${event.audit.integrity_digest.slice(0, 12)}…` : shortId(event.event_id)}</code></article>)}</div>}</section></div></aside></div>;
+}
+
+function TimelineActionPanel({ loading, onAction }: { loading: string; onAction: (type: "deadline" | "move" | "milestone" | "marker" | "penalty" | "resolve" | "archive") => void }) {
+  const actions = [["deadline", "Set deadline"], ["move", "Move deadline"], ["milestone", "Add milestone"], ["marker", "Critical marker"], ["penalty", "Penalty zone"], ["resolve", "Resolve exception"], ["archive", "Archive"]] as const;
+  return <section className="timeline-action-panel" aria-label="Timeline contract operations"><strong>Schedule control</strong><div>{actions.map(([action, label]) => <button key={action} disabled={Boolean(loading)} onClick={() => onAction(action)}>{loading === action ? "Working…" : label}</button>)}</div></section>;
 }
 
 function CreateModal({ kind, missions, tasks, timelines, submitting, onClose, onSubmit }: { kind: CreateKind; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; submitting: boolean; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {

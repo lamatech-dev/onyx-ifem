@@ -8,7 +8,7 @@ import { InMemoryTimelineRepository } from "../src/timeline/repository.ts";
 import { TimelineService } from "../src/timeline/service.ts";
 import { InMemoryWorkRepository } from "../src/work/repository.ts";
 import { WorkService } from "../src/work/service.ts";
-import { createMissionCommand, createTaskCommand, createTimelineCommand, testId } from "./fixtures.ts";
+import { createMissionCommand, createTaskCommand, createTimelineCommand, testId, timelineCommand } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -55,6 +55,8 @@ describe("TimelineService.createTimeline", () => {
       payload: {...base.payload, subject_ref: {aggregate_type: "Task", object_id: testId(400)}},
     }));
 
+    assert.equal(event.event_type, "TimelineCreated");
+    if (event.event_type !== "TimelineCreated") throw new Error("unexpected event");
     assert.equal(event.payload.subject_ref.aggregate_type, "Task");
   });
 
@@ -107,5 +109,22 @@ describe("TimelineService.createTimeline", () => {
       timeline.execute(createTimelineCommand({target: {aggregate_type: "Timeline", object_id: testId(999)}})),
       (error: unknown) => error instanceof OnyxError && error.code === "INVALID_ARGUMENT",
     );
+  });
+
+  it("executes scheduling mutations and archives the timeline", async () => {
+    const {timeline} = await fixture(); await timeline.execute(createTimelineCommand()); const id = testId(500);
+    const commands = [
+      timelineCommand("SetDeadline", 1, {timeline_id: id, deadline_id: testId(520), deadline_at: "2026-08-01T10:00:00.000000Z", label: "Release"}, "timeline:deadline:set", 1),
+      timelineCommand("MoveDeadline", 2, {timeline_id: id, deadline_id: testId(520), new_deadline_at: "2026-08-02T10:00:00.000000Z", reason: "Risk buffer"}, "timeline:deadline:move", 2),
+      timelineCommand("AddMilestone", 3, {timeline_id: id, milestone_id: testId(521), title: "Acceptance", due_at: "2026-08-02T09:00:00.000000Z"}, "timeline:milestone:add", 3),
+      timelineCommand("DefineCriticalMarker", 4, {timeline_id: id, marker_id: testId(522), label: "Go/no-go", trigger_at: "2026-08-02T08:00:00.000000Z"}, "timeline:marker:define", 4),
+      timelineCommand("ActivatePenaltyZone", 5, {timeline_id: id, penalty_zone_id: testId(523), starts_at: "2026-08-02T11:00:00.000000Z", reason: "Late delivery"}, "timeline:penalty-zone:activate", 5),
+      timelineCommand("ResolveScheduleException", 6, {timeline_id: id, exception_id: testId(524), resolution_note: "Approved variance"}, "timeline:exception:resolve", 6),
+      timelineCommand("ArchiveTimeline", 7, {timeline_id: id, retention_policy_id: testId(525)}, "timeline:archive", 7),
+    ];
+    const events = []; for (const command of commands) events.push(await timeline.execute(command));
+    assert.deepEqual(events.map((event) => event.event_type), ["DeadlineChanged", "DeadlineMoved", "MilestoneAdded", "CriticalMarkerDefined", "PenaltyZoneActivated", "ScheduleExceptionRaised", "TimelineArchived"]);
+    const view = await timeline.getTimeline(testId(13), id); assert.equal(view.status, "ARCHIVED"); assert.equal(view.version, 8); assert.equal(view.lifecycle_epoch, 1); assert.equal(view.deadlines[testId(520)]?.deadline_at, "2026-08-02T10:00:00.000000Z");
+    await assert.rejects(timeline.execute(timelineCommand("AddMilestone", 8, {timeline_id: id, milestone_id: testId(526), title: "No", due_at: "2026-08-03T00:00:00.000000Z"}, "timeline:milestone:add", 8)), (error: unknown) => error instanceof OnyxError && error.code === "INVALID_STATE_TRANSITION");
   });
 });

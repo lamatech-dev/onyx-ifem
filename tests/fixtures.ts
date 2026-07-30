@@ -1,6 +1,6 @@
 import type { CreateMissionCommand, MissionCommand } from "../src/mission/types.ts";
 import type { CreateTaskCommand, WorkCommand } from "../src/work/types.ts";
-import type { CreateTimelineCommand } from "../src/timeline/types.ts";
+import type { CreateTimelineCommand, TimelineCommand } from "../src/timeline/types.ts";
 import type { CreateReportCommand } from "../src/reporting-evidence/types.ts";
 
 export function testId(sequence: number): string {
@@ -148,6 +148,17 @@ export function createTimelineCommand(overrides: Partial<CreateTimelineCommand> 
     vector_clock: {"replica-a": 1},
     ...overrides,
   };
+}
+
+export function timelineCommand<TType extends TimelineCommand["command_type"], TPayload>(type: TType, sequence: number, payload: TPayload, scope: string, expectedVersion: number): Extract<TimelineCommand, {command_type: TType}> {
+  return {
+    actor_context: {actor_type: "USER", principal_id: testId(15)},
+    authority_proof: {authority_epoch: 0, expires_at: "2030-01-01T00:00:00.000000Z", proof_ref: `proof:${type}`, scope: [scope]},
+    command_id: testId(1_000 + sequence), command_type: type, correlation_id: testId(200), expected_authority_epoch: 0,
+    expected_lifecycle_epoch: 0, expected_version: expectedVersion, issued_at: "2026-07-29T20:00:00.000000Z",
+    operation_id: testId(1_100 + sequence), organization_id: testId(13), payload, schema_version: 1,
+    target: {aggregate_type: "Timeline", object_id: testId(500)}, vector_clock: {"replica-a": sequence},
+  } as unknown as Extract<TimelineCommand, {command_type: TType}>;
 }
 
 export function createReportCommand(overrides: Partial<CreateReportCommand> = {}): CreateReportCommand {

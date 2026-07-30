@@ -1,6 +1,6 @@
 # Timeline context
 
-The Timeline context owns Timeline aggregates. The initial vertical slice implements `CreateTimeline`, the only Timeline command whose v2.0 payload is marked `FIELD_COMPLETE`.
+The Timeline context owns Timeline aggregates and implements every v2.0 Timeline command with exact payload schemas.
 
 ## Contract mapping
 
@@ -27,6 +27,13 @@ Creation requires an unexpired authority proof containing `timeline:create`. The
 - list Timelines inside an organization;
 - read aggregate event history using `after_version` and `limit` bounds.
 
-## Deferred scheduling
+## Scheduling operations
 
-Commands for milestones, deadlines, critical markers, penalty zones, exceptions, and archival remain unavailable because their payload schemas are `NAME_FROZEN_PAYLOAD_OPEN`. The implementation does not infer fields or state transitions for those contracts.
+- `SetDeadline` and `MoveDeadline` maintain identified deadlines.
+- `AddMilestone` records named due points.
+- `DefineCriticalMarker` records decision boundaries.
+- `ActivatePenaltyZone` records late-delivery enforcement windows.
+- `ResolveScheduleException` permanently deduplicates resolved exception identifiers.
+- `ArchiveTimeline` increments the lifecycle epoch and makes the aggregate immutable.
+
+Every mutation enforces organization ownership, authority scope, optional version/epoch fences, idempotency, and atomic event persistence in both repository adapters.

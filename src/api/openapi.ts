@@ -37,6 +37,13 @@ export const IMPLEMENTED_COMMAND_ROUTES: readonly CommandRoute[] = [
   {context: "work", command: "CloseTask", event: "TaskClosed"},
   {context: "work", command: "CancelTask", event: "TaskCancelled"},
   {context: "timeline", command: "CreateTimeline", event: "TimelineCreated"},
+  {context: "timeline", command: "SetDeadline", event: "DeadlineChanged"},
+  {context: "timeline", command: "MoveDeadline", event: "DeadlineMoved"},
+  {context: "timeline", command: "AddMilestone", event: "MilestoneAdded"},
+  {context: "timeline", command: "DefineCriticalMarker", event: "CriticalMarkerDefined"},
+  {context: "timeline", command: "ActivatePenaltyZone", event: "PenaltyZoneActivated"},
+  {context: "timeline", command: "ResolveScheduleException", event: "ScheduleExceptionRaised"},
+  {context: "timeline", command: "ArchiveTimeline", event: "TimelineArchived"},
   {context: "reporting-evidence", command: "CreateReport", event: "ReportCreated"},
 ];
 
@@ -194,7 +201,7 @@ function addResource(resource: string, singular: string, schema: string, events:
 
 addResource("missions", "Mission", "MissionView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "mission").map((route) => route.event));
 addResource("tasks", "Task", "TaskView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "work").map((route) => route.event));
-addResource("timelines", "Timeline", "TimelineView", ["TimelineCreated"]);
+addResource("timelines", "Timeline", "TimelineView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "timeline").map((route) => route.event));
 addResource("reports", "Report", "ReportView", ["ReportCreated"]);
 
 paths["/healthz"] = {
@@ -300,12 +307,15 @@ const viewSchemas: JsonObject = {
   },
   TimelineView: {
     type: "object", additionalProperties: false,
-    required: ["timeline_id", "organization_id", "subject_ref", "timezone", "version"],
+    required: ["timeline_id", "organization_id", "subject_ref", "timezone", "version", "status", "lifecycle_epoch", "authority_epoch", "deadlines", "milestones", "critical_markers", "penalty_zones", "resolved_exception_ids"],
     properties: {
       timeline_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
       organization_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
       subject_ref: {$ref: "#/components/schemas/SharedTypes/$defs/DomainObjectRef"},
       timezone: {type: "string", minLength: 1}, version: {type: "integer", minimum: 1},
+      status: {type: "string", enum: ["ACTIVE", "ARCHIVED"]}, lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0},
+      deadlines: {type: "object"}, milestones: {type: "object"}, critical_markers: {type: "object"}, penalty_zones: {type: "object"},
+      resolved_exception_ids: {type: "array", items: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, uniqueItems: true},
     },
   },
   ReportView: {
