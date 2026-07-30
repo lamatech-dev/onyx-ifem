@@ -11,7 +11,13 @@
           "const": "AssignOwner"
         },
         "payload": {
-          "additionalProperties": true,
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},
+            "owner_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},
+            "assignment_note": {"type": "string", "minLength": 1, "maxLength": 2000}
+          },
+          "required": ["task_id", "owner_id"],
           "type": "object"
         },
         "schema_version": {
@@ -22,7 +28,7 @@
     }
   ],
   "title": "ONYX AssignOwner",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C02",
   "x-onyx-topic": "work.events"
 }

@@ -11,7 +11,9 @@
           "const": "TaskPriorityChanged"
         },
         "payload": {
-          "additionalProperties": true,
+          "additionalProperties": false,
+          "properties": {"priority": {"type": "string", "minLength": 1, "maxLength": 100}},
+          "required": ["priority"],
           "type": "object"
         },
         "schema_version": {
@@ -22,7 +24,7 @@
     }
   ],
   "title": "ONYX TaskPriorityChanged",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C02",
   "x-onyx-topic": "work.events"
 }

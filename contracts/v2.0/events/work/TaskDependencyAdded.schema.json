@@ -11,7 +11,9 @@
           "const": "TaskDependencyAdded"
         },
         "payload": {
-          "additionalProperties": true,
+          "additionalProperties": false,
+          "properties": {"dependency_task_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}},
+          "required": ["dependency_task_id"],
           "type": "object"
         },
         "schema_version": {
@@ -22,7 +24,7 @@
     }
   ],
   "title": "ONYX TaskDependencyAdded",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C02",
   "x-onyx-topic": "work.events"
 }

@@ -46,7 +46,8 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   assert.match(page, /\/v1\/tasks\/\$\{id\}\/history/);
   assert.match(page, /\/v1\/timelines\/\$\{id\}\/history/);
   assert.match(page, /\/v1\/reports\/\$\{id\}\/history/);
-  assert.match(page, /Contract-governed record/);
+  assert.match(page, /SubmitCompletion/);
+  assert.match(page, /LIFECYCLE CONTROL/);
   assert.match(page, /parseSubjectRef/);
   assert.match(page, /Operational subject/);
   assert.match(page, /Timeline:\$\{timeline\.timeline_id\}/);

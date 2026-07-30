@@ -1,21 +1,21 @@
-import type { Task, TaskCreatedEvent, TaskView } from "./types.ts";
+import type { Task, TaskView, WorkEvent } from "./types.ts";
 
 export interface WorkOperationRecord {
   fingerprint: string;
-  event: TaskCreatedEvent;
+  event: WorkEvent;
 }
 
 export interface WorkRepository {
   find(taskId: string): Promise<Task | undefined>;
   list(organizationId: string, afterId: string | undefined, limit: number): Promise<Task[]>;
-  history(taskId: string, afterVersion?: number, limit?: number): Promise<TaskCreatedEvent[]>;
+  history(taskId: string, afterVersion?: number, limit?: number): Promise<WorkEvent[]>;
   findOperation(operationId: string): Promise<WorkOperationRecord | undefined>;
-  commit(task: Task, event: TaskCreatedEvent, operationId: string, record: WorkOperationRecord): Promise<void>;
+  commit(task: Task, event: WorkEvent, operationId: string, record: WorkOperationRecord, create: boolean): Promise<void>;
 }
 
 export class InMemoryWorkRepository implements WorkRepository {
   readonly #tasks = new Map<string, Task>();
-  readonly #events = new Map<string, TaskCreatedEvent[]>();
+  readonly #events = new Map<string, WorkEvent[]>();
   readonly #operations = new Map<string, WorkOperationRecord>();
 
   async find(taskId: string): Promise<Task | undefined> {
@@ -31,7 +31,7 @@ export class InMemoryWorkRepository implements WorkRepository {
       .map((task) => structuredClone(task));
   }
 
-  async history(taskId: string, afterVersion = 0, limit = 100): Promise<TaskCreatedEvent[]> {
+  async history(taskId: string, afterVersion = 0, limit = 100): Promise<WorkEvent[]> {
     return (this.#events.get(taskId) ?? [])
       .filter((event) => event.aggregate_version > afterVersion)
       .slice(0, limit)
@@ -43,11 +43,11 @@ export class InMemoryWorkRepository implements WorkRepository {
     return record && structuredClone(record);
   }
 
-  async commit(task: Task, event: TaskCreatedEvent, operationId: string, record: WorkOperationRecord): Promise<void> {
-    if (this.#tasks.has(task.taskId)) throw new Error("task already exists during commit");
+  async commit(task: Task, event: WorkEvent, operationId: string, record: WorkOperationRecord, create: boolean): Promise<void> {
+    if (create === this.#tasks.has(task.taskId)) throw new Error(create ? "task already exists during commit" : "task does not exist during commit");
     if (this.#operations.has(operationId)) throw new Error("operation already exists during commit");
     this.#tasks.set(task.taskId, structuredClone(task));
-    this.#events.set(task.taskId, [structuredClone(event)]);
+    this.#events.set(task.taskId, [...(this.#events.get(task.taskId) ?? []), structuredClone(event)]);
     this.#operations.set(operationId, structuredClone(record));
   }
 }
@@ -63,5 +63,8 @@ export function toTaskView(task: Task): TaskView {
     priority: task.priority,
     status: task.status,
     version: task.version,
+    lifecycle_epoch: task.lifecycleEpoch,
+    authority_epoch: task.authorityEpoch,
+    dependency_task_ids: structuredClone(task.dependencyTaskIds),
   };
 }

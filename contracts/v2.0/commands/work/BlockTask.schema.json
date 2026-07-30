@@ -11,7 +11,13 @@
           "const": "BlockTask"
         },
         "payload": {
-          "additionalProperties": true,
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},
+            "blocker_code": {"type": "string", "minLength": 1, "maxLength": 200},
+            "blocker_description": {"type": "string", "minLength": 1, "maxLength": 4000}
+          },
+          "required": ["task_id", "blocker_code", "blocker_description"],
           "type": "object"
         },
         "schema_version": {
@@ -22,7 +28,7 @@
     }
   ],
   "title": "ONYX BlockTask",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C02",
   "x-onyx-topic": "work.events"
 }

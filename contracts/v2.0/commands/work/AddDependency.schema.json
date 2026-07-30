@@ -11,7 +11,12 @@
           "const": "AddDependency"
         },
         "payload": {
-          "additionalProperties": true,
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},
+            "dependency_task_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"}
+          },
+          "required": ["task_id", "dependency_task_id"],
           "type": "object"
         },
         "schema_version": {
@@ -22,7 +27,7 @@
     }
   ],
   "title": "ONYX AddDependency",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C02",
   "x-onyx-topic": "work.events"
 }

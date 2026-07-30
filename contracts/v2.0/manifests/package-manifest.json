@@ -162,77 +162,77 @@
       "path": "contracts/commands/work/CreateTask.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "AssignOwner",
       "path": "contracts/commands/work/AssignOwner.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "ChangePriority",
       "path": "contracts/commands/work/ChangePriority.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "AddDependency",
       "path": "contracts/commands/work/AddDependency.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "StartTask",
       "path": "contracts/commands/work/StartTask.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "PauseTask",
       "path": "contracts/commands/work/PauseTask.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "BlockTask",
       "path": "contracts/commands/work/BlockTask.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "SubmitCompletion",
       "path": "contracts/commands/work/SubmitCompletion.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "ApproveTask",
       "path": "contracts/commands/work/ApproveTask.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "ReopenTask",
       "path": "contracts/commands/work/ReopenTask.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "CloseTask",
       "path": "contracts/commands/work/CloseTask.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "command",
       "name": "CancelTask",
@@ -246,21 +246,21 @@
       "path": "contracts/events/work/TaskCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "event",
       "name": "TaskOwnerAssigned",
       "path": "contracts/events/work/TaskOwnerAssigned.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "event",
       "name": "TaskPriorityChanged",
       "path": "contracts/events/work/TaskPriorityChanged.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C02",
       "kind": "event",
       "name": "TaskDependencyAdded",

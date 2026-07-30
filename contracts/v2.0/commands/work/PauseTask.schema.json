@@ -11,7 +11,13 @@
           "const": "PauseTask"
         },
         "payload": {
-          "additionalProperties": true,
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {"$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},
+            "reason_code": {"type": "string", "minLength": 1, "maxLength": 200},
+            "reason": {"type": "string", "minLength": 1, "maxLength": 2000}
+          },
+          "required": ["task_id", "reason_code", "reason"],
           "type": "object"
         },
         "schema_version": {
@@ -22,7 +28,7 @@
     }
   ],
   "title": "ONYX PauseTask",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C02",
   "x-onyx-topic": "work.events"
 }

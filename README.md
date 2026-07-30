@@ -157,7 +157,7 @@ See [Mission context](docs/mission-context.md) for lifecycle and authority detai
 
 All command handlers share strict validation of the canonical v2.0 envelope before domain-specific payload checks. Emitted events are validated and their canonical integrity digests are verified before persistence. See [Runtime contract validation](docs/contract-validation.md).
 
-The Work context currently implements `CreateTask`, the only Work command with a `FIELD_COMPLETE` payload. A task may be created only when its referenced Mission exists inside the same organization boundary. See [Work context](docs/work-context.md).
+The Work context implements the complete Task lifecycle plus owner, priority, and dependency mutations. A task may be created only when its referenced Mission exists inside the same organization boundary. See [Work context](docs/work-context.md).
 
 The Timeline context implements `CreateTimeline`. A timeline may currently target an existing Mission or Task inside the same organization boundary. See [Timeline context](docs/timeline-context.md).
 
@@ -167,8 +167,8 @@ The HTTP adapter exposes every currently executable context. Other bounded conte
 
 ## Contract maturity
 
-The imported v2.0 package contains 294 command/event schemas. All 14 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
+The imported v2.0 package contains 294 command/event schemas. All 25 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
 
 The Mission context is now lifecycle-complete, including operational halt, restart with lifecycle-epoch fencing, close, and archive transitions.
 
-Work lifecycle commands such as `StartTask`, `PauseTask`, `BlockTask`, and `CloseTask` are also deliberately unavailable until their command payloads are frozen. Timeline scheduling commands remain unavailable for the same reason.
+The Work context is lifecycle-complete from creation through execution, completion approval, closure, reopening, and cancellation. Timeline scheduling commands are the next contract group being completed.

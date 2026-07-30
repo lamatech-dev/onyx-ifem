@@ -1,6 +1,27 @@
 # Work context
 
-The Work context owns Task aggregates. The initial vertical slice implements only `CreateTask`, because it is the only Work command whose v2.0 payload is marked `FIELD_COMPLETE`.
+The Work context owns Task aggregates and implements every v2.0 Work command. Payloads are exact, versioned contracts; unknown fields are rejected.
+
+## Lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> DRAFT: CreateTask
+  DRAFT --> ACTIVE: StartTask
+  ACTIVE --> PAUSED: PauseTask
+  PAUSED --> ACTIVE: StartTask
+  ACTIVE --> BLOCKED: BlockTask
+  PAUSED --> BLOCKED: BlockTask
+  BLOCKED --> ACTIVE: StartTask
+  ACTIVE --> SUBMITTED: SubmitCompletion
+  SUBMITTED --> APPROVED: ApproveTask
+  APPROVED --> CLOSED: CloseTask
+  SUBMITTED --> ACTIVE: ReopenTask
+  APPROVED --> ACTIVE: ReopenTask
+  CLOSED --> ACTIVE: ReopenTask
+```
+
+Non-terminal states can be cancelled. Closure, reopening, and cancellation increment the lifecycle epoch to fence stale commands.
 
 ## Cross-context boundary
 
@@ -17,7 +38,7 @@ Creation is rejected when:
 
 ## Persistence boundary
 
-Task state, the `TaskCreated` event, and the idempotency record are committed through one repository operation. The in-memory adapter demonstrates the contract; a durable adapter must preserve the same atomic behavior.
+Task state, its emitted event, and the idempotency record are committed through one repository operation. Both in-memory and SQLite adapters preserve the same atomic behavior for creation and mutation.
 
 ## Query surface
 
@@ -25,7 +46,6 @@ Task state, the `TaskCreated` event, and the idempotency record are committed th
 - list Tasks inside an organization;
 - read aggregate event history using `after_version` and `limit` bounds.
 
-## Deferred lifecycle
+## Supporting mutations
 
-The event registry names later Task states, but the corresponding command payloads remain open. The implementation therefore does not guess fields for ownership changes, dependencies, priority changes, execution, completion, approval, closure, cancellation, or reopening.
-
+`AssignOwner`, `ChangePriority`, and `AddDependency` update active planning metadata without changing lifecycle status. Dependencies must exist in the same organization and Mission, cannot reference the task itself, and cannot be duplicated.

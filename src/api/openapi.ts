@@ -25,6 +25,17 @@ export const IMPLEMENTED_COMMAND_ROUTES: readonly CommandRoute[] = [
   {context: "mission", command: "CancelMission", event: "MissionCancelled"},
   {context: "mission", command: "ArchiveMission", event: "MissionArchived"},
   {context: "work", command: "CreateTask", event: "TaskCreated"},
+  {context: "work", command: "AssignOwner", event: "TaskOwnerAssigned"},
+  {context: "work", command: "ChangePriority", event: "TaskPriorityChanged"},
+  {context: "work", command: "AddDependency", event: "TaskDependencyAdded"},
+  {context: "work", command: "StartTask", event: "TaskStarted"},
+  {context: "work", command: "PauseTask", event: "TaskPaused"},
+  {context: "work", command: "BlockTask", event: "TaskBlocked"},
+  {context: "work", command: "SubmitCompletion", event: "TaskCompletionSubmitted"},
+  {context: "work", command: "ApproveTask", event: "TaskApproved"},
+  {context: "work", command: "ReopenTask", event: "TaskReopened"},
+  {context: "work", command: "CloseTask", event: "TaskClosed"},
+  {context: "work", command: "CancelTask", event: "TaskCancelled"},
   {context: "timeline", command: "CreateTimeline", event: "TimelineCreated"},
   {context: "reporting-evidence", command: "CreateReport", event: "ReportCreated"},
 ];
@@ -182,7 +193,7 @@ function addResource(resource: string, singular: string, schema: string, events:
 }
 
 addResource("missions", "Mission", "MissionView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "mission").map((route) => route.event));
-addResource("tasks", "Task", "TaskView", ["TaskCreated"]);
+addResource("tasks", "Task", "TaskView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "work").map((route) => route.event));
 addResource("timelines", "Timeline", "TimelineView", ["TimelineCreated"]);
 addResource("reports", "Report", "ReportView", ["ReportCreated"]);
 
@@ -275,7 +286,7 @@ const viewSchemas: JsonObject = {
   TaskView: {
     type: "object",
     additionalProperties: false,
-    required: ["task_id", "organization_id", "mission_id", "title", "description", "owner_id", "priority", "status", "version"],
+    required: ["task_id", "organization_id", "mission_id", "title", "description", "owner_id", "priority", "status", "version", "lifecycle_epoch", "authority_epoch", "dependency_task_ids"],
     properties: {
       task_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
       organization_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
@@ -283,6 +294,8 @@ const viewSchemas: JsonObject = {
       title: {type: "string"}, description: {type: "string"},
       owner_id: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"},
       priority: {type: "string"}, status: {type: "string"}, version: {type: "integer", minimum: 1},
+      lifecycle_epoch: {type: "integer", minimum: 0}, authority_epoch: {type: "integer", minimum: 0},
+      dependency_task_ids: {type: "array", items: {$ref: "#/components/schemas/SharedTypes/$defs/UuidV7"}, uniqueItems: true},
     },
   },
   TimelineView: {

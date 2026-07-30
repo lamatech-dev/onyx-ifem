@@ -39,6 +39,9 @@ type Task = {
   owner_id: string;
   status: string;
   version: number;
+  lifecycle_epoch: number;
+  authority_epoch: number;
+  dependency_task_ids: string[];
 };
 
 type Timeline = {
@@ -460,6 +463,39 @@ export default function Home() {
     }
   }
 
+  async function runTaskAction(type: "start" | "pause" | "block" | "submit" | "approve" | "close" | "reopen" | "cancel") {
+    if (!selectedRecord || selectedRecord.kind !== "task") return;
+    if (["close", "cancel"].includes(type) && !window.confirm(`${type === "close" ? "Close" : "Cancel"} this task?`)) return;
+    const task = selectedRecord.record;
+    setActionLoading(type);
+    try {
+      const config = {
+        start: ["StartTask", "work:start", {task_id: task.task_id, start_note: "Started from ONYX Command Center"}],
+        pause: ["PauseTask", "work:pause", {task_id: task.task_id, reason_code: "OPERATOR_PAUSE", reason: "Paused from ONYX Command Center"}],
+        block: ["BlockTask", "work:block", {task_id: task.task_id, blocker_code: "OPERATIONAL_BLOCKER", blocker_description: "Blocked from ONYX Command Center"}],
+        submit: ["SubmitCompletion", "work:completion:submit", {task_id: task.task_id, completion_summary: "Completion submitted from ONYX Command Center"}],
+        approve: ["ApproveTask", "work:approve", {task_id: task.task_id, approval_note: "Completion approved from ONYX Command Center"}],
+        close: ["CloseTask", "work:close", {task_id: task.task_id, closure_note: "Task closed from ONYX Command Center"}],
+        reopen: ["ReopenTask", "work:reopen", {task_id: task.task_id, reason: "Task reopened from ONYX Command Center"}],
+        cancel: ["CancelTask", "work:cancel", {task_id: task.task_id, reason_code: "OPERATOR_CANCEL", reason: "Cancelled from ONYX Command Center"}],
+      } as const;
+      const [commandType, scope, payload] = config[type];
+      const command = envelope(commandType, "Task", task.task_id, organizationId, principalId, scope, payload);
+      command.expected_version = task.version;
+      command.expected_lifecycle_epoch = task.lifecycle_epoch;
+      command.expected_authority_epoch = task.authority_epoch;
+      await api(`/v1/work/commands/${commandType}`, {method: "POST", body: JSON.stringify(command)});
+      await refresh();
+      const updated = await api<Task>(`/v1/tasks/${task.task_id}?organization_id=${organizationId}`);
+      await openRecord({kind: "task", record: updated}, false);
+      setToast(`${commandType.replace(/([A-Z])/g, " $1").trim()} completed`);
+    } catch (caught) {
+      setToast(caught instanceof Error ? caught.message : "Task action failed");
+    } finally {
+      setActionLoading("");
+    }
+  }
+
   const activeMissions = missions.filter((item) => item.status === "ACTIVE").length;
   const openTasks = tasks.filter((item) => !["CLOSED", "CANCELLED"].includes(item.status)).length;
   const completion = tasks.length ? Math.round(((tasks.length - openTasks) / tasks.length) * 100) : 0;
@@ -623,7 +659,7 @@ export default function Home() {
 
       {createKind && <CreateModal kind={createKind} missions={missions} tasks={tasks} timelines={timelines} submitting={submitting} onClose={() => setCreateKind(null)} onSubmit={submitCreate} />}
       {selectedMission && <MissionDetail mission={selectedMission} history={missionHistory} tasks={tasks.filter((task) => task.mission_id === selectedMission.mission_id)} timelines={timelines.filter((timeline) => timeline.subject_ref.object_id === selectedMission.mission_id)} reports={reports.filter((report) => report.subject_ref.object_id === selectedMission.mission_id)} loading={detailLoading} actionLoading={actionLoading} onAction={(type) => void runMissionAction(type)} onOpenRecord={(selection) => void openRecord(selection)} onClose={closeDetails} />}
-      {selectedRecord && <RecordDetail selection={selectedRecord} history={recordHistory} missions={missions} tasks={tasks} timelines={timelines} reports={reports} loading={detailLoading} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(nextSelection) => void openRecord(nextSelection)} onClose={closeDetails} />}
+      {selectedRecord && <RecordDetail selection={selectedRecord} history={recordHistory} missions={missions} tasks={tasks} timelines={timelines} reports={reports} loading={detailLoading} actionLoading={actionLoading} onTaskAction={(type) => void runTaskAction(type)} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(nextSelection) => void openRecord(nextSelection)} onClose={closeDetails} />}
       {toast && <div className="toast" role="status"><span>✓</span>{toast}</div>}
     </main>
   );
@@ -675,7 +711,7 @@ function MissionDetail({ mission, history, tasks, timelines, reports, loading, a
   </div>;
 }
 
-function RecordDetail({ selection, history, missions, tasks, timelines, reports, loading, onOpenMission, onOpenRecord, onClose }: { selection: RecordSelection; history: DomainEvent[]; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; onOpenMission: (mission: Mission) => void; onOpenRecord: (selection: RecordSelection) => void; onClose: () => void }) {
+function RecordDetail({ selection, history, missions, tasks, timelines, reports, loading, actionLoading, onTaskAction, onOpenMission, onOpenRecord, onClose }: { selection: RecordSelection; history: DomainEvent[]; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; actionLoading: string; onTaskAction: (type: "start" | "pause" | "block" | "submit" | "approve" | "close" | "reopen" | "cancel") => void; onOpenMission: (mission: Mission) => void; onOpenRecord: (selection: RecordSelection) => void; onClose: () => void }) {
   let id = "";
   let title = "";
   let description = "";
@@ -712,7 +748,8 @@ function RecordDetail({ selection, history, missions, tasks, timelines, reports,
   const relatedReports = childReports.length;
   const version = selection.record.version;
   const kindLabel = selection.kind === "task" ? "WORK RECORD" : selection.kind === "timeline" ? "TIMELINE RECORD" : "EVIDENCE RECORD";
-  return <div className="drawer-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="mission-drawer" role="dialog" aria-modal="true" aria-label={`${selection.kind} details`}><header><div><p className="eyebrow">{kindLabel}</p><h2>{title}</h2></div><button onClick={onClose} aria-label={`Close ${selection.kind} details`}>×</button></header><div className="drawer-scroll"><div className="mission-identity"><span className={selection.kind === "task" ? statusClass(badge) : "status neutral"}>{badge.replaceAll("_", " ")}</span><code>{id}</code><p>{description}</p></div><div className="detail-metrics"><div><strong>v{version}</strong><small>Aggregate version</small></div><div><strong>{history.length}</strong><small>Immutable events</small></div><div><strong>{relatedTimelines}</strong><small>Child timelines</small></div><div><strong>{relatedReports}</strong><small>Evidence links</small></div></div><section className="relationship-card"><div><p className="eyebrow">OPERATIONAL CONTEXT</p><h3>{subject.aggregate_type} · {shortId(subject.object_id)}</h3>{subjectTask && <small>{subjectTask.title}</small>}{subjectTimeline && <small>{subjectTimeline.timezone} timeline</small>}</div><div className="relationship-actions">{subjectTask && <button onClick={() => onOpenRecord({ kind: "task", record: subjectTask })}>Open task</button>}{subjectTimeline && <button onClick={() => onOpenRecord({ kind: "timeline", record: subjectTimeline })}>Open timeline</button>}{mission && <button onClick={() => onOpenMission(mission)}>Open mission <span>→</span></button>}</div></section>{(childTimelines.length > 0 || childReports.length > 0) && <section className="related-section compact"><div className="panel-header"><div><p className="eyebrow">DOWNSTREAM RECORDS</p><h3>Connected evidence</h3></div></div><div className="related-grid">{childTimelines.map((timeline) => <button key={timeline.timeline_id} onClick={() => onOpenRecord({ kind: "timeline", record: timeline })}><span className="metric-icon amber">◷</span><div><strong>{timeline.timezone}</strong><small>Timeline · {shortId(timeline.timeline_id)}</small></div><b>›</b></button>)}{childReports.map((report) => <button key={report.report_id} onClick={() => onOpenRecord({ kind: "report", record: report })}><span className="metric-icon green">▤</span><div><strong>{report.title}</strong><small>{report.report_type.replaceAll("_", " ")}</small></div><b>›</b></button>)}</div></section>}<section className="contract-note"><span>i</span><div><strong>Contract-governed record</strong><p>Additional lifecycle commands remain unavailable until their machine-readable payload contracts are frozen.</p></div></section><section className="history-section"><div className="panel-header"><div><p className="eyebrow">IMMUTABLE HISTORY</p><h3>Event timeline</h3></div><small>{history.length} events</small></div>{loading ? <LoadingRows /> : <div className="event-timeline">{[...history].reverse().map((event) => <article key={event.event_id}><i /><div><strong>{event.event_type.replace(/([A-Z])/g, " $1").trim()}</strong><p>Aggregate version {event.aggregate_version}</p><small>{new Date(event.occurred_at).toLocaleString()}</small></div><code>{event.audit?.integrity_digest ? `${event.audit.integrity_digest.slice(0, 12)}…` : shortId(event.event_id)}</code></article>)}</div>}</section></div></aside></div>;
+  const taskAction = selection.kind === "task" ? (selection.record.status === "DRAFT" ? ["start", "Start task"] : ["PAUSED", "BLOCKED"].includes(selection.record.status) ? ["start", "Resume task"] : selection.record.status === "ACTIVE" ? ["submit", "Submit completion"] : selection.record.status === "SUBMITTED" ? ["approve", "Approve completion"] : selection.record.status === "APPROVED" ? ["close", "Close task"] : selection.record.status === "CLOSED" ? ["reopen", "Reopen task"] : null) : null;
+  return <div className="drawer-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="mission-drawer" role="dialog" aria-modal="true" aria-label={`${selection.kind} details`}><header><div><p className="eyebrow">{kindLabel}</p><h2>{title}</h2></div><button onClick={onClose} aria-label={`Close ${selection.kind} details`}>×</button></header><div className="drawer-scroll"><div className="mission-identity"><span className={selection.kind === "task" ? statusClass(badge) : "status neutral"}>{badge.replaceAll("_", " ")}</span><code>{id}</code><p>{description}</p></div><div className="detail-metrics"><div><strong>v{version}</strong><small>Aggregate version</small></div><div><strong>{history.length}</strong><small>Immutable events</small></div><div><strong>{relatedTimelines}</strong><small>Child timelines</small></div><div><strong>{relatedReports}</strong><small>Evidence links</small></div></div><section className="relationship-card"><div><p className="eyebrow">OPERATIONAL CONTEXT</p><h3>{subject.aggregate_type} · {shortId(subject.object_id)}</h3>{subjectTask && <small>{subjectTask.title}</small>}{subjectTimeline && <small>{subjectTimeline.timezone} timeline</small>}</div><div className="relationship-actions">{subjectTask && <button onClick={() => onOpenRecord({ kind: "task", record: subjectTask })}>Open task</button>}{subjectTimeline && <button onClick={() => onOpenRecord({ kind: "timeline", record: subjectTimeline })}>Open timeline</button>}{mission && <button onClick={() => onOpenMission(mission)}>Open mission <span>→</span></button>}</div></section>{(childTimelines.length > 0 || childReports.length > 0) && <section className="related-section compact"><div className="panel-header"><div><p className="eyebrow">DOWNSTREAM RECORDS</p><h3>Connected evidence</h3></div></div><div className="related-grid">{childTimelines.map((timeline) => <button key={timeline.timeline_id} onClick={() => onOpenRecord({ kind: "timeline", record: timeline })}><span className="metric-icon amber">◷</span><div><strong>{timeline.timezone}</strong><small>Timeline · {shortId(timeline.timeline_id)}</small></div><b>›</b></button>)}{childReports.map((report) => <button key={report.report_id} onClick={() => onOpenRecord({ kind: "report", record: report })}><span className="metric-icon green">▤</span><div><strong>{report.title}</strong><small>{report.report_type.replaceAll("_", " ")}</small></div><b>›</b></button>)}</div></section>}{selection.kind === "task" && <><section className="lifecycle-card"><div><p className="eyebrow">LIFECYCLE CONTROL</p><h3>Available operation</h3></div>{taskAction ? <button className="primary-button" disabled={Boolean(actionLoading)} onClick={() => onTaskAction(taskAction[0] as "start" | "submit" | "approve" | "close" | "reopen")}>{actionLoading === taskAction[0] ? "Working…" : taskAction[1]}</button> : <span className="status neutral">No transition</span>}</section>{selection.record.status === "ACTIVE" && <button className="danger-action" disabled={Boolean(actionLoading)} onClick={() => onTaskAction("pause")}>Pause task</button>}{["DRAFT", "ACTIVE", "PAUSED", "BLOCKED", "SUBMITTED", "APPROVED"].includes(selection.record.status) && <button className="danger-action" disabled={Boolean(actionLoading)} onClick={() => onTaskAction("cancel")}>Cancel task</button>}</>}<section className="history-section"><div className="panel-header"><div><p className="eyebrow">IMMUTABLE HISTORY</p><h3>Event timeline</h3></div><small>{history.length} events</small></div>{loading ? <LoadingRows /> : <div className="event-timeline">{[...history].reverse().map((event) => <article key={event.event_id}><i /><div><strong>{event.event_type.replace(/([A-Z])/g, " $1").trim()}</strong><p>Aggregate version {event.aggregate_version}</p><small>{new Date(event.occurred_at).toLocaleString()}</small></div><code>{event.audit?.integrity_digest ? `${event.audit.integrity_digest.slice(0, 12)}…` : shortId(event.event_id)}</code></article>)}</div>}</section></div></aside></div>;
 }
 
 function CreateModal({ kind, missions, tasks, timelines, submitting, onClose, onSubmit }: { kind: CreateKind; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; submitting: boolean; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {

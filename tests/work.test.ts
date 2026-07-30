@@ -5,7 +5,7 @@ import { InMemoryMissionRepository } from "../src/mission/repository.ts";
 import { MissionService } from "../src/mission/service.ts";
 import { InMemoryWorkRepository } from "../src/work/repository.ts";
 import { WorkService } from "../src/work/service.ts";
-import { createMissionCommand, createTaskCommand, testId } from "./fixtures.ts";
+import { createMissionCommand, createTaskCommand, testId, workCommand } from "./fixtures.ts";
 
 const now = () => new Date("2026-07-29T20:00:01.000Z");
 
@@ -74,12 +74,49 @@ describe("WorkService.createTask", () => {
     );
   });
 
-  it("rejects lifecycle commands whose payload contracts remain open", async () => {
+  it("executes the complete task lifecycle and preserves epoch fencing", async () => {
     const {work} = await fixture();
+    await work.execute(createTaskCommand());
+    const taskId = testId(400);
+    const commands = [
+      workCommand("AssignOwner", 1, taskId, {task_id: taskId, owner_id: testId(16), assignment_note: "New operator"}, "work:owner:assign", 1),
+      workCommand("ChangePriority", 2, taskId, {task_id: taskId, priority: "CRITICAL", reason: "Mission path"}, "work:priority:change", 2),
+      workCommand("StartTask", 3, taskId, {task_id: taskId, start_note: "Dependencies ready"}, "work:start", 3),
+      workCommand("PauseTask", 4, taskId, {task_id: taskId, reason_code: "SHIFT", reason: "Shift handoff"}, "work:pause", 4),
+      workCommand("StartTask", 5, taskId, {task_id: taskId, start_note: "New shift"}, "work:start", 5),
+      workCommand("BlockTask", 6, taskId, {task_id: taskId, blocker_code: "EXTERNAL", blocker_description: "Waiting on material"}, "work:block", 6),
+      workCommand("StartTask", 7, taskId, {task_id: taskId, start_note: "Material received"}, "work:start", 7),
+      workCommand("SubmitCompletion", 8, taskId, {task_id: taskId, completion_summary: "Acceptance criteria met", evidence_refs: [testId(901)]}, "work:completion:submit", 8),
+      workCommand("ApproveTask", 9, taskId, {task_id: taskId, approval_note: "Verified"}, "work:approve", 9),
+      workCommand("CloseTask", 10, taskId, {task_id: taskId, closure_note: "Released"}, "work:close", 10),
+    ];
+    const events = [];
+    for (const command of commands) events.push(await work.execute(command));
+    const reopen = workCommand("ReopenTask", 11, taskId, {task_id: taskId, reason: "Follow-up required"}, "work:reopen", 11);
+    reopen.expected_lifecycle_epoch = 1;
+    events.push(await work.execute(reopen));
+    const cancel = workCommand("CancelTask", 12, taskId, {task_id: taskId, reason_code: "SUPERSEDED", reason: "Follow-up moved"}, "work:cancel", 12);
+    cancel.expected_lifecycle_epoch = 2;
+    events.push(await work.execute(cancel));
+    assert.deepEqual(events.map((event) => event.event_type), [
+      "TaskOwnerAssigned", "TaskPriorityChanged", "TaskStarted", "TaskPaused", "TaskStarted", "TaskBlocked",
+      "TaskStarted", "TaskCompletionSubmitted", "TaskApproved", "TaskClosed", "TaskReopened", "TaskCancelled",
+    ]);
+    const view = await work.getTask(testId(13), taskId);
+    assert.equal(view.status, "CANCELLED"); assert.equal(view.version, 13); assert.equal(view.lifecycle_epoch, 3);
+    assert.equal(view.owner_id, testId(16)); assert.equal(view.priority, "CRITICAL");
+  });
 
-    await assert.rejects(
-      work.execute({command_type: "StartTask"}),
-      (error: unknown) => error instanceof OnyxError && error.code === "INVALID_ARGUMENT",
-    );
+  it("adds only same-mission dependencies", async () => {
+    const {work} = await fixture();
+    await work.execute(createTaskCommand());
+    const dependentId = testId(410);
+    await work.execute(createTaskCommand({
+      command_id: testId(411), operation_id: testId(412), target: {aggregate_type: "Task", object_id: dependentId},
+      payload: {...createTaskCommand().payload, task_id: dependentId, title: "Dependent task"},
+    }));
+    const event = await work.execute(workCommand("AddDependency", 20, dependentId, {task_id: dependentId, dependency_task_id: testId(400)}, "work:dependency:add", 1));
+    assert.equal(event.event_type, "TaskDependencyAdded");
+    assert.deepEqual((await work.getTask(testId(13), dependentId)).dependency_task_ids, [testId(400)]);
   });
 });
