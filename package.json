@@ -7,7 +7,10 @@
     "node": ">=24"
   },
   "scripts": {
-    "check": "npm run validate:contracts && npm run validate:openapi && npm run validate:completion && npm run validate:monitoring && npm run typecheck && npm test",
+    "check": "npm run validate:contracts && npm run validate:openapi && npm run validate:completion && npm run validate:artifact-package && npm run validate:monitoring && npm run typecheck && npm run check:codegen:typescript && npm test",
+    "build:codegen:typescript": "tsc -p codegen/typescript/tsconfig.json",
+    "check:artifacts": "npm run validate:artifact-package && npm run check:codegen:typescript && npm run build:codegen:typescript && npm run test:contracts:python && npm run test:codegen:rust",
+    "check:codegen:typescript": "tsc -p codegen/typescript/tsconfig.json --noEmit",
     "db:backup": "node --experimental-strip-types tools/database-recovery.ts backup",
     "db:restore": "node --experimental-strip-types tools/database-recovery.ts restore",
     "db:verify": "node --experimental-strip-types tools/database-recovery.ts verify",
@@ -17,10 +20,13 @@
     "start:api": "node --experimental-strip-types src/mission/server.ts",
     "start:mission": "node --experimental-strip-types src/mission/server.ts",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:codegen:rust": "cargo fmt --manifest-path codegen/rust/Cargo.toml -- --check && cargo test --locked --manifest-path codegen/rust/Cargo.toml",
+    "test:contracts:python": "if [ -x .venv/bin/python ]; then .venv/bin/python validation/tests/test_contracts.py; else python3 validation/tests/test_contracts.py; fi",
     "test:stack": "node --experimental-strip-types --test integration/local-stack.test.ts",
     "typecheck": "tsc --noEmit",
     "validate:openapi": "node --experimental-strip-types tools/validate-openapi.ts",
     "validate:contracts": "node --experimental-strip-types tools/validate-contracts.ts",
+    "validate:artifact-package": "node --experimental-strip-types tools/validate-artifact-package.ts",
     "validate:completion": "node --experimental-strip-types tools/validate-completion.ts",
     "validate:monitoring": "node --experimental-strip-types tools/validate-monitoring.ts"
   },

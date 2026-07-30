@@ -1,0 +1,29 @@
+{
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "name": "@onyx/contracts",
+  "description": "Canonical TypeScript envelopes and command/event types for ONYX IFEM v2.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lamatech-dev/onyx-ifem.git",
+    "directory": "codegen/typescript"
+  }
+}

@@ -1,0 +1,15 @@
+[package]
+name="onyx-contracts"
+version="1.0.0"
+edition="2021"
+description="Canonical Rust envelopes and command/event types for ONYX IFEM v2.0"
+repository="https://github.com/lamatech-dev/onyx-ifem"
+readme="README.md"
+keywords=["onyx","ifem","contracts"]
+categories=["data-structures"]
+[dependencies]
+serde={version="1",features=["derive"]}
+serde_json="1"
+
+[package.metadata.onyx]
+contract-version="2.0"

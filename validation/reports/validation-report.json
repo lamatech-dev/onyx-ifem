@@ -1,0 +1,31 @@
+{
+  "baseline_inventory_files": 372,
+  "codegen": {
+    "rust": {
+      "commands": 144,
+      "events": 150,
+      "result": "PASS",
+      "tests": 2
+    },
+    "typescript": {
+      "commands": 144,
+      "events": 150,
+      "result": "PASS",
+      "typecheck": "PASS"
+    }
+  },
+  "contract_tests": {
+    "assertions": 3,
+    "result": "PASS"
+  },
+  "errors": [],
+  "generated_at": "2026-07-30T21:28:08Z",
+  "json_files_checked": 361,
+  "runtime": {
+    "backend_tests": 139,
+    "local_stack_tests": 1,
+    "result": "PASS",
+    "web_render_tests": 2
+  },
+  "yaml_files_checked": 3
+}

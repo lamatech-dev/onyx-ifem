@@ -19,3 +19,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  - package-ecosystem: cargo
+    directory: /codegen/rust
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: /validation
+    schedule:
+      interval: weekly

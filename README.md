@@ -8,6 +8,9 @@ The executable product includes all 18 ONYX IFEM bounded contexts and all 294 v2
 
 ```text
 contracts/v2.0/       Versioned machine-readable contract baseline
+codegen/rust/          Rust command/event types and canonical envelopes
+codegen/typescript/    TypeScript command/event types and canonical envelopes
+validation/            Executable Python contract fixtures and validation evidence
 src/api/              Service composition and port-free request dispatcher
 src/auth/             Ed25519 bearer authentication and JWT validation
 src/contracts/        Canonical envelope and shared runtime types
@@ -30,6 +33,8 @@ web/                  Next.js operations command center
 ## Requirements
 
 - Node.js 24 or newer
+- Rust stable (for the supplied Rust SDK)
+- Python 3.13 with `validation/requirements.txt` (for the supplied fixture validator)
 
 The API has no third-party runtime dependencies. TypeScript and the matching Node.js type definitions are development-only dependencies.
 
@@ -41,6 +46,16 @@ npm run check
 ```
 
 The check pipeline validates the imported contracts, performs a strict no-emit TypeScript compilation, and runs the complete test suite, including a black-box real-socket process and graceful-shutdown test. See [Type safety](docs/type-safety.md).
+
+Validate every language artifact restored from the original package:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r validation/requirements.txt
+npm run check:artifacts
+```
+
+`check:artifacts` reconciles the complete 372-file upstream inventory, checks both SDKs against all 144 commands and 150 events, type-checks TypeScript, executes the Python fixtures, and builds/tests Rust with its committed lockfile.
 
 ## Run the API
 
@@ -252,7 +267,7 @@ The Audit context owns hash-chained entries, sealed partitions, bounded exports,
 
 The Policy context owns versioned decisions, violations, legal holds, quota thresholds, and rate-limit enforcement. See [Policy context](docs/policy-context.md).
 
-The HTTP adapter exposes every currently executable context. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
+The HTTP adapter exposes every command across all 18 executable bounded contexts; no bounded context remains contract-only.
 
 ## Contract maturity
 
