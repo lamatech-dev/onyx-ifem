@@ -17,6 +17,7 @@ import { validateIdentityCommand } from "../src/identity-authority/validation.ts
 import { validateContextLinkCommand } from "../src/context-link/validation.ts";
 import {validateMeetingCommand}from"../src/meeting/validation.ts";
 import{validateConversationCommand}from"../src/conversation/validation.ts";
+import{validateFileCommand}from"../src/file/validation.ts";
 import { contextLinkCommand, conversationCommand, createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, meetingCommand, missionCommand, testId } from "./fixtures.ts";
 
 type Validator = (value: unknown) => void;
@@ -38,6 +39,7 @@ describe("strict command envelope validation", () => {
     validateContextLinkCommand(contextLinkCommand("CreateContextLink",1,{context_link_id:testId(850),source_ref:{aggregate_type:"Mission",object_id:testId(14)},target_ref:{aggregate_type:"Task",object_id:testId(400)},relation_type:"DELIVERS",strength:"NORMAL",metadata:{}},"context:create",0));
     validateMeetingCommand(meetingCommand("CreateMeeting",1,{meeting_id:testId(900),title:"Review",organizer_id:testId(800),scheduled_start_at:"2026-08-01T10:00:00.000000Z",timezone:"UTC"},"meeting:create",0));
     validateConversationCommand(conversationCommand("CreateConversation",1,{conversation_id:testId(950),title:"Room",creator_id:testId(800)},"communication:create",0));
+    validateFileCommand({...conversationCommand("CreateConversation",2,{conversation_id:testId(951),title:"x",creator_id:testId(800)},"communication:create",0),command_type:"CreateFileAsset",target:{aggregate_type:"FileAsset",object_id:testId(951)},payload:{file_id:testId(951),name:"x.txt",media_type:"text/plain",owner_id:testId(800)},authority_proof:{...conversationCommand("CreateConversation",2,{conversation_id:testId(951),title:"x",creator_id:testId(800)},"communication:create",0).authority_proof,scope:["file:create"]}});
   });
 
   it("rejects unknown envelope properties in every executable context", () => {

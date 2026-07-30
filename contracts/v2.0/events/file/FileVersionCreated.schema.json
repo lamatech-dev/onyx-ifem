@@ -11,8 +11,30 @@
           "const": "FileVersionCreated"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file_id",
+            "version_id",
+            "source_upload_id",
+            "label"
+          ],
+          "properties": {
+            "file_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "version_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "source_upload_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +44,7 @@
     }
   ],
   "title": "ONYX FileVersionCreated",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C08",
   "x-onyx-topic": "file.events"
 }

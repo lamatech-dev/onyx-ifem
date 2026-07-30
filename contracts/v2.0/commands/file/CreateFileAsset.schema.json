@@ -11,8 +11,32 @@
           "const": "CreateFileAsset"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file_id",
+            "name",
+            "media_type",
+            "owner_id"
+          ],
+          "properties": {
+            "file_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "media_type": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "owner_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +46,7 @@
     }
   ],
   "title": "ONYX CreateFileAsset",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C08",
   "x-onyx-topic": "file.events"
 }

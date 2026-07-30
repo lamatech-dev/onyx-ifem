@@ -11,8 +11,37 @@
           "const": "AppendChunk"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file_id",
+            "upload_id",
+            "chunk_index",
+            "size_bytes",
+            "checksum_sha256"
+          ],
+          "properties": {
+            "file_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "upload_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "chunk_index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            "size_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000000
+            },
+            "checksum_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +51,7 @@
     }
   ],
   "title": "ONYX AppendChunk",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C08",
   "x-onyx-topic": "file.events"
 }

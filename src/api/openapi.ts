@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 type JsonObject = Record<string, any>;
 
 interface CommandRoute {
-  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization" | "identity-authority" | "context" | "meeting" | "communication";
+  context: "mission" | "work" | "timeline" | "reporting-evidence" | "organization" | "identity-authority" | "context" | "meeting" | "communication"|"file";
   command: string;
   event: string;
 }
@@ -83,6 +83,7 @@ export const IMPLEMENTED_COMMAND_ROUTES: readonly CommandRoute[] = [
   {context:"meeting",command:"EndMeeting",event:"MeetingEnded"},
   {context:"meeting",command:"CancelMeeting",event:"MeetingCancelled"},
   {context:"communication",command:"CreateConversation",event:"ConversationCreated"},{context:"communication",command:"AddMember",event:"ConversationMemberAdded"},{context:"communication",command:"PostMessage",event:"MessagePosted"},{context:"communication",command:"EditMessage",event:"MessageEdited"},{context:"communication",command:"RedactMessage",event:"MessageRedacted"},{context:"communication",command:"AddReaction",event:"ReactionAdded"},{context:"communication",command:"RemoveReaction",event:"ReactionRemoved"},{context:"communication",command:"ArchiveConversation",event:"ConversationArchived"},
+  {context:"file",command:"CreateFileAsset",event:"FileAssetCreated"},{context:"file",command:"StartUpload",event:"UploadStarted"},{context:"file",command:"AppendChunk",event:"ChunkAccepted"},{context:"file",command:"FinalizeUpload",event:"UploadFinalized"},{context:"file",command:"CreateVersion",event:"FileVersionCreated"},{context:"file",command:"GrantFileAccess",event:"FileAccessGranted"},{context:"file",command:"RevokeFileAccess",event:"FileAccessRevoked"},{context:"file",command:"QuarantineFile",event:"FileQuarantined"},{context:"file",command:"ArchiveFile",event:"FileArchived"},
 ];
 
 function readSchema(path: string): JsonObject {
@@ -246,6 +247,7 @@ addResource("users", "User", "UserIdentityView", IMPLEMENTED_COMMAND_ROUTES.filt
 addResource("context-links", "ContextLink", "ContextLinkView", IMPLEMENTED_COMMAND_ROUTES.filter((route) => route.context === "context").map((route) => route.event));
 addResource("meetings","Meeting","MeetingView",IMPLEMENTED_COMMAND_ROUTES.filter(route=>route.context==="meeting").map(route=>route.event));
 addResource("conversations","Conversation","ConversationView",IMPLEMENTED_COMMAND_ROUTES.filter(route=>route.context==="communication").map(route=>route.event));
+addResource("files","File","FileAssetView",IMPLEMENTED_COMMAND_ROUTES.filter(route=>route.context==="file").map(route=>route.event));
 
 paths["/healthz"] = {
   get: {
@@ -405,6 +407,7 @@ const viewSchemas: JsonObject = {
   },
   MeetingView:{type:"object",additionalProperties:false,required:["meeting_id","organization_id","title","organizer_id","scheduled_start_at","timezone","status","version","lifecycle_epoch","authority_epoch","participants","decisions","action_items"],properties:{meeting_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},organization_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},title:{type:"string"},organizer_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},scheduled_start_at:{$ref:"#/components/schemas/SharedTypes/$defs/UtcInstant"},timezone:{type:"string"},status:{type:"string",enum:["SCHEDULED","IN_PROGRESS","ENDED","CANCELLED"]},started_at:{$ref:"#/components/schemas/SharedTypes/$defs/UtcInstant"},ended_at:{$ref:"#/components/schemas/SharedTypes/$defs/UtcInstant"},summary:{type:"string"},version:{type:"integer",minimum:1},lifecycle_epoch:{type:"integer",minimum:0},authority_epoch:{type:"integer",minimum:0},participants:{type:"object"},decisions:{type:"object"},action_items:{type:"object"}}},
   ConversationView:{type:"object",additionalProperties:false,required:["conversation_id","organization_id","title","creator_id","status","version","lifecycle_epoch","authority_epoch","members","messages"],properties:{conversation_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},organization_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},title:{type:"string"},creator_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},topic_ref:{$ref:"#/components/schemas/SharedTypes/$defs/DomainObjectRef"},status:{type:"string",enum:["ACTIVE","ARCHIVED"]},version:{type:"integer",minimum:1},lifecycle_epoch:{type:"integer",minimum:0},authority_epoch:{type:"integer",minimum:0},members:{type:"object"},messages:{type:"object"}}},
+  FileAssetView:{type:"object",additionalProperties:false,required:["file_id","organization_id","name","media_type","owner_id","status","version","lifecycle_epoch","authority_epoch","uploads","versions","access"],properties:{file_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},organization_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},name:{type:"string"},media_type:{type:"string"},owner_id:{$ref:"#/components/schemas/SharedTypes/$defs/UuidV7"},status:{type:"string",enum:["DRAFT","AVAILABLE","QUARANTINED","ARCHIVED"]},version:{type:"integer",minimum:1},lifecycle_epoch:{type:"integer",minimum:0},authority_epoch:{type:"integer",minimum:0},uploads:{type:"object"},versions:{type:"object"},access:{type:"object"}}},
 };
 
 const contractSchemas: JsonObject = {

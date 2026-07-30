@@ -82,6 +82,8 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   assert.match(page, /AddReaction/);
   assert.match(page, /RemoveReaction/);
   assert.match(page, /ArchiveConversation/);
+  assert.match(page, /FilePanel/);
+  for(const command of ["CreateFileAsset","StartUpload","AppendChunk","FinalizeUpload","CreateVersion","GrantFileAccess","RevokeFileAccess","QuarantineFile","ArchiveFile"])assert.match(page,new RegExp(command));
   assert.match(page, /MissionDetail/);
   assert.match(page, /RecordDetail/);
   assert.match(page, /MissionBlueprintRevisionCreated/);

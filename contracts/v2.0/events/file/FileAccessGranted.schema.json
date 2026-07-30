@@ -11,8 +11,29 @@
           "const": "FileAccessGranted"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file_id",
+            "principal_ref",
+            "permission"
+          ],
+          "properties": {
+            "file_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "principal_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "permission": {
+              "type": "string",
+              "enum": [
+                "READ",
+                "WRITE",
+                "ADMIN"
+              ]
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +43,7 @@
     }
   ],
   "title": "ONYX FileAccessGranted",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C08",
   "x-onyx-topic": "file.events"
 }

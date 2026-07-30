@@ -855,126 +855,126 @@
       "path": "contracts/events/communication/ConversationArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "command",
       "name": "CreateFileAsset",
       "path": "contracts/commands/file/CreateFileAsset.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "command",
       "name": "StartUpload",
       "path": "contracts/commands/file/StartUpload.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "command",
       "name": "AppendChunk",
       "path": "contracts/commands/file/AppendChunk.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "command",
       "name": "FinalizeUpload",
       "path": "contracts/commands/file/FinalizeUpload.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "command",
       "name": "CreateVersion",
       "path": "contracts/commands/file/CreateVersion.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "command",
       "name": "GrantFileAccess",
       "path": "contracts/commands/file/GrantFileAccess.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "command",
       "name": "RevokeFileAccess",
       "path": "contracts/commands/file/RevokeFileAccess.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "command",
       "name": "QuarantineFile",
       "path": "contracts/commands/file/QuarantineFile.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "command",
       "name": "ArchiveFile",
       "path": "contracts/commands/file/ArchiveFile.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "event",
       "name": "FileAssetCreated",
       "path": "contracts/events/file/FileAssetCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "event",
       "name": "UploadStarted",
       "path": "contracts/events/file/UploadStarted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "event",
       "name": "ChunkAccepted",
       "path": "contracts/events/file/ChunkAccepted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "event",
       "name": "UploadFinalized",
       "path": "contracts/events/file/UploadFinalized.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "event",
       "name": "FileVersionCreated",
       "path": "contracts/events/file/FileVersionCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "event",
       "name": "FileAccessGranted",
       "path": "contracts/events/file/FileAccessGranted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "event",
       "name": "FileAccessRevoked",
       "path": "contracts/events/file/FileAccessRevoked.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "event",
       "name": "FileQuarantined",
       "path": "contracts/events/file/FileQuarantined.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C08",
       "kind": "event",
       "name": "FileArchived",

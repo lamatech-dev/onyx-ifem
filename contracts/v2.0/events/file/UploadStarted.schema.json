@@ -11,8 +11,37 @@
           "const": "UploadStarted"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file_id",
+            "upload_id",
+            "expected_size_bytes",
+            "chunk_size_bytes",
+            "checksum_sha256"
+          ],
+          "properties": {
+            "file_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "upload_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "expected_size_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000000000
+            },
+            "chunk_size_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000000
+            },
+            "checksum_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +51,7 @@
     }
   ],
   "title": "ONYX UploadStarted",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C08",
   "x-onyx-topic": "file.events"
 }
