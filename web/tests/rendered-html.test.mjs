@@ -90,6 +90,8 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   for(const command of ["CreateCapacityProfile","UpdateAvailability","AllocateWorkload","CaptureCapacitySnapshot","RecalculateCapacity","ArchiveCapacityProfile"])assert.match(page,new RegExp(command));
   assert.match(page,/ForecastPanel/);
   for(const command of ["GenerateForecast","CreateScenario","RecalculateForecast","PublishForecast","ArchiveForecast"])assert.match(page,new RegExp(command));
+  assert.match(page,/AutomationPanel/);
+  for(const command of ["CreateAutomationRule","EnableRule","DisableRule","EvaluateRule","ExecuteAction","RetryExecution","CompensateExecution","ArchiveRule"])assert.match(page,new RegExp(command));
   assert.match(page, /MissionDetail/);
   assert.match(page, /RecordDetail/);
   assert.match(page, /MissionBlueprintRevisionCreated/);

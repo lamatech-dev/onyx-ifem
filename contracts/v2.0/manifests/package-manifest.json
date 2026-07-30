@@ -1513,112 +1513,112 @@
       "path": "contracts/events/forecasting/ForecastArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "command",
       "name": "CreateAutomationRule",
       "path": "contracts/commands/automation/CreateAutomationRule.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "command",
       "name": "EnableRule",
       "path": "contracts/commands/automation/EnableRule.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "command",
       "name": "DisableRule",
       "path": "contracts/commands/automation/DisableRule.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "command",
       "name": "EvaluateRule",
       "path": "contracts/commands/automation/EvaluateRule.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "command",
       "name": "ExecuteAction",
       "path": "contracts/commands/automation/ExecuteAction.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "command",
       "name": "RetryExecution",
       "path": "contracts/commands/automation/RetryExecution.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "command",
       "name": "CompensateExecution",
       "path": "contracts/commands/automation/CompensateExecution.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "command",
       "name": "ArchiveRule",
       "path": "contracts/commands/automation/ArchiveRule.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "event",
       "name": "AutomationRuleCreated",
       "path": "contracts/events/automation/AutomationRuleCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "event",
       "name": "AutomationRuleEnabled",
       "path": "contracts/events/automation/AutomationRuleEnabled.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "event",
       "name": "AutomationRuleDisabled",
       "path": "contracts/events/automation/AutomationRuleDisabled.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "event",
       "name": "AutomationRuleTriggered",
       "path": "contracts/events/automation/AutomationRuleTriggered.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "event",
       "name": "AutomationActionExecuted",
       "path": "contracts/events/automation/AutomationActionExecuted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "event",
       "name": "AutomationExecutionFailed",
       "path": "contracts/events/automation/AutomationExecutionFailed.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "event",
       "name": "AutomationExecutionCompensated",
       "path": "contracts/events/automation/AutomationExecutionCompensated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C14",
       "kind": "event",
       "name": "AutomationRuleArchived",

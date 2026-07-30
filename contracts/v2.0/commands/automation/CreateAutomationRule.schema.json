@@ -11,8 +11,60 @@
           "const": "CreateAutomationRule"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "automation_rule_id",
+            "name",
+            "owner_id",
+            "trigger_type",
+            "trigger_expression",
+            "action_type",
+            "action_config"
+          ],
+          "properties": {
+            "automation_rule_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            "owner_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "trigger_type": {
+              "type": "string",
+              "enum": [
+                "EVENT",
+                "SCHEDULE",
+                "MANUAL"
+              ]
+            },
+            "trigger_expression": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "action_type": {
+              "type": "string",
+              "enum": [
+                "COMMAND",
+                "WEBHOOK",
+                "NOTIFICATION"
+              ]
+            },
+            "action_config": {
+              "type": "object",
+              "maxProperties": 50,
+              "additionalProperties": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "minProperties": 1
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +74,7 @@
     }
   ],
   "title": "ONYX CreateAutomationRule",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C14",
   "x-onyx-topic": "automation.events"
 }

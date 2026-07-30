@@ -11,8 +11,29 @@
           "const": "EvaluateRule"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "automation_rule_id",
+            "evaluation_id",
+            "input"
+          ],
+          "properties": {
+            "automation_rule_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "evaluation_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "input": {
+              "type": "object",
+              "maxProperties": 50,
+              "additionalProperties": {
+                "type": "string",
+                "maxLength": 2000
+              }
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +43,7 @@
     }
   ],
   "title": "ONYX EvaluateRule",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C14",
   "x-onyx-topic": "automation.events"
 }

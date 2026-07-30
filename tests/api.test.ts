@@ -19,7 +19,7 @@ describe("OnyxApplication", () => {
     try {
       const health = await application.handle({method: "GET", path: "/healthz"});
       assert.equal(health.status, 200);
-      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity","forecasting"]);
+      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity","forecasting","automation"]);
 
       const head = await application.handle({method: "HEAD", path: "/healthz"});
       assert.equal(head.status, 200);
@@ -44,7 +44,7 @@ describe("OnyxApplication", () => {
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");
-      assert.equal(Object.keys(body(openapi).paths as object).length, 150);
+      assert.equal(Object.keys(body(openapi).paths as object).length, 161);
       body(openapi).info.title = "mutated by caller";
       const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");
@@ -63,7 +63,7 @@ describe("OnyxApplication", () => {
     }
   });
 
-  it("executes the thirteen-context HTTP workflow without a network socket", async () => {
+  it("executes the fourteen-context HTTP workflow without a network socket", async () => {
     const application = new OnyxApplication({now});
     try {
       const organization = await application.handle({
@@ -79,6 +79,7 @@ describe("OnyxApplication", () => {
       const approvalId=testId(976),approvalBase=conversationCommand("CreateConversation",745,{conversation_id:approvalId,title:"x",creator_id:userId},"communication:create",0),approval=await application.handle({method:"POST",path:"/v1/approval/commands/CreateApproval",body:{...approvalBase,command_type:"CreateApproval",target:{aggregate_type:"Approval",object_id:approvalId},payload:{approval_id:approvalId,title:"Contract release",subject_ref:{aggregate_type:"FileAsset",object_id:fileId},requester_id:userId,required_approvals:1},authority_proof:{...approvalBase.authority_proof,scope:["approval:create"]}}});
       const capacityId=testId(977),capacityBase=conversationCommand("CreateConversation",746,{conversation_id:capacityId,title:"x",creator_id:userId},"communication:create",0),capacity=await application.handle({method:"POST",path:"/v1/capacity/commands/CreateCapacityProfile",body:{...capacityBase,command_type:"CreateCapacityProfile",target:{aggregate_type:"CapacityProfile",object_id:capacityId},payload:{capacity_profile_id:capacityId,name:"Lead capacity",resource_ref:{aggregate_type:"User",object_id:userId},unit:"HOURS"},authority_proof:{...capacityBase.authority_proof,scope:["capacity:create"]}}});
       const forecastId=testId(978),forecastBase=conversationCommand("CreateConversation",747,{conversation_id:forecastId,title:"x",creator_id:userId},"communication:create",0),forecast=await application.handle({method:"POST",path:"/v1/forecasting/commands/GenerateForecast",body:{...forecastBase,command_type:"GenerateForecast",target:{aggregate_type:"Forecast",object_id:forecastId},payload:{forecast_id:forecastId,title:"Capacity outlook",subject_ref:{aggregate_type:"CapacityProfile",object_id:capacityId},horizon_start:"2026-08-01T00:00:00.000000Z",horizon_end:"2026-09-01T00:00:00.000000Z",method:"LINEAR",baseline_value:40},authority_proof:{...forecastBase.authority_proof,scope:["forecast:generate"]}}});
+      const automationId=testId(979),automationBase=conversationCommand("CreateConversation",748,{conversation_id:automationId,title:"x",creator_id:userId},"communication:create",0),automation=await application.handle({method:"POST",path:"/v1/automation/commands/CreateAutomationRule",body:{...automationBase,command_type:"CreateAutomationRule",target:{aggregate_type:"AutomationRule",object_id:automationId},payload:{automation_rule_id:automationId,name:"Notify blocked task",owner_id:userId,trigger_type:"EVENT",trigger_expression:"TaskBlocked",action_type:"NOTIFICATION",action_config:{channel:"ops"}},authority_proof:{...automationBase.authority_proof,scope:["automation:create"]}}});
       const mission = await application.handle({
         method: "POST",
         path: "/v1/mission/commands/CreateMission",
@@ -106,7 +107,7 @@ describe("OnyxApplication", () => {
         body: reportCommand,
       });
 
-      assert.deepEqual([organization.status, user.status, meeting.status, conversation.status,file.status,approval.status,capacity.status,forecast.status, mission.status, task.status, contextLink.status, timeline.status, report.status], [202, 202, 202, 202,202,202,202,202, 202, 202, 202, 202, 202]);
+      assert.deepEqual([organization.status, user.status, meeting.status, conversation.status,file.status,approval.status,capacity.status,forecast.status,automation.status, mission.status, task.status, contextLink.status, timeline.status, report.status], [202, 202, 202, 202,202,202,202,202,202, 202, 202, 202, 202, 202]);
       const organizationView = await application.handle({method: "GET", path: `/v1/organizations/${testId(13)}?organization_id=${testId(13)}`});
       assert.equal(organizationView.status, 200);
       assert.equal(body(organizationView).slug, "onyx-labs");
@@ -119,6 +120,7 @@ describe("OnyxApplication", () => {
       const approvalView=await application.handle({method:"GET",path:`/v1/approvals/${approvalId}?organization_id=${testId(13)}`});assert.equal(approvalView.status,200);assert.equal(body(approvalView).subject_ref.aggregate_type,"FileAsset");
       const capacityView=await application.handle({method:"GET",path:`/v1/capacity-profiles/${capacityId}?organization_id=${testId(13)}`});assert.equal(capacityView.status,200);assert.equal(body(capacityView).unit,"HOURS");
       const forecastView=await application.handle({method:"GET",path:`/v1/forecasts/${forecastId}?organization_id=${testId(13)}`});assert.equal(forecastView.status,200);assert.equal(body(forecastView).baseline_value,40);
+      const automationView=await application.handle({method:"GET",path:`/v1/automation-rules/${automationId}?organization_id=${testId(13)}`});assert.equal(automationView.status,200);assert.equal(body(automationView).trigger_type,"EVENT");
       assert.equal(body(report).event_type, "ReportCreated");
       const replay = await application.handle({method: "POST", path: "/v1/reporting-evidence/commands/CreateReport", body: reportCommand});
       assert.equal(replay.status, report.status);

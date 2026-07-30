@@ -11,8 +11,22 @@
           "const": "AutomationRuleDisabled"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "automation_rule_id",
+            "reason"
+          ],
+          "properties": {
+            "automation_rule_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +36,7 @@
     }
   ],
   "title": "ONYX AutomationRuleDisabled",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C14",
   "x-onyx-topic": "automation.events"
 }
