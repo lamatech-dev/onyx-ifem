@@ -11,8 +11,43 @@
           "const": "CreateScenario"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "forecast_id",
+            "scenario_id",
+            "name",
+            "probability",
+            "adjustments"
+          ],
+          "properties": {
+            "forecast_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "scenario_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            "probability": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "adjustments": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 50,
+              "additionalProperties": {
+                "type": "number",
+                "minimum": -1000000000000,
+                "maximum": 1000000000000
+              }
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +57,7 @@
     }
   ],
   "title": "ONYX CreateScenario",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C13",
   "x-onyx-topic": "forecasting.events"
 }

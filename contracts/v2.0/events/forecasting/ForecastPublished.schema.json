@@ -11,8 +11,20 @@
           "const": "ForecastPublished"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "forecast_id",
+            "published_at"
+          ],
+          "properties": {
+            "forecast_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "published_at": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +34,7 @@
     }
   ],
   "title": "ONYX ForecastPublished",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C13",
   "x-onyx-topic": "forecasting.events"
 }

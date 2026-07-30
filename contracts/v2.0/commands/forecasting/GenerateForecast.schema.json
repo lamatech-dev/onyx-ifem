@@ -11,8 +11,49 @@
           "const": "GenerateForecast"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "forecast_id",
+            "title",
+            "subject_ref",
+            "horizon_start",
+            "horizon_end",
+            "method",
+            "baseline_value"
+          ],
+          "properties": {
+            "forecast_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "subject_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "horizon_start": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            },
+            "horizon_end": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            },
+            "method": {
+              "type": "string",
+              "enum": [
+                "LINEAR",
+                "MONTE_CARLO",
+                "EXPERT"
+              ]
+            },
+            "baseline_value": {
+              "type": "number",
+              "minimum": -1000000000000,
+              "maximum": 1000000000000
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +63,7 @@
     }
   ],
   "title": "ONYX GenerateForecast",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C13",
   "x-onyx-topic": "forecasting.events"
 }

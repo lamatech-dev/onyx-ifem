@@ -1443,70 +1443,70 @@
       "path": "contracts/events/capacity/CapacityProfileArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "command",
       "name": "GenerateForecast",
       "path": "contracts/commands/forecasting/GenerateForecast.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "command",
       "name": "CreateScenario",
       "path": "contracts/commands/forecasting/CreateScenario.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "command",
       "name": "RecalculateForecast",
       "path": "contracts/commands/forecasting/RecalculateForecast.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "command",
       "name": "PublishForecast",
       "path": "contracts/commands/forecasting/PublishForecast.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "command",
       "name": "ArchiveForecast",
       "path": "contracts/commands/forecasting/ArchiveForecast.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "event",
       "name": "ForecastGenerated",
       "path": "contracts/events/forecasting/ForecastGenerated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "event",
       "name": "ScenarioCreated",
       "path": "contracts/events/forecasting/ScenarioCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "event",
       "name": "ForecastRecalculated",
       "path": "contracts/events/forecasting/ForecastRecalculated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "event",
       "name": "ForecastPublished",
       "path": "contracts/events/forecasting/ForecastPublished.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C13",
       "kind": "event",
       "name": "ForecastArchived",

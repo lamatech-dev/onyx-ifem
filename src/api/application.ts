@@ -31,6 +31,7 @@ import{InMemoryConversationRepository}from"../conversation/repository.ts";import
 import{InMemoryFileRepository}from"../file/repository.ts";import{FileService}from"../file/service.ts";import{SqliteFileRepository}from"../file/sqlite-repository.ts";
 import{InMemoryApprovalRepository}from"../approval/repository.ts";import{ApprovalService}from"../approval/service.ts";import{SqliteApprovalRepository}from"../approval/sqlite-repository.ts";
 import{InMemoryCapacityRepository}from"../capacity/repository.ts";import{CapacityService}from"../capacity/service.ts";import{SqliteCapacityRepository}from"../capacity/sqlite-repository.ts";
+import{InMemoryForecastRepository}from"../forecast/repository.ts";import{ForecastService}from"../forecast/service.ts";import{SqliteForecastRepository}from"../forecast/sqlite-repository.ts";
 import { OPENAPI_DOCUMENT } from "./openapi.ts";
 import { encodeCursor, readCollectionQuery, readHistoryQuery, readItemQuery } from "./query.ts";
 import { allowedMethodsForPath } from "./routes.ts";
@@ -52,7 +53,7 @@ export interface ApiResponse {
 export interface OnyxApplicationOptions {
   databasePath?: string;
   now?: () => Date;
-  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority" | "context" | "meeting" | "communication"|"file"|"approval"|"capacity", string>>;
+  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority" | "context" | "meeting" | "communication"|"file"|"approval"|"capacity"|"forecast", string>>;
   logError?: (error: unknown) => void;
   logger?: StructuredLogger;
   monotonicNow?: () => number;
@@ -155,6 +156,7 @@ export class OnyxApplication {
     const file=new FileService({repository:this.#database?new SqliteFileRepository(this.#database):new InMemoryFileRepository(),...time,replicaId:options.replicaIds?.file??"file-api",requireOwner:async(organizationId,userId)=>{const user=await identity.getUser(organizationId,userId);if(user.status!=="ACTIVE")throw new OnyxError("INVALID_STATE_TRANSITION","file owner is disabled")}});
     const approval=new ApprovalService({repository:this.#database?new SqliteApprovalRepository(this.#database):new InMemoryApprovalRepository(),...time,replicaId:options.replicaIds?.approval??"approval-api",requireUser:async(organizationId,userId)=>{const user=await identity.getUser(organizationId,userId);if(user.status!=="ACTIVE")throw new OnyxError("INVALID_STATE_TRANSITION","approval user is disabled")},requireSubject:async(organizationId,reference)=>{if(reference.aggregate_type==="Mission")return void await mission.getMission(organizationId,reference.object_id);if(reference.aggregate_type==="Task")return void await work.getTask(organizationId,reference.object_id);if(reference.aggregate_type==="Timeline")return void await timeline.getTimeline(organizationId,reference.object_id);if(reference.aggregate_type==="Report")return void await reporting.getReport(organizationId,reference.object_id);if(reference.aggregate_type==="Meeting")return void await meeting.getMeeting(organizationId,reference.object_id);if(reference.aggregate_type==="Conversation")return void await conversation.getConversation(organizationId,reference.object_id);if(reference.aggregate_type==="FileAsset")return void await file.getFile(organizationId,reference.object_id);throw new OnyxError("INVALID_ARGUMENT",`unsupported approval subject type: ${reference.aggregate_type}`)}});
     const capacity=new CapacityService({repository:this.#database?new SqliteCapacityRepository(this.#database):new InMemoryCapacityRepository(),...time,replicaId:options.replicaIds?.capacity??"capacity-api",requireResource:async(organizationId,reference)=>{if(reference.aggregate_type==="User"){const user=await identity.getUser(organizationId,reference.object_id);if(user.status!=="ACTIVE")throw new OnyxError("INVALID_STATE_TRANSITION","capacity resource is disabled");return}if(reference.aggregate_type==="Organization"&&organizationId===reference.object_id)return void await organization.getOrganization(reference.object_id);throw new OnyxError("INVALID_ARGUMENT",`unsupported capacity resource type: ${reference.aggregate_type}`)},requireWork:async(organizationId,reference)=>{if(reference.aggregate_type==="Task")return void await work.getTask(organizationId,reference.object_id);if(reference.aggregate_type==="Mission")return void await mission.getMission(organizationId,reference.object_id);throw new OnyxError("INVALID_ARGUMENT",`unsupported capacity work type: ${reference.aggregate_type}`)}});
+    const forecast=new ForecastService({repository:this.#database?new SqliteForecastRepository(this.#database):new InMemoryForecastRepository(),...time,replicaId:options.replicaIds?.forecast??"forecast-api",requireSubject:async(organizationId,reference)=>{if(reference.aggregate_type==="Mission")return void await mission.getMission(organizationId,reference.object_id);if(reference.aggregate_type==="Task")return void await work.getTask(organizationId,reference.object_id);if(reference.aggregate_type==="Timeline")return void await timeline.getTimeline(organizationId,reference.object_id);if(reference.aggregate_type==="Report")return void await reporting.getReport(organizationId,reference.object_id);if(reference.aggregate_type==="CapacityProfile")return void await capacity.getCapacityProfile(organizationId,reference.object_id);throw new OnyxError("INVALID_ARGUMENT",`unsupported forecast subject type: ${reference.aggregate_type}`)}});
 
     this.#commands = new Map<string, (body: unknown) => Promise<unknown>>([
       ["mission", (body) => mission.execute(body)],
@@ -169,6 +171,7 @@ export class OnyxApplication {
       ["file",body=>file.execute(body)],
       ["approval",body=>approval.execute(body)],
       ["capacity",body=>capacity.execute(body)],
+      ["forecasting",body=>forecast.execute(body)],
     ]);
     this.#resources = new Map([
       ["missions", {
@@ -225,6 +228,7 @@ export class OnyxApplication {
       ["files",{list:async(organizationId,afterId,limit)=>page(await file.listFiles(organizationId,afterId,limit+1),limit,item=>item.file_id),get:(organizationId,objectId)=>file.getFile(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>file.getHistory(organizationId,objectId,afterVersion,limit)}],
       ["approvals",{list:async(organizationId,afterId,limit)=>page(await approval.listApprovals(organizationId,afterId,limit+1),limit,item=>item.approval_id),get:(organizationId,objectId)=>approval.getApproval(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>approval.getHistory(organizationId,objectId,afterVersion,limit)}],
       ["capacity-profiles",{list:async(organizationId,afterId,limit)=>page(await capacity.listCapacityProfiles(organizationId,afterId,limit+1),limit,item=>item.capacity_profile_id),get:(organizationId,objectId)=>capacity.getCapacityProfile(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>capacity.getHistory(organizationId,objectId,afterVersion,limit)}],
+      ["forecasts",{list:async(organizationId,afterId,limit)=>page(await forecast.listForecasts(organizationId,afterId,limit+1),limit,item=>item.forecast_id),get:(organizationId,objectId)=>forecast.getForecast(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>forecast.getHistory(organizationId,objectId,afterVersion,limit)}],
     ]);
   }
 
@@ -258,7 +262,7 @@ export class OnyxApplication {
     const method = request.method === "HEAD" ? "GET" : request.method;
 
     if (method === "GET" && url.pathname === "/healthz") {
-      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity"]}};
+      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity","forecasting"]}};
     }
     if (method === "GET" && url.pathname === "/readyz") {
       if (!this.#database) {
@@ -376,6 +380,7 @@ export class OnyxApplication {
       files: "file:read",
       approvals: "approval:read",
       "capacity-profiles": "capacity:read",
+      forecasts: "forecast:read",
     };
     if (!claims.scope.includes(requiredScope[resource]!)) {
       throw new OnyxError("AUTHORITY_PROOF_INVALID", `${requiredScope[resource]} authority is missing`);
