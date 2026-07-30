@@ -9,10 +9,14 @@ COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
 COPY contracts ./contracts
+COPY codegen ./codegen
 COPY deploy/monitoring ./deploy/monitoring
+COPY docs ./docs
 COPY src ./src
 COPY tests ./tests
 COPY tools ./tools
+COPY validation ./validation
+COPY web/app/page.tsx ./web/app/page.tsx
 COPY tsconfig.json ./
 
 RUN npm run check

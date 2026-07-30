@@ -10,6 +10,7 @@
 coverage
 data
 dist
-docs
 node_modules
 sbom*.json
+target
+.venv
