@@ -19,7 +19,7 @@ describe("OnyxApplication", () => {
     try {
       const health = await application.handle({method: "GET", path: "/healthz"});
       assert.equal(health.status, 200);
-      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity","forecasting","automation","notification","synchronization"]);
+      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval","capacity","forecasting","automation","notification","synchronization","audit"]);
 
       const head = await application.handle({method: "HEAD", path: "/healthz"});
       assert.equal(head.status, 200);
@@ -44,7 +44,7 @@ describe("OnyxApplication", () => {
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");
-      assert.equal(Object.keys(body(openapi).paths as object).length, 182);
+      assert.equal(Object.keys(body(openapi).paths as object).length, 190);
       body(openapi).info.title = "mutated by caller";
       const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");

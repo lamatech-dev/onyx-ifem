@@ -1842,70 +1842,70 @@
       "path": "contracts/events/synchronization/SynchronizationClosed.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "command",
       "name": "AppendAuditEntry",
       "path": "contracts/commands/audit/AppendAuditEntry.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "command",
       "name": "SealAuditPartition",
       "path": "contracts/commands/audit/SealAuditPartition.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "command",
       "name": "CreateAuditExport",
       "path": "contracts/commands/audit/CreateAuditExport.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "command",
       "name": "VerifyIntegrity",
       "path": "contracts/commands/audit/VerifyIntegrity.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "command",
       "name": "ArchiveAuditPartition",
       "path": "contracts/commands/audit/ArchiveAuditPartition.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "event",
       "name": "AuditEntryAppended",
       "path": "contracts/events/audit/AuditEntryAppended.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "event",
       "name": "AuditPartitionSealed",
       "path": "contracts/events/audit/AuditPartitionSealed.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "event",
       "name": "AuditExportCreated",
       "path": "contracts/events/audit/AuditExportCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "event",
       "name": "AuditIntegrityVerified",
       "path": "contracts/events/audit/AuditIntegrityVerified.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C17",
       "kind": "event",
       "name": "AuditPartitionArchived",

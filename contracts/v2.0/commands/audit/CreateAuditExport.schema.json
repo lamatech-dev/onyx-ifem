@@ -11,8 +11,38 @@
           "const": "CreateAuditExport"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "audit_partition_id",
+            "export_id",
+            "format",
+            "from_sequence",
+            "to_sequence"
+          ],
+          "properties": {
+            "audit_partition_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "export_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "JSONL",
+                "CSV"
+              ]
+            },
+            "from_sequence": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "to_sequence": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +52,7 @@
     }
   ],
   "title": "ONYX CreateAuditExport",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C17",
   "x-onyx-topic": "audit.events"
 }

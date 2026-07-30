@@ -11,8 +11,34 @@
           "const": "AuditIntegrityVerified"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "audit_partition_id",
+            "verification_id",
+            "expected_root_digest",
+            "actual_root_digest",
+            "valid"
+          ],
+          "properties": {
+            "audit_partition_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "verification_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "expected_root_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "actual_root_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "valid": {
+              "type": "boolean"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +48,7 @@
     }
   ],
   "title": "ONYX AuditIntegrityVerified",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C17",
   "x-onyx-topic": "audit.events"
 }

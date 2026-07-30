@@ -11,8 +11,43 @@
           "const": "AuditEntryAppended"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "audit_partition_id",
+            "entry_id",
+            "subject_ref",
+            "action",
+            "actor_id",
+            "occurred_at",
+            "integrity_digest"
+          ],
+          "properties": {
+            "audit_partition_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "entry_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "subject_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "action": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "actor_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "occurred_at": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            },
+            "integrity_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +57,7 @@
     }
   ],
   "title": "ONYX AuditEntryAppended",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C17",
   "x-onyx-topic": "audit.events"
 }
