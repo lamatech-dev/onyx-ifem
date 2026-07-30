@@ -55,6 +55,9 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   assert.match(page, /next_cursor/);
   assert.match(page, /mergeUnique/);
   assert.match(page, /Load more/);
+  assert.match(page, /history\[replace \? "replaceState" : "pushState"\]/);
+  assert.match(page, /popstate/);
+  assert.match(page, /record.*mission:/s);
   assert.match(layout, /ONYX — IFEM Operations Command Center/);
   assert.match(layout, /generateMetadata/);
   assert.match(layout, /x-forwarded-host/);

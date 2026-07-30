@@ -102,7 +102,8 @@ npm run dev -- --port 3002
 Open `http://localhost:3002`. The web server proxies requests to
 `http://127.0.0.1:3001` by default. Set `ONYX_API_URL` to use another API origin.
 The command center provides mission, task, timeline, and report creation, plus
-mission lifecycle actions and immutable mission-event history.
+mission lifecycle actions, immutable event history, cursor-based collection
+pagination, and shareable record URLs with browser Back/Forward restoration.
 
 Verify the web application independently with:
 

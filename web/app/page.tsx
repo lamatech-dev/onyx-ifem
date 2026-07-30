@@ -188,6 +188,7 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [organizationId, setOrganizationId] = useState(DEFAULT_ORG);
   const [principalId, setPrincipalId] = useState(DEFAULT_USER);
+  const [identityReady, setIdentityReady] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<RecordSelection | null>(null);
@@ -197,6 +198,30 @@ export default function Home() {
   const [actionLoading, setActionLoading] = useState("");
   const [nextCursors, setNextCursors] = useState<CollectionCursors>({ mission: undefined, task: undefined, timeline: undefined, report: undefined });
   const [loadingMore, setLoadingMore] = useState<CreateKind | null>(null);
+
+  const writeRoute = useCallback((nextView?: View, record?: string | null, replace = false) => {
+    const url = new URL(window.location.href);
+    if (nextView) {
+      if (nextView === "overview") url.searchParams.delete("view");
+      else url.searchParams.set("view", nextView);
+    }
+    if (record === null) url.searchParams.delete("record");
+    else if (record) url.searchParams.set("record", record);
+    window.history[replace ? "replaceState" : "pushState"]({}, "", url);
+  }, []);
+
+  const navigateView = useCallback((nextView: View) => {
+    setView(nextView);
+    setSelectedMission(null);
+    setSelectedRecord(null);
+    writeRoute(nextView, null);
+  }, [writeRoute]);
+
+  const closeDetails = useCallback(() => {
+    setSelectedMission(null);
+    setSelectedRecord(null);
+    writeRoute(undefined, null);
+  }, [writeRoute]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -260,11 +285,13 @@ export default function Home() {
     const storedPrincipal = localStorage.getItem("onyx.principal");
     if (storedOrg) setOrganizationId(storedOrg);
     if (storedPrincipal) setPrincipalId(storedPrincipal);
+    setIdentityReady(true);
   }, []);
 
   useEffect(() => {
+    if (!identityReady) return;
     void refresh();
-  }, [refresh]);
+  }, [identityReady, refresh]);
 
   useEffect(() => {
     if (!createKind) return;
@@ -277,12 +304,11 @@ export default function Home() {
     if (!selectedMission && !selectedRecord) return;
     const close = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      setSelectedMission(null);
-      setSelectedRecord(null);
+      closeDetails();
     };
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, [selectedMission, selectedRecord]);
+  }, [closeDetails, selectedMission, selectedRecord]);
 
   useEffect(() => {
     if (!toast) return;
@@ -290,9 +316,10 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const openMission = useCallback(async (mission: Mission) => {
+  const openMission = useCallback(async (mission: Mission, updateRoute = true) => {
     setSelectedRecord(null);
     setSelectedMission(mission);
+    if (updateRoute) writeRoute(undefined, `mission:${mission.mission_id}`);
     setMissionHistory([]);
     setDetailLoading(true);
     try {
@@ -303,15 +330,16 @@ export default function Home() {
     } finally {
       setDetailLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, writeRoute]);
 
-  const openRecord = useCallback(async (selection: RecordSelection) => {
+  const openRecord = useCallback(async (selection: RecordSelection, updateRoute = true) => {
     setSelectedMission(null);
     setSelectedRecord(selection);
     setRecordHistory([]);
     setDetailLoading(true);
     try {
       const id = selection.kind === "task" ? selection.record.task_id : selection.kind === "timeline" ? selection.record.timeline_id : selection.record.report_id;
+      if (updateRoute) writeRoute(undefined, `${selection.kind}:${id}`);
       const historyPath = selection.kind === "task" ? `/v1/tasks/${id}/history` : selection.kind === "timeline" ? `/v1/timelines/${id}/history` : `/v1/reports/${id}/history`;
       const history = await api<{ items: DomainEvent[] }>(`${historyPath}?organization_id=${organizationId}&after_version=0&limit=100`);
       setRecordHistory(history.items);
@@ -320,7 +348,57 @@ export default function Home() {
     } finally {
       setDetailLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, writeRoute]);
+
+  useEffect(() => {
+    if (!identityReady) return;
+    let active = true;
+    const restoreRoute = async () => {
+      const parameters = new URLSearchParams(window.location.search);
+      const requestedView = parameters.get("view");
+      const routeView = NAV.some((item) => item.id === requestedView) ? requestedView as View : "overview";
+      setView(routeView);
+      const reference = parameters.get("record");
+      if (!reference) {
+        setSelectedMission(null);
+        setSelectedRecord(null);
+        return;
+      }
+      const [kind, id] = reference.split(":", 2);
+      if (!id || !["mission", "task", "timeline", "report"].includes(kind)) {
+        writeRoute(undefined, null, true);
+        return;
+      }
+      try {
+        if (kind === "mission") {
+          const mission = await api<Mission>(`/v1/missions/${id}?organization_id=${organizationId}`);
+          if (active) await openMission(mission, false);
+        } else if (kind === "task") {
+          const task = await api<Task>(`/v1/tasks/${id}?organization_id=${organizationId}`);
+          if (active) await openRecord({ kind: "task", record: task }, false);
+        } else if (kind === "timeline") {
+          const timeline = await api<Timeline>(`/v1/timelines/${id}?organization_id=${organizationId}`);
+          if (active) await openRecord({ kind: "timeline", record: timeline }, false);
+        } else {
+          const report = await api<Report>(`/v1/reports/${id}?organization_id=${organizationId}`);
+          if (active) await openRecord({ kind: "report", record: report }, false);
+        }
+      } catch (caught) {
+        if (!active) return;
+        setSelectedMission(null);
+        setSelectedRecord(null);
+        writeRoute(undefined, null, true);
+        setToast(caught instanceof Error ? caught.message : "Unable to open linked record");
+      }
+    };
+    const handleHistory = () => void restoreRoute();
+    void restoreRoute();
+    window.addEventListener("popstate", handleHistory);
+    return () => {
+      active = false;
+      window.removeEventListener("popstate", handleHistory);
+    };
+  }, [identityReady, openMission, openRecord, organizationId, writeRoute]);
 
   async function runMissionAction(type: "plan" | "submit" | "activate" | "pause" | "resume" | "cancel" | "archive") {
     if (!selectedMission) return;
@@ -370,7 +448,7 @@ export default function Home() {
       await api(`/v1/mission/commands/${commandType}`, { method: "POST", body: JSON.stringify(command) });
       await refresh();
       const updated = await api<Mission>(`/v1/missions/${selectedMission.mission_id}?organization_id=${organizationId}`);
-      await openMission(updated);
+      await openMission(updated, false);
       setToast(`${commandType.replace(/([A-Z])/g, " $1").trim()} completed`);
     } catch (caught) {
       setToast(caught instanceof Error ? caught.message : "Mission action failed");
@@ -476,7 +554,7 @@ export default function Home() {
         <nav aria-label="Primary navigation">
           <p className="nav-heading">Workspace</p>
           {NAV.map((item) => (
-            <button key={item.id} className={view === item.id ? "nav-item active" : "nav-item"} onClick={() => setView(item.id)}>
+            <button key={item.id} className={view === item.id ? "nav-item active" : "nav-item"} onClick={() => navigateView(item.id)}>
               <span className="nav-icon">{item.icon}</span><span>{item.label}</span>
               {item.id !== "overview" && <small>{item.id === "missions" ? missions.length : item.id === "tasks" ? tasks.length : item.id === "timelines" ? timelines.length : reports.length}</small>}
             </button>
@@ -504,7 +582,7 @@ export default function Home() {
             <>
               <section className="hero-row">
                 <div><p className="eyebrow">LIVE OPERATIONS · {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}</p><h1>Command center</h1><p>Direct every mission, work item, timeline and evidence trail from one operational surface.</p></div>
-                <div className="hero-actions"><button className="secondary-button" onClick={() => setView("reports")}>View evidence</button><button className="primary-button" onClick={() => setCreateKind("mission")}>Create mission</button></div>
+                <div className="hero-actions"><button className="secondary-button" onClick={() => navigateView("reports")}>View evidence</button><button className="primary-button" onClick={() => setCreateKind("mission")}>Create mission</button></div>
               </section>
 
               <section className="metrics-grid" aria-label="Workspace metrics">
@@ -516,13 +594,13 @@ export default function Home() {
 
               <section className="dashboard-grid">
                 <article className="panel mission-panel">
-                  <div className="panel-header"><div><p className="eyebrow">MISSION PORTFOLIO</p><h2>Priority operations</h2></div><button onClick={() => setView("missions")}>View all <span>→</span></button></div>
+                  <div className="panel-header"><div><p className="eyebrow">MISSION PORTFOLIO</p><h2>Priority operations</h2></div><button onClick={() => navigateView("missions")}>View all <span>→</span></button></div>
                   <div className="mission-list">
                     {loading ? <LoadingRows /> : filteredMissions.length ? filteredMissions.slice(0, 5).map((mission, index) => <MissionRow key={mission.mission_id} mission={mission} index={index} taskCount={tasks.filter((task) => task.mission_id === mission.mission_id).length} onOpen={() => void openMission(mission)} />) : <EmptyState icon="◇" title="No missions yet" text="Create the first mission to activate your command center." action={() => setCreateKind("mission")} />}
                   </div>
                 </article>
                 <aside className="right-column">
-                  <article className="panel quick-panel"><div className="panel-header"><div><p className="eyebrow">QUICK ACTIONS</p><h2>Move work forward</h2></div></div><div className="quick-grid"><button onClick={() => setCreateKind("task")} disabled={!missions.length}><span className="metric-icon cyan">✓</span><strong>New task</strong><small>Assign work</small></button><button onClick={() => setCreateKind("timeline")} disabled={!missions.length}><span className="metric-icon amber">◷</span><strong>Timeline</strong><small>Set cadence</small></button><button onClick={() => setCreateKind("report")} disabled={!missions.length}><span className="metric-icon green">▤</span><strong>Report</strong><small>Capture proof</small></button><button onClick={() => setView("missions")}><span className="metric-icon violet">⌕</span><strong>Explore</strong><small>Review state</small></button></div></article>
+                  <article className="panel quick-panel"><div className="panel-header"><div><p className="eyebrow">QUICK ACTIONS</p><h2>Move work forward</h2></div></div><div className="quick-grid"><button onClick={() => setCreateKind("task")} disabled={!missions.length}><span className="metric-icon cyan">✓</span><strong>New task</strong><small>Assign work</small></button><button onClick={() => setCreateKind("timeline")} disabled={!missions.length}><span className="metric-icon amber">◷</span><strong>Timeline</strong><small>Set cadence</small></button><button onClick={() => setCreateKind("report")} disabled={!missions.length}><span className="metric-icon green">▤</span><strong>Report</strong><small>Capture proof</small></button><button onClick={() => navigateView("missions")}><span className="metric-icon violet">⌕</span><strong>Explore</strong><small>Review state</small></button></div></article>
                   <article className="panel pulse-panel"><div className="panel-header"><div><p className="eyebrow">SYSTEM PULSE</p><h2>Infrastructure</h2></div><span className="live-label"><i /> LIVE</span></div><div className="pulse-row"><span>Persistence</span><strong>{ready?.persistence?.mode || "—"}</strong></div><div className="pulse-row"><span>Pending events</span><strong>{ready?.messaging?.outbox?.pending ?? "—"}</strong></div><div className="pulse-row"><span>Dead letters</span><strong>{ready?.messaging?.outbox?.deadLettered ?? "—"}</strong></div><div className="uptime"><div style={{ width: ready?.status === "ready" ? "100%" : "14%" }} /><span>API readiness</span><b>{ready?.status === "ready" ? "100%" : "Degraded"}</b></div></article>
                 </aside>
               </section>
@@ -541,8 +619,8 @@ export default function Home() {
       </section>
 
       {createKind && <CreateModal kind={createKind} missions={missions} tasks={tasks} timelines={timelines} submitting={submitting} onClose={() => setCreateKind(null)} onSubmit={submitCreate} />}
-      {selectedMission && <MissionDetail mission={selectedMission} history={missionHistory} tasks={tasks.filter((task) => task.mission_id === selectedMission.mission_id)} timelines={timelines.filter((timeline) => timeline.subject_ref.object_id === selectedMission.mission_id)} reports={reports.filter((report) => report.subject_ref.object_id === selectedMission.mission_id)} loading={detailLoading} actionLoading={actionLoading} onAction={(type) => void runMissionAction(type)} onOpenRecord={(selection) => void openRecord(selection)} onClose={() => setSelectedMission(null)} />}
-      {selectedRecord && <RecordDetail selection={selectedRecord} history={recordHistory} missions={missions} tasks={tasks} timelines={timelines} reports={reports} loading={detailLoading} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(nextSelection) => void openRecord(nextSelection)} onClose={() => setSelectedRecord(null)} />}
+      {selectedMission && <MissionDetail mission={selectedMission} history={missionHistory} tasks={tasks.filter((task) => task.mission_id === selectedMission.mission_id)} timelines={timelines.filter((timeline) => timeline.subject_ref.object_id === selectedMission.mission_id)} reports={reports.filter((report) => report.subject_ref.object_id === selectedMission.mission_id)} loading={detailLoading} actionLoading={actionLoading} onAction={(type) => void runMissionAction(type)} onOpenRecord={(selection) => void openRecord(selection)} onClose={closeDetails} />}
+      {selectedRecord && <RecordDetail selection={selectedRecord} history={recordHistory} missions={missions} tasks={tasks} timelines={timelines} reports={reports} loading={detailLoading} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(nextSelection) => void openRecord(nextSelection)} onClose={closeDetails} />}
       {toast && <div className="toast" role="status"><span>✓</span>{toast}</div>}
     </main>
   );
