@@ -11,7 +11,21 @@
           "const": "RestartMission"
         },
         "payload": {
-          "additionalProperties": true,
+          "additionalProperties": false,
+          "properties": {
+            "mission_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "restart_note": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "timeline_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            }
+          },
+          "required": ["mission_id", "restart_note"],
           "type": "object"
         },
         "schema_version": {
@@ -22,7 +36,7 @@
     }
   ],
   "title": "ONYX RestartMission",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C01",
   "x-onyx-topic": "mission.events"
 }

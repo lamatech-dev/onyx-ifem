@@ -11,7 +11,13 @@
           "const": "MissionRestarted"
         },
         "payload": {
-          "additionalProperties": true,
+          "additionalProperties": false,
+          "properties": {
+            "new_status": {
+              "const": "ACTIVE"
+            }
+          },
+          "required": ["new_status"],
           "type": "object"
         },
         "schema_version": {
@@ -22,7 +28,7 @@
     }
   ],
   "title": "ONYX MissionRestarted",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C01",
   "x-onyx-topic": "mission.events"
 }

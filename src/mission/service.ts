@@ -8,6 +8,7 @@ import type {
   ActivateMissionCommand,
   ArchiveMissionCommand,
   CancelMissionCommand,
+  CloseMissionCommand,
   CreateBlueprintRevisionCommand,
   CreateMissionCommand,
   Mission,
@@ -16,6 +17,8 @@ import type {
   MissionStatus,
   MissionView,
   PauseMissionCommand,
+  OperationalHaltMissionCommand,
+  RestartMissionCommand,
   ResumeMissionCommand,
   SubmitBlueprintCommand,
 } from "./types.ts";
@@ -23,9 +26,12 @@ import {
   validateActivateMissionCommand,
   validateArchiveMissionCommand,
   validateCancelMissionCommand,
+  validateCloseMissionCommand,
   validateCreateBlueprintRevisionCommand,
   validateCreateMissionCommand,
   validatePauseMissionCommand,
+  validateOperationalHaltMissionCommand,
+  validateRestartMissionCommand,
   validateResumeMissionCommand,
   validateSubmitBlueprintCommand,
 } from "./validation.ts";
@@ -58,6 +64,9 @@ export class MissionService {
       case "ActivateMission": return this.activateMission(input);
       case "PauseMission": return this.pauseMission(input);
       case "ResumeMission": return this.resumeMission(input);
+      case "OperationalHaltMission": return this.operationalHaltMission(input);
+      case "RestartMission": return this.restartMission(input);
+      case "CloseMission": return this.closeMission(input);
       case "CancelMission": return this.cancelMission(input);
       case "ArchiveMission": return this.archiveMission(input);
       default: throw new OnyxError("INVALID_ARGUMENT", "command is not implemented or does not have a frozen payload");
@@ -162,6 +171,42 @@ export class MissionService {
     mission.status = "ACTIVE";
     mission.version += 1;
     return this.#publish(command, mission, "MissionResumed", {new_status: "ACTIVE"});
+  }
+
+  async operationalHaltMission(input: unknown): Promise<MissionEvent> {
+    validateOperationalHaltMissionCommand(input);
+    const command = input;
+    const replay = await this.#replay(command);
+    if (replay) return replay;
+    const mission = await this.#loadForMutation(command, "mission:halt", ["ACTIVE", "PAUSED"]);
+    mission.status = "HALTED";
+    mission.version += 1;
+    return this.#publish(command, mission, "MissionOperationallyHalted", {new_status: "HALTED"});
+  }
+
+  async restartMission(input: unknown): Promise<MissionEvent> {
+    validateRestartMissionCommand(input);
+    const command = input;
+    const replay = await this.#replay(command);
+    if (replay) return replay;
+    const mission = await this.#loadForMutation(command, "mission:restart", ["HALTED"]);
+    if (command.payload.timeline_id !== undefined) mission.timelineId = command.payload.timeline_id;
+    mission.status = "ACTIVE";
+    mission.version += 1;
+    mission.lifecycleEpoch += 1;
+    return this.#publish(command, mission, "MissionRestarted", {new_status: "ACTIVE"});
+  }
+
+  async closeMission(input: unknown): Promise<MissionEvent> {
+    validateCloseMissionCommand(input);
+    const command = input;
+    const replay = await this.#replay(command);
+    if (replay) return replay;
+    const mission = await this.#loadForMutation(command, "mission:close", ["ACTIVE", "PAUSED", "HALTED", "REVIEW"]);
+    mission.status = "CLOSED";
+    mission.version += 1;
+    mission.lifecycleEpoch += 1;
+    return this.#publish(command, mission, "MissionClosed", {new_status: "CLOSED"});
   }
 
   async cancelMission(input: unknown): Promise<MissionEvent> {

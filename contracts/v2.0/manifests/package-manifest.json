@@ -36,7 +36,7 @@
       "path": "contracts/commands/mission/PauseMission.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C01",
       "kind": "command",
       "name": "OperationalHaltMission",
@@ -50,14 +50,14 @@
       "path": "contracts/commands/mission/ResumeMission.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C01",
       "kind": "command",
       "name": "RestartMission",
       "path": "contracts/commands/mission/RestartMission.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C01",
       "kind": "command",
       "name": "CloseMission",
@@ -127,7 +127,7 @@
       "path": "contracts/events/mission/MissionResumed.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C01",
       "kind": "event",
       "name": "MissionRestarted",

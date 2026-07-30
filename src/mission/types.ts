@@ -44,6 +44,25 @@ export interface ResumeMissionPayload {
   resume_note: string;
 }
 
+export interface OperationalHaltMissionPayload {
+  mission_id: UuidV7;
+  reason_code: string;
+  reason: string;
+  incident_id?: UuidV7;
+}
+
+export interface RestartMissionPayload {
+  mission_id: UuidV7;
+  restart_note: string;
+  timeline_id?: UuidV7;
+}
+
+export interface CloseMissionPayload {
+  mission_id: UuidV7;
+  outcome_code: string;
+  outcome_summary: string;
+}
+
 export interface CancelMissionPayload {
   mission_id: UuidV7;
   reason_code: string;
@@ -60,6 +79,9 @@ export type SubmitBlueprintCommand = CommandEnvelope<"SubmitBlueprint", SubmitBl
 export type ActivateMissionCommand = CommandEnvelope<"ActivateMission", ActivateMissionPayload>;
 export type PauseMissionCommand = CommandEnvelope<"PauseMission", PauseMissionPayload>;
 export type ResumeMissionCommand = CommandEnvelope<"ResumeMission", ResumeMissionPayload>;
+export type OperationalHaltMissionCommand = CommandEnvelope<"OperationalHaltMission", OperationalHaltMissionPayload>;
+export type RestartMissionCommand = CommandEnvelope<"RestartMission", RestartMissionPayload>;
+export type CloseMissionCommand = CommandEnvelope<"CloseMission", CloseMissionPayload>;
 export type CancelMissionCommand = CommandEnvelope<"CancelMission", CancelMissionPayload>;
 export type ArchiveMissionCommand = CommandEnvelope<"ArchiveMission", ArchiveMissionPayload>;
 
@@ -70,6 +92,9 @@ export type MissionCommand =
   | ActivateMissionCommand
   | PauseMissionCommand
   | ResumeMissionCommand
+  | OperationalHaltMissionCommand
+  | RestartMissionCommand
+  | CloseMissionCommand
   | CancelMissionCommand
   | ArchiveMissionCommand;
 
@@ -80,6 +105,9 @@ export type MissionEvent =
   | EventEnvelope<"MissionActivated", {new_status: "ACTIVE"}>
   | EventEnvelope<"MissionPaused", {new_status: "PAUSED"}>
   | EventEnvelope<"MissionResumed", {new_status: "ACTIVE"}>
+  | EventEnvelope<"MissionOperationallyHalted", {new_status: "HALTED"}>
+  | EventEnvelope<"MissionRestarted", {new_status: "ACTIVE"}>
+  | EventEnvelope<"MissionClosed", {new_status: "CLOSED"}>
   | EventEnvelope<"MissionCancelled", {new_status: "CANCELLED"}>
   | EventEnvelope<"MissionArchived", {new_status: "ARCHIVED"}>;
 

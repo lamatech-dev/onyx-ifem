@@ -11,7 +11,26 @@
           "const": "OperationalHaltMission"
         },
         "payload": {
-          "additionalProperties": true,
+          "additionalProperties": false,
+          "properties": {
+            "incident_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "mission_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "reason": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "reason_code": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": ["mission_id", "reason_code", "reason"],
           "type": "object"
         },
         "schema_version": {
@@ -22,7 +41,7 @@
     }
   ],
   "title": "ONYX OperationalHaltMission",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C01",
   "x-onyx-topic": "mission.events"
 }

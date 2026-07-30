@@ -4,11 +4,16 @@ import { OnyxError } from "../src/contracts/errors.ts";
 import { assertEmittedEvent, validateEventEnvelope } from "../src/contracts/validation.ts";
 import { InMemoryMissionRepository } from "../src/mission/repository.ts";
 import { MissionService } from "../src/mission/service.ts";
-import { validateCreateMissionCommand } from "../src/mission/validation.ts";
+import {
+  validateCloseMissionCommand,
+  validateCreateMissionCommand,
+  validateOperationalHaltMissionCommand,
+  validateRestartMissionCommand,
+} from "../src/mission/validation.ts";
 import { validateCreateReportCommand } from "../src/reporting-evidence/validation.ts";
 import { validateCreateTimelineCommand } from "../src/timeline/validation.ts";
 import { validateCreateTaskCommand } from "../src/work/validation.ts";
-import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand } from "./fixtures.ts";
+import { createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, missionCommand, testId } from "./fixtures.ts";
 
 type Validator = (value: unknown) => void;
 
@@ -71,6 +76,36 @@ describe("strict command envelope validation", () => {
         membership_id: base.operation_id,
       },
     });
+  });
+
+  it("strictly validates the completed mission lifecycle payloads", () => {
+    const halt = missionCommand(
+      "OperationalHaltMission",
+      80,
+      {mission_id: testId(14), reason_code: "INCIDENT", reason: "Operational boundary", incident_id: testId(401)},
+      "mission:halt",
+      4,
+    );
+    const restart = missionCommand(
+      "RestartMission",
+      81,
+      {mission_id: testId(14), restart_note: "Boundary cleared", timeline_id: testId(402)},
+      "mission:restart",
+      5,
+    );
+    const close = missionCommand(
+      "CloseMission",
+      82,
+      {mission_id: testId(14), outcome_code: "COMPLETED", outcome_summary: "Objective met"},
+      "mission:close",
+      6,
+    );
+    validateOperationalHaltMissionCommand(halt);
+    validateRestartMissionCommand(restart);
+    validateCloseMissionCommand(close);
+    rejectsInvalid(validateOperationalHaltMissionCommand, {...halt, payload: {...halt.payload, extension: true}});
+    rejectsInvalid(validateRestartMissionCommand, {...restart, payload: {...restart.payload, restart_note: ""}});
+    rejectsInvalid(validateCloseMissionCommand, {...close, payload: {...close.payload, outcome_summary: ""}});
   });
 });
 

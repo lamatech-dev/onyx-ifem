@@ -10,10 +10,13 @@ import type {
   ActivateMissionCommand,
   ArchiveMissionCommand,
   CancelMissionCommand,
+  CloseMissionCommand,
   CreateBlueprintRevisionCommand,
   CreateMissionCommand,
   MissionCommand,
   PauseMissionCommand,
+  OperationalHaltMissionCommand,
+  RestartMissionCommand,
   ResumeMissionCommand,
   SubmitBlueprintCommand,
 } from "./types.ts";
@@ -88,6 +91,34 @@ export function validatePauseMissionCommand(value: unknown): asserts value is Pa
 
 export function validateCancelMissionCommand(value: unknown): asserts value is CancelMissionCommand {
   validateReasonCommand(value, "CancelMission");
+}
+
+export function validateOperationalHaltMissionCommand(value: unknown): asserts value is OperationalHaltMissionCommand {
+  const command = validateEnvelope(value, "OperationalHaltMission");
+  const payload = object(command.payload, "payload");
+  exactKeys(payload, ["mission_id", "reason_code", "reason", "incident_id"]);
+  validateMissionTarget(command, payload);
+  text(payload.reason_code, "payload.reason_code", 200);
+  text(payload.reason, "payload.reason", 2_000);
+  if (payload.incident_id !== undefined) uuid(payload.incident_id, "payload.incident_id");
+}
+
+export function validateRestartMissionCommand(value: unknown): asserts value is RestartMissionCommand {
+  const command = validateEnvelope(value, "RestartMission");
+  const payload = object(command.payload, "payload");
+  exactKeys(payload, ["mission_id", "restart_note", "timeline_id"]);
+  validateMissionTarget(command, payload);
+  text(payload.restart_note, "payload.restart_note", 2_000);
+  if (payload.timeline_id !== undefined) uuid(payload.timeline_id, "payload.timeline_id");
+}
+
+export function validateCloseMissionCommand(value: unknown): asserts value is CloseMissionCommand {
+  const command = validateEnvelope(value, "CloseMission");
+  const payload = object(command.payload, "payload");
+  exactKeys(payload, ["mission_id", "outcome_code", "outcome_summary"]);
+  validateMissionTarget(command, payload);
+  text(payload.outcome_code, "payload.outcome_code", 200);
+  text(payload.outcome_summary, "payload.outcome_summary", 4_000);
 }
 
 export function validateResumeMissionCommand(value: unknown): asserts value is ResumeMissionCommand {

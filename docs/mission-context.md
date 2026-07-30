@@ -14,15 +14,23 @@ stateDiagram-v2
   AWAITING_APPROVAL --> ACTIVE: ActivateMission
   ACTIVE --> PAUSED: PauseMission
   PAUSED --> ACTIVE: ResumeMission
+  ACTIVE --> HALTED: OperationalHaltMission
+  PAUSED --> HALTED: OperationalHaltMission
+  HALTED --> ACTIVE: RestartMission
+  ACTIVE --> CLOSED: CloseMission
+  PAUSED --> CLOSED: CloseMission
+  HALTED --> CLOSED: CloseMission
+  REVIEW --> CLOSED: CloseMission
   DRAFT --> CANCELLED: CancelMission
   PLANNING --> CANCELLED: CancelMission
   AWAITING_APPROVAL --> CANCELLED: CancelMission
   ACTIVE --> CANCELLED: CancelMission
   PAUSED --> CANCELLED: CancelMission
+  HALTED --> CANCELLED: CancelMission
+  REVIEW --> CANCELLED: CancelMission
+  CLOSED --> ARCHIVED: ArchiveMission
   CANCELLED --> ARCHIVED: ArchiveMission
 ```
-
-Transitions involving `CLOSED`, `HALTED`, or restart behavior remain unavailable until the corresponding command payloads are frozen.
 
 ## Command authority scopes
 
@@ -34,6 +42,9 @@ Transitions involving `CLOSED`, `HALTED`, or restart behavior remain unavailable
 | `ActivateMission` | `mission:activate` |
 | `PauseMission` | `mission:pause` |
 | `ResumeMission` | `mission:resume` |
+| `OperationalHaltMission` | `mission:halt` |
+| `RestartMission` | `mission:restart` |
+| `CloseMission` | `mission:close` |
 | `CancelMission` | `mission:cancel` |
 | `ArchiveMission` | `mission:archive` |
 
@@ -48,5 +59,4 @@ Authority proofs must be unexpired. Optional expected version, lifecycle epoch, 
 - Aggregate state, emitted event, and operation record share one repository commit boundary.
 - Event integrity metadata contains a SHA-256 digest over canonical event content.
 
-The current repository adapter is in-memory. Its interface is intentionally shaped so a durable database adapter can preserve the same atomic commit boundary in the next infrastructure phase.
-
+The runtime supports both in-memory and durable SQLite repository adapters while preserving the same atomic commit boundary.

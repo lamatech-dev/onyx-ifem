@@ -147,6 +147,9 @@ Implemented command types:
 - `ActivateMission`
 - `PauseMission`
 - `ResumeMission`
+- `OperationalHaltMission`
+- `RestartMission`
+- `CloseMission`
 - `CancelMission`
 - `ArchiveMission`
 
@@ -164,8 +167,8 @@ The HTTP adapter exposes every currently executable context. Other bounded conte
 
 ## Contract maturity
 
-The imported v2.0 package contains 294 command/event schemas. All 11 commands marked `FIELD_COMPLETE` now have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` are discoverable placeholders, not production-complete domain contracts.
+The imported v2.0 package contains 294 command/event schemas. All 14 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
 
-`CloseMission`, `OperationalHaltMission`, and `RestartMission` are deliberately not implemented because their command payloads are still open.
+The Mission context is now lifecycle-complete, including operational halt, restart with lifecycle-epoch fencing, close, and archive transitions.
 
 Work lifecycle commands such as `StartTask`, `PauseTask`, `BlockTask`, and `CloseTask` are also deliberately unavailable until their command payloads are frozen. Timeline scheduling commands remain unavailable for the same reason.

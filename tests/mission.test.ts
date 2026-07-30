@@ -175,6 +175,81 @@ describe("Mission lifecycle", () => {
     );
   });
 
+  it("halts, restarts, closes, and archives a mission with epoch fencing", async () => {
+    const repository = new InMemoryMissionRepository();
+    const service = new MissionService({repository, now});
+    await service.execute(createMissionCommand());
+    const revisionId = testId(320);
+    const timelineId = testId(321);
+    await service.execute(missionCommand(
+      "CreateBlueprintRevision",
+      20,
+      {mission_id: testId(14), revision_id: revisionId, content: {steps: []}, change_summary: "Operational plan"},
+      "mission:blueprint:create",
+      1,
+    ));
+    await service.execute(missionCommand(
+      "SubmitBlueprint",
+      21,
+      {mission_id: testId(14), revision_id: revisionId},
+      "mission:blueprint:submit",
+      2,
+    ));
+    await service.execute(missionCommand(
+      "ActivateMission",
+      22,
+      {mission_id: testId(14), approved_revision_id: revisionId, timeline_id: timelineId},
+      "mission:activate",
+      3,
+    ));
+    const halted = await service.execute(missionCommand(
+      "OperationalHaltMission",
+      23,
+      {mission_id: testId(14), reason_code: "INCIDENT", reason: "Safety boundary reached", incident_id: testId(322)},
+      "mission:halt",
+      4,
+    ));
+    const restarted = await service.execute(missionCommand(
+      "RestartMission",
+      24,
+      {mission_id: testId(14), restart_note: "Incident resolved", timeline_id: testId(323)},
+      "mission:restart",
+      5,
+    ));
+    const closeCommand = missionCommand(
+      "CloseMission",
+      25,
+      {mission_id: testId(14), outcome_code: "OBJECTIVE_COMPLETED", outcome_summary: "All mission outcomes accepted"},
+      "mission:close",
+      6,
+    );
+    closeCommand.expected_lifecycle_epoch = 1;
+    const closed = await service.execute(closeCommand);
+    const archiveCommand = missionCommand(
+      "ArchiveMission",
+      26,
+      {mission_id: testId(14), retention_policy_id: testId(324)},
+      "mission:archive",
+      7,
+    );
+    archiveCommand.expected_lifecycle_epoch = 2;
+    const archived = await service.execute(archiveCommand);
+
+    assert.deepEqual(
+      [halted.event_type, restarted.event_type, closed.event_type, archived.event_type],
+      ["MissionOperationallyHalted", "MissionRestarted", "MissionClosed", "MissionArchived"],
+    );
+    assert.deepEqual(
+      [halted.lifecycle_epoch, restarted.lifecycle_epoch, closed.lifecycle_epoch, archived.lifecycle_epoch],
+      [0, 1, 2, 2],
+    );
+    const view = await service.getMission(testId(13), testId(14));
+    assert.equal(view.status, "ARCHIVED");
+    assert.equal(view.version, 8);
+    assert.equal(view.lifecycle_epoch, 2);
+    assert.equal(view.timeline_id, testId(323));
+  });
+
   it("rejects an optimistic concurrency mismatch", async () => {
     const service = new MissionService({repository: new InMemoryMissionRepository(), now});
     await service.execute(createMissionCommand());
