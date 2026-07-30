@@ -39,6 +39,9 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   assert.match(page, /CreateTask/);
   assert.match(page, /CreateTimeline/);
   assert.match(page, /CreateReport/);
+  assert.match(page, /MissionDetail/);
+  assert.match(page, /MissionBlueprintRevisionCreated/);
+  assert.match(page, /Approve & activate/);
   assert.match(layout, /ONYX — IFEM Operations Command Center/);
   assert.match(route, /ALLOWED_PREFIXES/);
   assert.match(route, /http:\/\/127\.0\.0\.1:3001/);

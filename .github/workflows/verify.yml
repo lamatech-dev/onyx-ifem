@@ -37,6 +37,32 @@ jobs:
           npm sbom --omit=dev --sbom-format=cyclonedx --sbom-type=application > sbom.cdx.json
           node -e "const bom = JSON.parse(require('node:fs').readFileSync('sbom.cdx.json', 'utf8')); if (bom.bomFormat !== 'CycloneDX') process.exit(1)"
 
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install web dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Build and test the operations console
+        run: npm test
+      - name: Type-check the operations console
+        run: npm run lint
+      - name: Audit web dependencies
+        run: npm audit --audit-level=high
+
   container:
     runs-on: ubuntu-latest
     timeout-minutes: 20

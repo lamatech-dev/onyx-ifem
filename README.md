@@ -19,6 +19,7 @@ src/reporting-evidence/ Report domain and application service
 src/shared/           Deterministic serialization and identifier utilities
 tests/                Contract and domain verification
 tools/                Repository-level validation commands
+web/                  Next.js operations command center
 ```
 
 ## Requirements
@@ -68,6 +69,32 @@ State is in-memory unless `ONYX_DB_PATH` is set. Enable durable SQLite persisten
 
 ```bash
 ONYX_DB_PATH=./data/onyx.db npm start
+```
+
+## Run the web command center
+
+Run the API on port 3001, then start the graphical command center in a second terminal:
+
+```bash
+ONYX_HOST=127.0.0.1 ONYX_PORT=3001 ONYX_DB_PATH=./data/onyx.db npm start
+```
+
+```bash
+cd web
+npm ci
+npm run dev -- --port 3002
+```
+
+Open `http://localhost:3002`. The web server proxies requests to
+`http://127.0.0.1:3001` by default. Set `ONYX_API_URL` to use another API origin.
+The command center provides mission, task, timeline, and report creation, plus
+mission lifecycle actions and immutable mission-event history.
+
+Verify the web application independently with:
+
+```bash
+cd web
+npm test
 ```
 
 Mission, Work, Timeline, and Reporting-Evidence keep separate context ownership while sharing the same transactional database. See [Persistence](docs/persistence.md).
