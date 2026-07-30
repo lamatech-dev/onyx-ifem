@@ -70,6 +70,9 @@ type Ready = {
   messaging?: { outbox?: { pending?: number; delivered?: number; deadLettered?: number } };
 };
 
+type ResourcePage<T> = { items: T[]; next_cursor?: string };
+type CollectionCursors = Record<CreateKind, string | undefined>;
+
 const NAV: Array<{ id: View; label: string; icon: string }> = [
   { id: "overview", label: "Command center", icon: "⌂" },
   { id: "missions", label: "Missions", icon: "◇" },
@@ -159,6 +162,18 @@ function parseSubjectRef(value: FormDataEntryValue | null) {
   return { aggregate_type: aggregateType, object_id: objectId };
 }
 
+function mergeUnique<T>(current: T[], incoming: T[], identify: (item: T) => string) {
+  const known = new Set(current.map(identify));
+  const merged = [...current];
+  for (const item of incoming) {
+    const id = identify(item);
+    if (known.has(id)) continue;
+    known.add(id);
+    merged.push(item);
+  }
+  return merged;
+}
+
 export default function Home() {
   const [view, setView] = useState<View>("overview");
   const [missions, setMissions] = useState<Mission[]>([]);
@@ -180,6 +195,8 @@ export default function Home() {
   const [recordHistory, setRecordHistory] = useState<DomainEvent[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
+  const [nextCursors, setNextCursors] = useState<CollectionCursors>({ mission: undefined, task: undefined, timeline: undefined, report: undefined });
+  const [loadingMore, setLoadingMore] = useState<CreateKind | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -188,22 +205,55 @@ export default function Home() {
       const query = `organization_id=${encodeURIComponent(organizationId)}&limit=100`;
       const [healthData, missionData, taskData, timelineData, reportData] = await Promise.all([
         api<Ready>("/readyz"),
-        api<{ items: Mission[] }>(`/v1/missions?${query}`),
-        api<{ items: Task[] }>(`/v1/tasks?${query}`),
-        api<{ items: Timeline[] }>(`/v1/timelines?${query}`),
-        api<{ items: Report[] }>(`/v1/reports?${query}`),
+        api<ResourcePage<Mission>>(`/v1/missions?${query}`),
+        api<ResourcePage<Task>>(`/v1/tasks?${query}`),
+        api<ResourcePage<Timeline>>(`/v1/timelines?${query}`),
+        api<ResourcePage<Report>>(`/v1/reports?${query}`),
       ]);
       setReady(healthData);
       setMissions(missionData.items);
       setTasks(taskData.items);
       setTimelines(timelineData.items);
       setReports(reportData.items);
+      setNextCursors({ mission: missionData.next_cursor, task: taskData.next_cursor, timeline: timelineData.next_cursor, report: reportData.next_cursor });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to reach ONYX API");
     } finally {
       setLoading(false);
     }
   }, [organizationId]);
+
+  const loadMore = useCallback(async (kind: CreateKind) => {
+    const cursor = nextCursors[kind];
+    if (!cursor || loadingMore) return;
+    setLoadingMore(kind);
+    try {
+      const query = `organization_id=${encodeURIComponent(organizationId)}&limit=100&cursor=${encodeURIComponent(cursor)}`;
+      let nextCursor: string | undefined;
+      if (kind === "mission") {
+        const page = await api<ResourcePage<Mission>>(`/v1/missions?${query}`);
+        setMissions((current) => mergeUnique(current, page.items, (item) => item.mission_id));
+        nextCursor = page.next_cursor;
+      } else if (kind === "task") {
+        const page = await api<ResourcePage<Task>>(`/v1/tasks?${query}`);
+        setTasks((current) => mergeUnique(current, page.items, (item) => item.task_id));
+        nextCursor = page.next_cursor;
+      } else if (kind === "timeline") {
+        const page = await api<ResourcePage<Timeline>>(`/v1/timelines?${query}`);
+        setTimelines((current) => mergeUnique(current, page.items, (item) => item.timeline_id));
+        nextCursor = page.next_cursor;
+      } else {
+        const page = await api<ResourcePage<Report>>(`/v1/reports?${query}`);
+        setReports((current) => mergeUnique(current, page.items, (item) => item.report_id));
+        nextCursor = page.next_cursor;
+      }
+      setNextCursors((current) => ({ ...current, [kind]: nextCursor }));
+    } catch (caught) {
+      setToast(caught instanceof Error ? caught.message : `Unable to load more ${kind} records`);
+    } finally {
+      setLoadingMore(null);
+    }
+  }, [loadingMore, nextCursors, organizationId]);
 
   useEffect(() => {
     const storedOrg = localStorage.getItem("onyx.organization");
@@ -480,7 +530,7 @@ export default function Home() {
           )}
 
           {view !== "overview" && (
-            <CollectionView view={view} missions={filteredMissions} tasks={filteredTasks} timelines={filteredTimelines} reports={filteredReports} loading={loading} onCreate={(kind) => setCreateKind(kind)} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(selection) => void openRecord(selection)} />
+            <CollectionView view={view} missions={filteredMissions} tasks={filteredTasks} timelines={filteredTimelines} reports={filteredReports} loading={loading} hasMore={Boolean(nextCursors[view === "missions" ? "mission" : view === "tasks" ? "task" : view === "timelines" ? "timeline" : "report"])} loadingMore={loadingMore === (view === "missions" ? "mission" : view === "tasks" ? "task" : view === "timelines" ? "timeline" : "report")} onLoadMore={(kind) => void loadMore(kind)} onCreate={(kind) => setCreateKind(kind)} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(selection) => void openRecord(selection)} />
           )}
 
           <details className="workspace-settings">
@@ -511,11 +561,11 @@ function EmptyState({ icon, title, text, action }: { icon: string; title: string
   return <div className="empty-state"><span>{icon}</span><strong>{title}</strong><p>{text}</p><button onClick={action}>Create now</button></div>;
 }
 
-function CollectionView({ view, missions, tasks, timelines, reports, loading, onCreate, onOpenMission, onOpenRecord }: { view: Exclude<View, "overview">; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; onCreate: (kind: CreateKind) => void; onOpenMission: (mission: Mission) => void; onOpenRecord: (selection: RecordSelection) => void }) {
+function CollectionView({ view, missions, tasks, timelines, reports, loading, hasMore, loadingMore, onLoadMore, onCreate, onOpenMission, onOpenRecord }: { view: Exclude<View, "overview">; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; hasMore: boolean; loadingMore: boolean; onLoadMore: (kind: CreateKind) => void; onCreate: (kind: CreateKind) => void; onOpenMission: (mission: Mission) => void; onOpenRecord: (selection: RecordSelection) => void }) {
   const labels = { missions: ["Mission portfolio", "Every objective and its operational state."], tasks: ["Work queue", "Assignments moving each mission forward."], timelines: ["Timelines", "Cadence and timezone for operational subjects."], reports: ["Evidence library", "Versioned proof connected to mission outcomes."] } as const;
   const kind = view === "missions" ? "mission" : view === "tasks" ? "task" : view === "timelines" ? "timeline" : "report";
   const items = view === "missions" ? missions : view === "tasks" ? tasks : view === "timelines" ? timelines : reports;
-  return <section className="collection-page"><div className="collection-heading"><div><p className="eyebrow">ONYX WORKSPACE</p><h1>{labels[view][0]}</h1><p>{labels[view][1]}</p></div><button className="primary-button" onClick={() => onCreate(kind)} disabled={kind !== "mission" && !missions.length}>＋ New {kind}</button></div><div className="collection-summary"><span><strong>{items.length}</strong> total records</span><span><i /> API synchronized</span><span>Durable history enabled</span></div><div className="data-panel">{loading ? <LoadingRows /> : !items.length ? <EmptyState icon={view === "missions" ? "◇" : view === "tasks" ? "✓" : view === "timelines" ? "◷" : "▤"} title={`No ${view} yet`} text={`Create your first ${kind} to populate this workspace.`} action={() => onCreate(kind)} /> : <table><thead><tr>{view === "missions" && <><th>Mission</th><th>Objective</th><th>Status</th><th>Version</th></>}{view === "tasks" && <><th>Task</th><th>Mission</th><th>Priority</th><th>Status</th></>}{view === "timelines" && <><th>Timeline</th><th>Subject</th><th>Timezone</th><th>Version</th></>}{view === "reports" && <><th>Report</th><th>Subject</th><th>Type</th><th>Version</th></>}</tr></thead><tbody>{view === "missions" && missions.map((item) => <tr key={item.mission_id} className="clickable-row" onClick={() => onOpenMission(item)}><td><strong>{item.title || "Untitled mission"}</strong><small>{shortId(item.mission_id)}</small></td><td>{item.objective}</td><td><span className={statusClass(item.status)}>{item.status}</span></td><td>v{item.version}</td></tr>)}{view === "tasks" && tasks.map((item) => <tr key={item.task_id} className="clickable-row" onClick={() => onOpenRecord({ kind: "task", record: item })}><td><strong>{item.title}</strong><small>{item.description}</small></td><td>{shortId(item.mission_id)}</td><td>{item.priority}</td><td><span className={statusClass(item.status)}>{item.status}</span></td></tr>)}{view === "timelines" && timelines.map((item) => <tr key={item.timeline_id} className="clickable-row" onClick={() => onOpenRecord({ kind: "timeline", record: item })}><td><strong>{shortId(item.timeline_id)}</strong></td><td>{item.subject_ref.aggregate_type} · {shortId(item.subject_ref.object_id)}</td><td>{item.timezone}</td><td>v{item.version}</td></tr>)}{view === "reports" && reports.map((item) => <tr key={item.report_id} className="clickable-row" onClick={() => onOpenRecord({ kind: "report", record: item })}><td><strong>{item.title}</strong><small>{shortId(item.report_id)}</small></td><td>{item.subject_ref.aggregate_type} · {shortId(item.subject_ref.object_id)}</td><td>{item.report_type.replaceAll("_", " ")}</td><td>v{item.version}</td></tr>)}</tbody></table>}</div></section>;
+  return <section className="collection-page"><div className="collection-heading"><div><p className="eyebrow">ONYX WORKSPACE</p><h1>{labels[view][0]}</h1><p>{labels[view][1]}</p></div><button className="primary-button" onClick={() => onCreate(kind)} disabled={kind !== "mission" && !missions.length}>＋ New {kind}</button></div><div className="collection-summary"><span><strong>{items.length}</strong> records loaded</span><span><i /> API synchronized</span><span>{hasMore ? "More records available" : "All records loaded"}</span></div><div className="data-panel">{loading ? <LoadingRows /> : !items.length ? <EmptyState icon={view === "missions" ? "◇" : view === "tasks" ? "✓" : view === "timelines" ? "◷" : "▤"} title={`No ${view} yet`} text={`Create your first ${kind} to populate this workspace.`} action={() => onCreate(kind)} /> : <table><thead><tr>{view === "missions" && <><th>Mission</th><th>Objective</th><th>Status</th><th>Version</th></>}{view === "tasks" && <><th>Task</th><th>Mission</th><th>Priority</th><th>Status</th></>}{view === "timelines" && <><th>Timeline</th><th>Subject</th><th>Timezone</th><th>Version</th></>}{view === "reports" && <><th>Report</th><th>Subject</th><th>Type</th><th>Version</th></>}</tr></thead><tbody>{view === "missions" && missions.map((item) => <tr key={item.mission_id} className="clickable-row" onClick={() => onOpenMission(item)}><td><strong>{item.title || "Untitled mission"}</strong><small>{shortId(item.mission_id)}</small></td><td>{item.objective}</td><td><span className={statusClass(item.status)}>{item.status}</span></td><td>v{item.version}</td></tr>)}{view === "tasks" && tasks.map((item) => <tr key={item.task_id} className="clickable-row" onClick={() => onOpenRecord({ kind: "task", record: item })}><td><strong>{item.title}</strong><small>{item.description}</small></td><td>{shortId(item.mission_id)}</td><td>{item.priority}</td><td><span className={statusClass(item.status)}>{item.status}</span></td></tr>)}{view === "timelines" && timelines.map((item) => <tr key={item.timeline_id} className="clickable-row" onClick={() => onOpenRecord({ kind: "timeline", record: item })}><td><strong>{shortId(item.timeline_id)}</strong></td><td>{item.subject_ref.aggregate_type} · {shortId(item.subject_ref.object_id)}</td><td>{item.timezone}</td><td>v{item.version}</td></tr>)}{view === "reports" && reports.map((item) => <tr key={item.report_id} className="clickable-row" onClick={() => onOpenRecord({ kind: "report", record: item })}><td><strong>{item.title}</strong><small>{shortId(item.report_id)}</small></td><td>{item.subject_ref.aggregate_type} · {shortId(item.subject_ref.object_id)}</td><td>{item.report_type.replaceAll("_", " ")}</td><td>v{item.version}</td></tr>)}</tbody></table>}</div>{items.length > 0 && <div className="collection-pagination"><span>{hasMore ? "Continue from the secure API cursor." : "You have reached the end of this collection."}</span>{hasMore && <button className="secondary-button" disabled={loadingMore} onClick={() => onLoadMore(kind)}>{loadingMore ? "Loading…" : "Load more"}</button>}</div>}</section>;
 }
 
 function MissionDetail({ mission, history, tasks, timelines, reports, loading, actionLoading, onAction, onOpenRecord, onClose }: { mission: Mission; history: DomainEvent[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; actionLoading: string; onAction: (type: "plan" | "submit" | "activate" | "pause" | "resume" | "cancel" | "archive") => void; onOpenRecord: (selection: RecordSelection) => void; onClose: () => void }) {
