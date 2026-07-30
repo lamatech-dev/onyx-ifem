@@ -19,11 +19,11 @@ type Mission = {
   timeline_id?: string;
 };
 
-type MissionEvent = {
+type DomainEvent = {
   event_id: string;
   event_type: string;
   aggregate_version: number;
-  lifecycle_epoch: number;
+  lifecycle_epoch?: number;
   occurred_at: string;
   payload: Record<string, unknown>;
   audit?: { provenance?: string; integrity_digest?: string };
@@ -31,16 +31,19 @@ type MissionEvent = {
 
 type Task = {
   task_id: string;
+  organization_id: string;
   mission_id: string;
   title: string;
   description: string;
   priority: string;
+  owner_id: string;
   status: string;
   version: number;
 };
 
 type Timeline = {
   timeline_id: string;
+  organization_id: string;
   subject_ref: { aggregate_type: string; object_id: string };
   timezone: string;
   version: number;
@@ -48,11 +51,18 @@ type Timeline = {
 
 type Report = {
   report_id: string;
+  organization_id: string;
   report_type: string;
   subject_ref: { aggregate_type: string; object_id: string };
   title: string;
+  author_id: string;
   version: number;
 };
+
+type RecordSelection =
+  | { kind: "task"; record: Task }
+  | { kind: "timeline"; record: Timeline }
+  | { kind: "report"; record: Report };
 
 type Ready = {
   status: string;
@@ -159,7 +169,9 @@ export default function Home() {
   const [principalId, setPrincipalId] = useState(DEFAULT_USER);
   const [search, setSearch] = useState("");
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
-  const [missionHistory, setMissionHistory] = useState<MissionEvent[]>([]);
+  const [selectedRecord, setSelectedRecord] = useState<RecordSelection | null>(null);
+  const [missionHistory, setMissionHistory] = useState<DomainEvent[]>([]);
+  const [recordHistory, setRecordHistory] = useState<DomainEvent[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState("");
 
@@ -206,19 +218,49 @@ export default function Home() {
   }, [createKind]);
 
   useEffect(() => {
+    if (!selectedMission && !selectedRecord) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setSelectedMission(null);
+      setSelectedRecord(null);
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [selectedMission, selectedRecord]);
+
+  useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(""), 3200);
     return () => window.clearTimeout(timer);
   }, [toast]);
 
   const openMission = useCallback(async (mission: Mission) => {
+    setSelectedRecord(null);
     setSelectedMission(mission);
+    setMissionHistory([]);
     setDetailLoading(true);
     try {
-      const history = await api<{ items: MissionEvent[] }>(`/v1/missions/${mission.mission_id}/history?organization_id=${organizationId}&after_version=0&limit=100`);
+      const history = await api<{ items: DomainEvent[] }>(`/v1/missions/${mission.mission_id}/history?organization_id=${organizationId}&after_version=0&limit=100`);
       setMissionHistory(history.items);
     } catch (caught) {
       setToast(caught instanceof Error ? caught.message : "Unable to load mission history");
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [organizationId]);
+
+  const openRecord = useCallback(async (selection: RecordSelection) => {
+    setSelectedMission(null);
+    setSelectedRecord(selection);
+    setRecordHistory([]);
+    setDetailLoading(true);
+    try {
+      const id = selection.kind === "task" ? selection.record.task_id : selection.kind === "timeline" ? selection.record.timeline_id : selection.record.report_id;
+      const historyPath = selection.kind === "task" ? `/v1/tasks/${id}/history` : selection.kind === "timeline" ? `/v1/timelines/${id}/history` : `/v1/reports/${id}/history`;
+      const history = await api<{ items: DomainEvent[] }>(`${historyPath}?organization_id=${organizationId}&after_version=0&limit=100`);
+      setRecordHistory(history.items);
+    } catch (caught) {
+      setToast(caught instanceof Error ? caught.message : "Unable to load record history");
     } finally {
       setDetailLoading(false);
     }
@@ -289,6 +331,18 @@ export default function Home() {
     if (!needle) return missions;
     return missions.filter((mission) => `${mission.title} ${mission.objective} ${mission.status}`.toLowerCase().includes(needle));
   }, [missions, search]);
+  const filteredTasks = useMemo(() => {
+    const needle = search.toLowerCase().trim();
+    return needle ? tasks.filter((task) => `${task.title} ${task.description} ${task.priority} ${task.status}`.toLowerCase().includes(needle)) : tasks;
+  }, [tasks, search]);
+  const filteredTimelines = useMemo(() => {
+    const needle = search.toLowerCase().trim();
+    return needle ? timelines.filter((timeline) => `${timeline.timeline_id} ${timeline.subject_ref.aggregate_type} ${timeline.subject_ref.object_id} ${timeline.timezone}`.toLowerCase().includes(needle)) : timelines;
+  }, [timelines, search]);
+  const filteredReports = useMemo(() => {
+    const needle = search.toLowerCase().trim();
+    return needle ? reports.filter((report) => `${report.title} ${report.report_type} ${report.subject_ref.aggregate_type} ${report.subject_ref.object_id}`.toLowerCase().includes(needle)) : reports;
+  }, [reports, search]);
 
   async function submitCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -420,7 +474,7 @@ export default function Home() {
           )}
 
           {view !== "overview" && (
-            <CollectionView view={view} missions={filteredMissions} tasks={tasks} timelines={timelines} reports={reports} loading={loading} onCreate={(kind) => setCreateKind(kind)} onOpenMission={(mission) => void openMission(mission)} />
+            <CollectionView view={view} missions={filteredMissions} tasks={filteredTasks} timelines={filteredTimelines} reports={filteredReports} loading={loading} onCreate={(kind) => setCreateKind(kind)} onOpenMission={(mission) => void openMission(mission)} onOpenRecord={(selection) => void openRecord(selection)} />
           )}
 
           <details className="workspace-settings">
@@ -432,6 +486,7 @@ export default function Home() {
 
       {createKind && <CreateModal kind={createKind} missions={missions} submitting={submitting} onClose={() => setCreateKind(null)} onSubmit={submitCreate} />}
       {selectedMission && <MissionDetail mission={selectedMission} history={missionHistory} tasks={tasks.filter((task) => task.mission_id === selectedMission.mission_id)} timelines={timelines.filter((timeline) => timeline.subject_ref.object_id === selectedMission.mission_id)} reports={reports.filter((report) => report.subject_ref.object_id === selectedMission.mission_id)} loading={detailLoading} actionLoading={actionLoading} onAction={(type) => void runMissionAction(type)} onClose={() => setSelectedMission(null)} />}
+      {selectedRecord && <RecordDetail selection={selectedRecord} history={recordHistory} missions={missions} tasks={tasks} timelines={timelines} reports={reports} loading={detailLoading} onOpenMission={(mission) => void openMission(mission)} onClose={() => setSelectedRecord(null)} />}
       {toast && <div className="toast" role="status"><span>✓</span>{toast}</div>}
     </main>
   );
@@ -450,16 +505,51 @@ function EmptyState({ icon, title, text, action }: { icon: string; title: string
   return <div className="empty-state"><span>{icon}</span><strong>{title}</strong><p>{text}</p><button onClick={action}>Create now</button></div>;
 }
 
-function CollectionView({ view, missions, tasks, timelines, reports, loading, onCreate, onOpenMission }: { view: Exclude<View, "overview">; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; onCreate: (kind: CreateKind) => void; onOpenMission: (mission: Mission) => void }) {
+function CollectionView({ view, missions, tasks, timelines, reports, loading, onCreate, onOpenMission, onOpenRecord }: { view: Exclude<View, "overview">; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; onCreate: (kind: CreateKind) => void; onOpenMission: (mission: Mission) => void; onOpenRecord: (selection: RecordSelection) => void }) {
   const labels = { missions: ["Mission portfolio", "Every objective and its operational state."], tasks: ["Work queue", "Assignments moving each mission forward."], timelines: ["Timelines", "Cadence and timezone for operational subjects."], reports: ["Evidence library", "Versioned proof connected to mission outcomes."] } as const;
   const kind = view === "missions" ? "mission" : view === "tasks" ? "task" : view === "timelines" ? "timeline" : "report";
   const items = view === "missions" ? missions : view === "tasks" ? tasks : view === "timelines" ? timelines : reports;
-  return <section className="collection-page"><div className="collection-heading"><div><p className="eyebrow">ONYX WORKSPACE</p><h1>{labels[view][0]}</h1><p>{labels[view][1]}</p></div><button className="primary-button" onClick={() => onCreate(kind)} disabled={kind !== "mission" && !missions.length}>＋ New {kind}</button></div><div className="collection-summary"><span><strong>{items.length}</strong> total records</span><span><i /> API synchronized</span><span>Durable history enabled</span></div><div className="data-panel">{loading ? <LoadingRows /> : !items.length ? <EmptyState icon={view === "missions" ? "◇" : view === "tasks" ? "✓" : view === "timelines" ? "◷" : "▤"} title={`No ${view} yet`} text={`Create your first ${kind} to populate this workspace.`} action={() => onCreate(kind)} /> : <table><thead><tr>{view === "missions" && <><th>Mission</th><th>Objective</th><th>Status</th><th>Version</th></>}{view === "tasks" && <><th>Task</th><th>Mission</th><th>Priority</th><th>Status</th></>}{view === "timelines" && <><th>Timeline</th><th>Subject</th><th>Timezone</th><th>Version</th></>}{view === "reports" && <><th>Report</th><th>Subject</th><th>Type</th><th>Version</th></>}</tr></thead><tbody>{view === "missions" && missions.map((item) => <tr key={item.mission_id} className="clickable-row" onClick={() => onOpenMission(item)}><td><strong>{item.title || "Untitled mission"}</strong><small>{shortId(item.mission_id)}</small></td><td>{item.objective}</td><td><span className={statusClass(item.status)}>{item.status}</span></td><td>v{item.version}</td></tr>)}{view === "tasks" && tasks.map((item) => <tr key={item.task_id}><td><strong>{item.title}</strong><small>{item.description}</small></td><td>{shortId(item.mission_id)}</td><td>{item.priority}</td><td><span className={statusClass(item.status)}>{item.status}</span></td></tr>)}{view === "timelines" && timelines.map((item) => <tr key={item.timeline_id}><td><strong>{shortId(item.timeline_id)}</strong></td><td>{item.subject_ref.aggregate_type} · {shortId(item.subject_ref.object_id)}</td><td>{item.timezone}</td><td>v{item.version}</td></tr>)}{view === "reports" && reports.map((item) => <tr key={item.report_id}><td><strong>{item.title}</strong><small>{shortId(item.report_id)}</small></td><td>{item.subject_ref.aggregate_type} · {shortId(item.subject_ref.object_id)}</td><td>{item.report_type.replaceAll("_", " ")}</td><td>v{item.version}</td></tr>)}</tbody></table>}</div></section>;
+  return <section className="collection-page"><div className="collection-heading"><div><p className="eyebrow">ONYX WORKSPACE</p><h1>{labels[view][0]}</h1><p>{labels[view][1]}</p></div><button className="primary-button" onClick={() => onCreate(kind)} disabled={kind !== "mission" && !missions.length}>＋ New {kind}</button></div><div className="collection-summary"><span><strong>{items.length}</strong> total records</span><span><i /> API synchronized</span><span>Durable history enabled</span></div><div className="data-panel">{loading ? <LoadingRows /> : !items.length ? <EmptyState icon={view === "missions" ? "◇" : view === "tasks" ? "✓" : view === "timelines" ? "◷" : "▤"} title={`No ${view} yet`} text={`Create your first ${kind} to populate this workspace.`} action={() => onCreate(kind)} /> : <table><thead><tr>{view === "missions" && <><th>Mission</th><th>Objective</th><th>Status</th><th>Version</th></>}{view === "tasks" && <><th>Task</th><th>Mission</th><th>Priority</th><th>Status</th></>}{view === "timelines" && <><th>Timeline</th><th>Subject</th><th>Timezone</th><th>Version</th></>}{view === "reports" && <><th>Report</th><th>Subject</th><th>Type</th><th>Version</th></>}</tr></thead><tbody>{view === "missions" && missions.map((item) => <tr key={item.mission_id} className="clickable-row" onClick={() => onOpenMission(item)}><td><strong>{item.title || "Untitled mission"}</strong><small>{shortId(item.mission_id)}</small></td><td>{item.objective}</td><td><span className={statusClass(item.status)}>{item.status}</span></td><td>v{item.version}</td></tr>)}{view === "tasks" && tasks.map((item) => <tr key={item.task_id} className="clickable-row" onClick={() => onOpenRecord({ kind: "task", record: item })}><td><strong>{item.title}</strong><small>{item.description}</small></td><td>{shortId(item.mission_id)}</td><td>{item.priority}</td><td><span className={statusClass(item.status)}>{item.status}</span></td></tr>)}{view === "timelines" && timelines.map((item) => <tr key={item.timeline_id} className="clickable-row" onClick={() => onOpenRecord({ kind: "timeline", record: item })}><td><strong>{shortId(item.timeline_id)}</strong></td><td>{item.subject_ref.aggregate_type} · {shortId(item.subject_ref.object_id)}</td><td>{item.timezone}</td><td>v{item.version}</td></tr>)}{view === "reports" && reports.map((item) => <tr key={item.report_id} className="clickable-row" onClick={() => onOpenRecord({ kind: "report", record: item })}><td><strong>{item.title}</strong><small>{shortId(item.report_id)}</small></td><td>{item.subject_ref.aggregate_type} · {shortId(item.subject_ref.object_id)}</td><td>{item.report_type.replaceAll("_", " ")}</td><td>v{item.version}</td></tr>)}</tbody></table>}</div></section>;
 }
 
-function MissionDetail({ mission, history, tasks, timelines, reports, loading, actionLoading, onAction, onClose }: { mission: Mission; history: MissionEvent[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; actionLoading: string; onAction: (type: "plan" | "submit" | "activate" | "pause" | "resume" | "cancel" | "archive") => void; onClose: () => void }) {
+function MissionDetail({ mission, history, tasks, timelines, reports, loading, actionLoading, onAction, onClose }: { mission: Mission; history: DomainEvent[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; actionLoading: string; onAction: (type: "plan" | "submit" | "activate" | "pause" | "resume" | "cancel" | "archive") => void; onClose: () => void }) {
   const primaryAction = mission.status === "DRAFT" ? ["plan", "Create plan"] : mission.status === "PLANNING" ? ["submit", "Submit plan"] : mission.status === "AWAITING_APPROVAL" ? ["activate", "Approve & activate"] : mission.status === "ACTIVE" ? ["pause", "Pause mission"] : mission.status === "PAUSED" ? ["resume", "Resume mission"] : mission.status === "CANCELLED" ? ["archive", "Archive mission"] : null;
   return <div className="drawer-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="mission-drawer" role="dialog" aria-modal="true" aria-label="Mission details"><header><div><p className="eyebrow">MISSION RECORD</p><h2>{mission.title || "Untitled mission"}</h2></div><button onClick={onClose} aria-label="Close mission details">×</button></header><div className="drawer-scroll"><div className="mission-identity"><span className={statusClass(mission.status)}>{mission.status.replaceAll("_", " ")}</span><code>{mission.mission_id}</code><p>{mission.objective}</p></div><div className="detail-metrics"><div><strong>v{mission.version}</strong><small>Aggregate version</small></div><div><strong>{tasks.length}</strong><small>Work items</small></div><div><strong>{timelines.length}</strong><small>Timelines</small></div><div><strong>{reports.length}</strong><small>Evidence</small></div></div><section className="lifecycle-card"><div><p className="eyebrow">LIFECYCLE CONTROL</p><h3>Available operation</h3></div>{primaryAction ? <button className="primary-button" disabled={Boolean(actionLoading)} onClick={() => onAction(primaryAction[0] as "plan" | "submit" | "activate" | "pause" | "resume" | "archive")}>{actionLoading === primaryAction[0] ? "Working…" : primaryAction[1]}</button> : <span className="status neutral">No transition</span>}</section>{!["CANCELLED", "ARCHIVED"].includes(mission.status) && <button className="danger-action" disabled={Boolean(actionLoading)} onClick={() => onAction("cancel")}>Cancel mission</button>}<section className="history-section"><div className="panel-header"><div><p className="eyebrow">IMMUTABLE HISTORY</p><h3>Event timeline</h3></div><small>{history.length} events</small></div>{loading ? <LoadingRows /> : <div className="event-timeline">{[...history].reverse().map((event) => <article key={event.event_id}><i /><div><strong>{event.event_type.replace(/([A-Z])/g, " $1").trim()}</strong><p>Version {event.aggregate_version} · lifecycle {event.lifecycle_epoch}</p><small>{new Date(event.occurred_at).toLocaleString()}</small></div><code>{event.audit?.integrity_digest ? `${event.audit.integrity_digest.slice(0, 12)}…` : shortId(event.event_id)}</code></article>)}</div>}</section></div></aside></div>;
+}
+
+function RecordDetail({ selection, history, missions, tasks, timelines, reports, loading, onOpenMission, onClose }: { selection: RecordSelection; history: DomainEvent[]; missions: Mission[]; tasks: Task[]; timelines: Timeline[]; reports: Report[]; loading: boolean; onOpenMission: (mission: Mission) => void; onClose: () => void }) {
+  let id = "";
+  let title = "";
+  let description = "";
+  let badge = "";
+  let subject = { aggregate_type: "Mission", object_id: "" };
+  if (selection.kind === "task") {
+    id = selection.record.task_id;
+    title = selection.record.title;
+    description = selection.record.description;
+    badge = selection.record.status;
+    subject = { aggregate_type: "Mission", object_id: selection.record.mission_id };
+  } else if (selection.kind === "timeline") {
+    id = selection.record.timeline_id;
+    title = `${selection.record.subject_ref.aggregate_type} timeline`;
+    description = `Operational cadence anchored to ${selection.record.timezone}.`;
+    badge = selection.record.timezone;
+    subject = selection.record.subject_ref;
+  } else {
+    id = selection.record.report_id;
+    title = selection.record.title;
+    description = `Versioned ${selection.record.report_type.replaceAll("_", " ").toLowerCase()} evidence record.`;
+    badge = selection.record.report_type;
+    subject = selection.record.subject_ref;
+  }
+  const subjectTask = subject.aggregate_type === "Task" ? tasks.find((task) => task.task_id === subject.object_id) : undefined;
+  const missionId = subject.aggregate_type === "Mission" ? subject.object_id : subjectTask?.mission_id;
+  const mission = missions.find((item) => item.mission_id === missionId);
+  const relatedTimelines = timelines.filter((item) => item.subject_ref.object_id === id).length;
+  const relatedReports = reports.filter((item) => item.subject_ref.object_id === id).length;
+  const version = selection.record.version;
+  const kindLabel = selection.kind === "task" ? "WORK RECORD" : selection.kind === "timeline" ? "TIMELINE RECORD" : "EVIDENCE RECORD";
+  return <div className="drawer-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="mission-drawer" role="dialog" aria-modal="true" aria-label={`${selection.kind} details`}><header><div><p className="eyebrow">{kindLabel}</p><h2>{title}</h2></div><button onClick={onClose} aria-label={`Close ${selection.kind} details`}>×</button></header><div className="drawer-scroll"><div className="mission-identity"><span className={selection.kind === "task" ? statusClass(badge) : "status neutral"}>{badge.replaceAll("_", " ")}</span><code>{id}</code><p>{description}</p></div><div className="detail-metrics"><div><strong>v{version}</strong><small>Aggregate version</small></div><div><strong>{history.length}</strong><small>Immutable events</small></div><div><strong>{relatedTimelines}</strong><small>Child timelines</small></div><div><strong>{relatedReports}</strong><small>Evidence links</small></div></div><section className="relationship-card"><div><p className="eyebrow">OPERATIONAL CONTEXT</p><h3>{subject.aggregate_type} · {shortId(subject.object_id)}</h3>{subjectTask && <small>{subjectTask.title}</small>}</div>{mission ? <button onClick={() => onOpenMission(mission)}>Open mission <span>→</span></button> : <span className="status neutral">Direct subject</span>}</section><section className="contract-note"><span>i</span><div><strong>Contract-governed record</strong><p>Additional lifecycle commands remain unavailable until their machine-readable payload contracts are frozen.</p></div></section><section className="history-section"><div className="panel-header"><div><p className="eyebrow">IMMUTABLE HISTORY</p><h3>Event timeline</h3></div><small>{history.length} events</small></div>{loading ? <LoadingRows /> : <div className="event-timeline">{[...history].reverse().map((event) => <article key={event.event_id}><i /><div><strong>{event.event_type.replace(/([A-Z])/g, " $1").trim()}</strong><p>Aggregate version {event.aggregate_version}</p><small>{new Date(event.occurred_at).toLocaleString()}</small></div><code>{event.audit?.integrity_digest ? `${event.audit.integrity_digest.slice(0, 12)}…` : shortId(event.event_id)}</code></article>)}</div>}</section></div></aside></div>;
 }
 
 function CreateModal({ kind, missions, submitting, onClose, onSubmit }: { kind: CreateKind; missions: Mission[]; submitting: boolean; onClose: () => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
