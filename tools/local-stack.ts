@@ -52,7 +52,16 @@ async function waitFor(url: string, label: string, timeoutMs = 45_000) {
 }
 
 function stop(child: ChildProcess, signal: NodeJS.Signals = "SIGTERM") {
-  if (child.exitCode === null && child.signalCode === null) child.kill(signal);
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  if (process.platform !== "win32" && child.pid) {
+    try {
+      process.kill(-child.pid, signal);
+      return;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+    }
+  }
+  child.kill(signal);
 }
 
 async function waitForExit(child: ChildProcess, timeoutMs: number) {
@@ -69,6 +78,7 @@ export async function runLocalStack(config = resolveLocalStackConfig()) {
   const webUrl = `http://${config.webHost}:${config.webPort}`;
   const api = spawn(process.execPath, ["--experimental-strip-types", "src/mission/server.ts"], {
     cwd: config.rootDirectory,
+    detached: process.platform !== "win32",
     env: {
       ...process.env,
       ONYX_AUTH_MODE: process.env.ONYX_AUTH_MODE || "disabled",
@@ -80,6 +90,7 @@ export async function runLocalStack(config = resolveLocalStackConfig()) {
   });
   const web = spawn("npm", ["run", "dev", "--", "--host", config.webHost, "--port", String(config.webPort), "--strictPort"], {
     cwd: config.webDirectory,
+    detached: process.platform !== "win32",
     env: { ...process.env, ONYX_API_URL: apiUrl },
     stdio: "inherit",
   });
