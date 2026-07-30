@@ -1093,140 +1093,140 @@
       "path": "contracts/events/reporting-evidence/ReportArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "CreateApproval",
       "path": "contracts/commands/approval/CreateApproval.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "AssignApprover",
       "path": "contracts/commands/approval/AssignApprover.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "Approve",
       "path": "contracts/commands/approval/Approve.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "Reject",
       "path": "contracts/commands/approval/Reject.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "RequestChanges",
       "path": "contracts/commands/approval/RequestChanges.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "DelegateApproval",
       "path": "contracts/commands/approval/DelegateApproval.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "EscalateApproval",
       "path": "contracts/commands/approval/EscalateApproval.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "CancelApproval",
       "path": "contracts/commands/approval/CancelApproval.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "ReverseApproval",
       "path": "contracts/commands/approval/ReverseApproval.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "command",
       "name": "ReopenApproval",
       "path": "contracts/commands/approval/ReopenApproval.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ApprovalCreated",
       "path": "contracts/events/approval/ApprovalCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ApproverAssigned",
       "path": "contracts/events/approval/ApproverAssigned.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ApprovalGranted",
       "path": "contracts/events/approval/ApprovalGranted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ApprovalRejected",
       "path": "contracts/events/approval/ApprovalRejected.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ChangesRequested",
       "path": "contracts/events/approval/ChangesRequested.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ApprovalDelegated",
       "path": "contracts/events/approval/ApprovalDelegated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ApprovalEscalated",
       "path": "contracts/events/approval/ApprovalEscalated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ApprovalCancelled",
       "path": "contracts/events/approval/ApprovalCancelled.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ApprovalReversed",
       "path": "contracts/events/approval/ApprovalReversed.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C10",
       "kind": "event",
       "name": "ApprovalReopened",

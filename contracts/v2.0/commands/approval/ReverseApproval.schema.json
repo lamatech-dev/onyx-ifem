@@ -11,8 +11,26 @@
           "const": "ReverseApproval"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "approval_id",
+            "reversed_by_id",
+            "reason"
+          ],
+          "properties": {
+            "approval_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "reversed_by_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +40,7 @@
     }
   ],
   "title": "ONYX ReverseApproval",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C10",
   "x-onyx-topic": "approval.events"
 }

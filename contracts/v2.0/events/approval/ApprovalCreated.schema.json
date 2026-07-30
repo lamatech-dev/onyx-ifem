@@ -11,8 +11,36 @@
           "const": "ApprovalCreated"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "approval_id",
+            "title",
+            "subject_ref",
+            "requester_id",
+            "required_approvals"
+          ],
+          "properties": {
+            "approval_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "subject_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "requester_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "required_approvals": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +50,7 @@
     }
   ],
   "title": "ONYX ApprovalCreated",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C10",
   "x-onyx-topic": "approval.events"
 }

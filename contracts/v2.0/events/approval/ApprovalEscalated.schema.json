@@ -11,8 +11,26 @@
           "const": "ApprovalEscalated"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "approval_id",
+            "escalated_to_id",
+            "reason"
+          ],
+          "properties": {
+            "approval_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "escalated_to_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +40,7 @@
     }
   ],
   "title": "ONYX ApprovalEscalated",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C10",
   "x-onyx-topic": "approval.events"
 }

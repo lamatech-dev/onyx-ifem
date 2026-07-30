@@ -11,8 +11,26 @@
           "const": "AssignApprover"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "approval_id",
+            "approver_id",
+            "role"
+          ],
+          "properties": {
+            "approval_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "approver_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "role": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +40,7 @@
     }
   ],
   "title": "ONYX AssignApprover",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C10",
   "x-onyx-topic": "approval.events"
 }

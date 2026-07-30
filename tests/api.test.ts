@@ -19,7 +19,7 @@ describe("OnyxApplication", () => {
     try {
       const health = await application.handle({method: "GET", path: "/healthz"});
       assert.equal(health.status, 200);
-      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file"]);
+      assert.deepEqual(body(health).contexts, ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication","file","approval"]);
 
       const head = await application.handle({method: "HEAD", path: "/healthz"});
       assert.equal(head.status, 200);
@@ -44,7 +44,7 @@ describe("OnyxApplication", () => {
       const openapi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(openapi.status, 200);
       assert.equal(body(openapi).openapi, "3.1.2");
-      assert.equal(Object.keys(body(openapi).paths as object).length, 120);
+      assert.equal(Object.keys(body(openapi).paths as object).length, 133);
       body(openapi).info.title = "mutated by caller";
       const freshOpenApi = await application.handle({method: "GET", path: "/openapi.json"});
       assert.equal(body(freshOpenApi).info.title, "ONYX IFEM API");
@@ -63,7 +63,7 @@ describe("OnyxApplication", () => {
     }
   });
 
-  it("executes the ten-context HTTP workflow without a network socket", async () => {
+  it("executes the eleven-context HTTP workflow without a network socket", async () => {
     const application = new OnyxApplication({now});
     try {
       const organization = await application.handle({
@@ -76,6 +76,7 @@ describe("OnyxApplication", () => {
       const meetingId=testId(900),meeting=await application.handle({method:"POST",path:"/v1/meeting/commands/CreateMeeting",body:meetingCommand("CreateMeeting",742,{meeting_id:meetingId,title:"Operational review",organizer_id:userId,scheduled_start_at:"2026-08-01T10:00:00.000000Z",timezone:"Asia/Tehran"},"meeting:create",0)});
       const conversationId=testId(950),conversation=await application.handle({method:"POST",path:"/v1/communication/commands/CreateConversation",body:conversationCommand("CreateConversation",743,{conversation_id:conversationId,title:"Review room",creator_id:userId,topic_ref:{aggregate_type:"Meeting",object_id:meetingId}},"communication:create",0)});
       const fileId=testId(975),fileBase=conversationCommand("CreateConversation",744,{conversation_id:fileId,title:"x",creator_id:userId},"communication:create",0),file=await application.handle({method:"POST",path:"/v1/file/commands/CreateFileAsset",body:{...fileBase,command_type:"CreateFileAsset",target:{aggregate_type:"FileAsset",object_id:fileId},payload:{file_id:fileId,name:"contract.pdf",media_type:"application/pdf",owner_id:userId},authority_proof:{...fileBase.authority_proof,scope:["file:create"]}}});
+      const approvalId=testId(976),approvalBase=conversationCommand("CreateConversation",745,{conversation_id:approvalId,title:"x",creator_id:userId},"communication:create",0),approval=await application.handle({method:"POST",path:"/v1/approval/commands/CreateApproval",body:{...approvalBase,command_type:"CreateApproval",target:{aggregate_type:"Approval",object_id:approvalId},payload:{approval_id:approvalId,title:"Contract release",subject_ref:{aggregate_type:"FileAsset",object_id:fileId},requester_id:userId,required_approvals:1},authority_proof:{...approvalBase.authority_proof,scope:["approval:create"]}}});
       const mission = await application.handle({
         method: "POST",
         path: "/v1/mission/commands/CreateMission",
@@ -103,7 +104,7 @@ describe("OnyxApplication", () => {
         body: reportCommand,
       });
 
-      assert.deepEqual([organization.status, user.status, meeting.status, conversation.status,file.status, mission.status, task.status, contextLink.status, timeline.status, report.status], [202, 202, 202, 202,202, 202, 202, 202, 202, 202]);
+      assert.deepEqual([organization.status, user.status, meeting.status, conversation.status,file.status,approval.status, mission.status, task.status, contextLink.status, timeline.status, report.status], [202, 202, 202, 202,202,202, 202, 202, 202, 202, 202]);
       const organizationView = await application.handle({method: "GET", path: `/v1/organizations/${testId(13)}?organization_id=${testId(13)}`});
       assert.equal(organizationView.status, 200);
       assert.equal(body(organizationView).slug, "onyx-labs");
@@ -113,6 +114,7 @@ describe("OnyxApplication", () => {
       const meetingView=await application.handle({method:"GET",path:`/v1/meetings/${meetingId}?organization_id=${testId(13)}`});assert.equal(meetingView.status,200);assert.equal(body(meetingView).status,"SCHEDULED");
       const conversationView=await application.handle({method:"GET",path:`/v1/conversations/${conversationId}?organization_id=${testId(13)}`});assert.equal(conversationView.status,200);assert.equal(body(conversationView).topic_ref.aggregate_type,"Meeting");
       const fileView=await application.handle({method:"GET",path:`/v1/files/${fileId}?organization_id=${testId(13)}`});assert.equal(fileView.status,200);assert.equal(body(fileView).media_type,"application/pdf");
+      const approvalView=await application.handle({method:"GET",path:`/v1/approvals/${approvalId}?organization_id=${testId(13)}`});assert.equal(approvalView.status,200);assert.equal(body(approvalView).subject_ref.aggregate_type,"FileAsset");
       assert.equal(body(report).event_type, "ReportCreated");
       const replay = await application.handle({method: "POST", path: "/v1/reporting-evidence/commands/CreateReport", body: reportCommand});
       assert.equal(replay.status, report.status);
