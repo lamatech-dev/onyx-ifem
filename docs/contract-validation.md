@@ -17,6 +17,8 @@ The runtime enforces the v2.0 command envelope constraints for:
 
 Each bounded context then validates its frozen payload fields, exact payload property set, target identity, and command/schema specialization.
 
+`npm run validate:contracts` also reconciles every manifest artifact with its schema, requires every `FIELD_COMPLETE` payload to be a strict object with declared required fields, and proves that all 150 event types are present in the SQLite executable-event profiles.
+
 ## Emitted event guarantees
 
 Every newly emitted event passes a second gate before repository commit. It enforces the exact canonical event envelope, aggregate reference, versions and epochs, actor context, timestamps, vector clock, audit metadata, and object-shaped payload. The audit digest must also equal the SHA-256 hash of the canonical event content without the `audit` field.
@@ -26,3 +28,5 @@ An invalid incoming command remains an `INVALID_ARGUMENT`. A contract violation 
 ## Failure behavior
 
 Malformed commands fail with `INVALID_ARGUMENT` before authority checks, cross-context lookups, state transitions, or writes. Negative conformance tests cover all executable contexts plus command and event envelope constraints, including post-signing event tampering.
+
+`npm run validate:completion` is the cross-layer completion gate. It verifies that all 18 contexts have domain types, validation, services, repositories, SQLite adapters, documentation, and three query contracts; all 144 commands have runtime/OpenAPI routes and graphical actions; and all 150 events have runtime handling and bundled OpenAPI schemas.

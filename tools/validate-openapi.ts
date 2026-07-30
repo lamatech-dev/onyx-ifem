@@ -17,9 +17,18 @@ const frozenCommands = new Set<string>(
     .filter((artifact: JsonObject) => artifact.kind === "command" && artifact.completeness === "FIELD_COMPLETE")
     .map((artifact: JsonObject) => artifact.name as string),
 );
+const frozenEvents = new Set<string>(
+  manifest.artifacts
+    .filter((artifact: JsonObject) => artifact.kind === "event" && artifact.completeness === "FIELD_COMPLETE")
+    .map((artifact: JsonObject) => artifact.name as string),
+);
 const documentedCommands = new Set(IMPLEMENTED_COMMAND_ROUTES.map((route) => route.command));
 for (const command of frozenCommands) if (!documentedCommands.has(command)) failures.push(`FIELD_COMPLETE command is undocumented: ${command}`);
 for (const command of documentedCommands) if (!frozenCommands.has(command)) failures.push(`documented command is not FIELD_COMPLETE: ${command}`);
+const componentSchemas = document.components?.schemas as JsonObject | undefined;
+for (const event of frozenEvents) {
+  if (componentSchemas?.[event] === undefined) failures.push(`FIELD_COMPLETE event schema is undocumented: ${event}`);
+}
 
 const operationIds = new Set<string>();
 for (const [path, item] of Object.entries(document.paths as JsonObject)) {
@@ -77,5 +86,6 @@ if (failures.length > 0) {
   console.log(`PASS: ${Object.keys(document.paths as JsonObject).length} OpenAPI paths validated`);
   console.log(`PASS: ${operationIds.size} unique operations documented`);
   console.log(`PASS: ${documentedCommands.size} FIELD_COMPLETE commands documented`);
+  console.log(`PASS: ${frozenEvents.size} FIELD_COMPLETE event schemas documented`);
   console.log("PASS: all schema references are bundled and resolvable");
 }

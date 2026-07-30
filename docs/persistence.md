@@ -21,7 +21,7 @@ The initial migration creates:
 - `onyx_inbox` for per-consumer event deduplication and processing leases;
 - `onyx_schema_migrations` for migration history.
 
-Every key includes a bounded-context identifier. Mission, Work, Timeline, and Reporting-Evidence therefore cannot overwrite each other's aggregate or operation identifiers.
+Every key includes a bounded-context identifier, so none of the 18 executable contexts can overwrite another context's aggregate or operation identifiers.
 
 ## Atomic commit
 
@@ -34,18 +34,18 @@ A command commit runs inside `BEGIN IMMEDIATE` and writes:
 
 Any failed statement rolls the transaction back. Updates also compare the stored aggregate version with the immediately preceding version, providing a persistence-level optimistic concurrency guard in addition to application validation.
 
-For executable contexts, events read from aggregate history, the operation-idempotency store, or the outbox are revalidated against their canonical envelope and integrity digest. Row metadata such as event ID, type, organization, aggregate identity, version, and operation ID must agree with the event body. Corruption fails closed as an internal storage error; outbox rows are validated before lease acquisition so a damaged message is not hidden behind a fresh lease.
+For all 18 executable contexts, events read from aggregate history, the operation-idempotency store, or the outbox are revalidated against their context-specific event whitelist, canonical envelope, aggregate type, and integrity digest. Row metadata such as event ID, type, organization, aggregate identity, version, and operation ID must agree with the event body. Corruption fails closed as an internal storage error; outbox rows are validated before lease acquisition so a damaged message is not hidden behind a fresh lease. Contract validation reconciles these whitelists with all 150 event schemas so a context or event cannot silently bypass the check.
 
 ## Recovery behavior
 
 Restart tests close the database, construct new repository and service instances, and verify:
 
-- aggregate snapshots are restored;
+- aggregate snapshots are restored for every executable context;
 - ordered history remains available;
 - identical command replay returns the original event;
-- Work references remain resolvable through the Mission boundary;
-- Timeline state and idempotency survive restart while subjects remain resolvable through their owning context.
-- Report state, event history, and idempotency survive restart while subjects remain resolvable through their owning context.
+- cross-context references remain resolvable through their owning services;
+- Timeline due signals remain exactly-once across restart;
+- corrupted events in both core and later contexts fail closed during history reads.
 
 The implementation currently uses Node's built-in `node:sqlite` module. Node 24 still reports this module as experimental, so the runtime version must remain pinned and persistence conformance tests must run before upgrades.
 

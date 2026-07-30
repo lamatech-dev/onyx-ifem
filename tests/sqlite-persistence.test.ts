@@ -302,4 +302,61 @@ describe("SQLite persistence", () => {
       await rm(directory, {recursive: true, force: true});
     }
   });
+
+  it("fails closed for corrupted events outside the original four persistence contexts", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "onyx-sqlite-policy-integrity-"));
+    const path = join(directory, "onyx.db");
+    const policyId = testId(997);
+    const base = conversationCommand(
+      "CreateConversation",
+      850,
+      {conversation_id: policyId, title: "integrity", creator_id: testId(800)},
+      "communication:create",
+      0,
+    );
+    const create = {
+      ...base,
+      command_type: "CreatePolicy",
+      target: {aggregate_type: "Policy", object_id: policyId},
+      payload: {
+        policy_id: policyId,
+        name: "Integrity policy",
+        description: "Verifies fail-closed persistence for C18",
+        policy_type: "RETENTION",
+        owner_id: testId(800),
+      },
+      authority_proof: {...base.authority_proof, scope: ["policy:create"]},
+    };
+    try {
+      const initial = new SqliteDatabase(path);
+      const service = new PolicyService({
+        repository: new SqlitePolicyRepository(initial),
+        now,
+        requireUser: async () => undefined,
+        requireObject: async () => undefined,
+      });
+      await service.execute(create);
+      initial.close();
+
+      const raw = new DatabaseSync(path);
+      raw.prepare(`
+        UPDATE onyx_events
+        SET event_json = json_set(event_json, '$.event_type', 'MissionCreated')
+        WHERE context = 'policy'
+      `).run();
+      raw.close();
+
+      const corrupted = new SqliteDatabase(path);
+      const restored = new PolicyService({
+        repository: new SqlitePolicyRepository(corrupted),
+        now,
+        requireUser: async () => undefined,
+        requireObject: async () => undefined,
+      });
+      await assert.rejects(restored.getHistory(testId(13), policyId), /stored event failed integrity validation/);
+      corrupted.close();
+    } finally {
+      await rm(directory, {recursive: true, force: true});
+    }
+  });
 });

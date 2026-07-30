@@ -1,5 +1,6 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
+import { EXECUTABLE_EVENT_PROFILES } from "../src/infrastructure/sqlite/database.ts";
 
 const root = resolve("contracts/v2.0");
 const manifestPath = join(root, "manifests/package-manifest.json");
@@ -46,6 +47,40 @@ for (const artifact of manifest.artifacts) {
   if (artifact.completeness === "FIELD_COMPLETE" && specialization?.payload?.additionalProperties !== false) {
     failures.push(`${artifact.path}: FIELD_COMPLETE payload must reject unknown properties`);
   }
+  if (artifact.completeness === "FIELD_COMPLETE") {
+    const payload = specialization?.payload;
+    if (payload?.type !== "object") failures.push(`${artifact.path}: FIELD_COMPLETE payload must be an object`);
+    if (!Array.isArray(payload?.required) || payload.required.length === 0) {
+      failures.push(`${artifact.path}: FIELD_COMPLETE payload must declare required fields`);
+    }
+    for (const field of payload?.required ?? []) {
+      if (payload?.properties?.[field] === undefined) failures.push(`${artifact.path}: required payload field is undefined: ${field}`);
+    }
+  }
+}
+
+const expectedEventTypes = new Map<string, Set<string>>();
+for (const artifact of manifest.artifacts.filter((entry) => entry.kind === "event")) {
+  const context = artifact.path.split("/")[2];
+  if (!context) {
+    failures.push(`${artifact.path}: event context cannot be derived from manifest path`);
+    continue;
+  }
+  const names = expectedEventTypes.get(context) ?? new Set<string>();
+  names.add(artifact.name);
+  expectedEventTypes.set(context, names);
+}
+for (const [context, expected] of expectedEventTypes) {
+  const profile = EXECUTABLE_EVENT_PROFILES[context];
+  if (!profile) {
+    failures.push(`${context}: SQLite executable event profile is missing`);
+    continue;
+  }
+  for (const eventType of expected) if (!profile.eventTypes.has(eventType)) failures.push(`${context}: SQLite profile is missing ${eventType}`);
+  for (const eventType of profile.eventTypes) if (!expected.has(eventType)) failures.push(`${context}: SQLite profile contains non-contract event ${eventType}`);
+}
+for (const context of Object.keys(EXECUTABLE_EVENT_PROFILES)) {
+  if (!expectedEventTypes.has(context)) failures.push(`${context}: SQLite profile has no manifest context`);
 }
 
 const contractFiles = (await walk(root))

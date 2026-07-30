@@ -669,7 +669,7 @@ interface StoredEventExpectation {
   operationId?: string;
 }
 
-const EXECUTABLE_EVENT_PROFILES: Readonly<Record<string, {aggregateType: string; eventTypes: ReadonlySet<string>}>> = {
+export const EXECUTABLE_EVENT_PROFILES: Readonly<Record<string, {aggregateType: string; eventTypes: ReadonlySet<string>}>> = {
   mission: {
     aggregateType: "Mission",
     eventTypes: new Set([
@@ -680,6 +680,20 @@ const EXECUTABLE_EVENT_PROFILES: Readonly<Record<string, {aggregateType: string;
   work: {aggregateType: "Task", eventTypes: new Set(["TaskCreated","TaskOwnerAssigned","TaskPriorityChanged","TaskDependencyAdded","TaskStarted","TaskPaused","TaskBlocked","TaskCompletionSubmitted","TaskApproved","TaskReopened","TaskClosed","TaskCancelled"])},
   timeline: {aggregateType: "Timeline", eventTypes: new Set(["TimelineCreated","DeadlineChanged","DeadlineMoved","DeadlineReached","MilestoneAdded","CriticalMarkerDefined","CriticalMarkerReached","PenaltyZoneActivated","ScheduleExceptionRaised","TimelineArchived"])},
   "reporting-evidence": {aggregateType: "Report", eventTypes: new Set(["ReportCreated","EvidenceAdded","EvidenceVerified","EvidenceRejected","ReportSubmitted","ReportApproved","ReportRejected","ReportArchived"])},
+  organization: {aggregateType: "Organization", eventTypes: new Set(["OrganizationCreated","WorkspaceCreated","DepartmentCreated","TeamCreated","GroupCreated","TeamMoved","DepartmentArchived","OrganizationArchived"])},
+  "identity-authority": {aggregateType: "User", eventTypes: new Set(["UserCreated","RoleAssigned","RoleRevoked","DeviceRegistered","DeviceRevoked","AuthorityDelegated","DelegationRevoked","UserDisabled","UserEnabled"])},
+  context: {aggregateType: "ContextLink", eventTypes: new Set(["ContextLinkCreated","ContextMetadataUpdated","ContextStrengthChanged","ContextLinkArchived","ContextLinkRestored"])},
+  meeting: {aggregateType: "Meeting", eventTypes: new Set(["MeetingCreated","ParticipantInvited","ParticipantRemoved","MeetingStarted","DecisionRecorded","ActionItemProposed","MeetingEnded","MeetingCancelled"])},
+  communication: {aggregateType: "Conversation", eventTypes: new Set(["ConversationCreated","ConversationMemberAdded","MessagePosted","MessageEdited","MessageRedacted","ReactionAdded","ReactionRemoved","ConversationArchived"])},
+  file: {aggregateType: "FileAsset", eventTypes: new Set(["FileAssetCreated","UploadStarted","ChunkAccepted","UploadFinalized","FileVersionCreated","FileAccessGranted","FileAccessRevoked","FileQuarantined","FileArchived"])},
+  approval: {aggregateType: "Approval", eventTypes: new Set(["ApprovalCreated","ApproverAssigned","ApprovalGranted","ApprovalRejected","ChangesRequested","ApprovalDelegated","ApprovalEscalated","ApprovalCancelled","ApprovalReversed","ApprovalReopened"])},
+  capacity: {aggregateType: "CapacityProfile", eventTypes: new Set(["CapacityProfileCreated","AvailabilityUpdated","WorkloadAllocated","CapacitySnapshotCaptured","CapacityRecalculated","CapacityProfileArchived"])},
+  forecasting: {aggregateType: "Forecast", eventTypes: new Set(["ForecastGenerated","ScenarioCreated","ForecastRecalculated","ForecastPublished","ForecastArchived"])},
+  automation: {aggregateType: "AutomationRule", eventTypes: new Set(["AutomationRuleCreated","AutomationRuleEnabled","AutomationRuleDisabled","AutomationRuleTriggered","AutomationActionExecuted","AutomationExecutionFailed","AutomationExecutionCompensated","AutomationRuleArchived"])},
+  notification: {aggregateType: "Notification", eventTypes: new Set(["NotificationCreated","RecipientsResolved","NotificationSent","NotificationDeliveryFailed","NotificationEscalated","NotificationAcknowledged","NotificationArchived"])},
+  synchronization: {aggregateType: "Synchronization", eventTypes: new Set(["SynchronizationStarted","OperationBatchOffered","OperationBatchAccepted","OperationBatchMerged","ConflictDetected","ConflictResolved","ConflictEscalated","SynchronizationAcknowledged","SynchronizationClosed"])},
+  audit: {aggregateType: "AuditPartition", eventTypes: new Set(["AuditEntryAppended","AuditPartitionSealed","AuditExportCreated","AuditIntegrityVerified","AuditPartitionArchived"])},
+  policy: {aggregateType: "Policy", eventTypes: new Set(["PolicyCreated","PolicyVersionCreated","PolicyVersionPublished","PolicyEvaluated","PolicyViolationDetected","LegalHoldApplied","LegalHoldReleased","PolicyRetired","RateLimitPolicyDefined","QuotaThresholdReached","QuotaExceeded","RateLimitTriggered"])},
 };
 
 function storedEvent<TEvent>(json: string, expected: StoredEventExpectation): TEvent {
