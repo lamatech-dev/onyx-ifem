@@ -11,8 +11,7 @@
           "const": "AddReaction"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"conversation_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"message_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"user_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"reaction":{"type":"string","minLength":1,"maxLength":64}}, "required": ["conversation_id","message_id","user_id","reaction"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX AddReaction",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C07",
   "x-onyx-topic": "communication.events"
 }

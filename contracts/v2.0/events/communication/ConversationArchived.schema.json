@@ -11,8 +11,7 @@
           "const": "ConversationArchived"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"conversation_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"reason":{"type":"string","minLength":1,"maxLength":2000}}, "required": ["conversation_id","reason"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX ConversationArchived",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C07",
   "x-onyx-topic": "communication.events"
 }

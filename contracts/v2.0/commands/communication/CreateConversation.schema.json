@@ -11,8 +11,7 @@
           "const": "CreateConversation"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "additionalProperties": false, "properties": {"conversation_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"title":{"type":"string","minLength":1,"maxLength":300},"creator_id":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"},"topic_ref":{"$ref":"https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"}}, "required": ["conversation_id","title","creator_id"], "type": "object"
         },
         "schema_version": {
           "const": 1
@@ -22,7 +21,7 @@
     }
   ],
   "title": "ONYX CreateConversation",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C07",
   "x-onyx-topic": "communication.events"
 }

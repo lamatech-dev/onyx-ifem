@@ -743,112 +743,112 @@
       "path": "contracts/events/meeting/MeetingCancelled.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "command",
       "name": "CreateConversation",
       "path": "contracts/commands/communication/CreateConversation.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "command",
       "name": "AddMember",
       "path": "contracts/commands/communication/AddMember.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "command",
       "name": "PostMessage",
       "path": "contracts/commands/communication/PostMessage.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "command",
       "name": "EditMessage",
       "path": "contracts/commands/communication/EditMessage.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "command",
       "name": "RedactMessage",
       "path": "contracts/commands/communication/RedactMessage.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "command",
       "name": "AddReaction",
       "path": "contracts/commands/communication/AddReaction.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "command",
       "name": "RemoveReaction",
       "path": "contracts/commands/communication/RemoveReaction.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "command",
       "name": "ArchiveConversation",
       "path": "contracts/commands/communication/ArchiveConversation.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "event",
       "name": "ConversationCreated",
       "path": "contracts/events/communication/ConversationCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "event",
       "name": "ConversationMemberAdded",
       "path": "contracts/events/communication/ConversationMemberAdded.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "event",
       "name": "MessagePosted",
       "path": "contracts/events/communication/MessagePosted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "event",
       "name": "MessageEdited",
       "path": "contracts/events/communication/MessageEdited.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "event",
       "name": "MessageRedacted",
       "path": "contracts/events/communication/MessageRedacted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "event",
       "name": "ReactionAdded",
       "path": "contracts/events/communication/ReactionAdded.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "event",
       "name": "ReactionRemoved",
       "path": "contracts/events/communication/ReactionRemoved.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C07",
       "kind": "event",
       "name": "ConversationArchived",

@@ -27,6 +27,7 @@ import { SqliteContextLinkRepository } from "../context-link/sqlite-repository.t
 import { InMemoryMeetingRepository } from "../meeting/repository.ts";
 import { MeetingService } from "../meeting/service.ts";
 import { SqliteMeetingRepository } from "../meeting/sqlite-repository.ts";
+import{InMemoryConversationRepository}from"../conversation/repository.ts";import{ConversationService}from"../conversation/service.ts";import{SqliteConversationRepository}from"../conversation/sqlite-repository.ts";
 import { OPENAPI_DOCUMENT } from "./openapi.ts";
 import { encodeCursor, readCollectionQuery, readHistoryQuery, readItemQuery } from "./query.ts";
 import { allowedMethodsForPath } from "./routes.ts";
@@ -48,7 +49,7 @@ export interface ApiResponse {
 export interface OnyxApplicationOptions {
   databasePath?: string;
   now?: () => Date;
-  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority" | "context" | "meeting", string>>;
+  replicaIds?: Partial<Record<"mission" | "work" | "timeline" | "reportingEvidence" | "organization" | "identityAuthority" | "context" | "meeting" | "communication", string>>;
   logError?: (error: unknown) => void;
   logger?: StructuredLogger;
   monotonicNow?: () => number;
@@ -147,6 +148,7 @@ export class OnyxApplication {
       },
     });
     const meeting = new MeetingService({repository:this.#database?new SqliteMeetingRepository(this.#database):new InMemoryMeetingRepository(),...time,replicaId:options.replicaIds?.meeting??"meeting-api",requireUser:async(organizationId,userId)=>{const user=await identity.getUser(organizationId,userId);if(user.status!=="ACTIVE")throw new OnyxError("INVALID_STATE_TRANSITION","meeting participant is disabled");}});
+    const conversation=new ConversationService({repository:this.#database?new SqliteConversationRepository(this.#database):new InMemoryConversationRepository(),...time,replicaId:options.replicaIds?.communication??"communication-api",requireUser:async(organizationId,userId)=>{const user=await identity.getUser(organizationId,userId);if(user.status!=="ACTIVE")throw new OnyxError("INVALID_STATE_TRANSITION","conversation user is disabled")},requireTopic:async(organizationId,reference)=>{if(reference.aggregate_type==="Mission")return void await mission.getMission(organizationId,reference.object_id);if(reference.aggregate_type==="Task")return void await work.getTask(organizationId,reference.object_id);if(reference.aggregate_type==="Timeline")return void await timeline.getTimeline(organizationId,reference.object_id);if(reference.aggregate_type==="Report")return void await reporting.getReport(organizationId,reference.object_id);if(reference.aggregate_type==="User")return void await identity.getUser(organizationId,reference.object_id);if(reference.aggregate_type==="Organization"&&organizationId===reference.object_id)return void await organization.getOrganization(reference.object_id);if(reference.aggregate_type==="ContextLink")return void await contextLink.getContextLink(organizationId,reference.object_id);if(reference.aggregate_type==="Meeting")return void await meeting.getMeeting(organizationId,reference.object_id);throw new OnyxError("INVALID_ARGUMENT",`unsupported conversation topic type: ${reference.aggregate_type}`)}});
 
     this.#commands = new Map<string, (body: unknown) => Promise<unknown>>([
       ["mission", (body) => mission.execute(body)],
@@ -157,6 +159,7 @@ export class OnyxApplication {
       ["identity-authority", (body) => identity.execute(body)],
       ["context", (body) => contextLink.execute(body)],
       ["meeting", (body) => meeting.execute(body)],
+      ["communication",body=>conversation.execute(body)],
     ]);
     this.#resources = new Map([
       ["missions", {
@@ -209,6 +212,7 @@ export class OnyxApplication {
         history: (organizationId, objectId, afterVersion, limit) => contextLink.getHistory(organizationId, objectId, afterVersion, limit),
       }],
       ["meetings", {list:async(organizationId,afterId,limit)=>page(await meeting.listMeetings(organizationId,afterId,limit+1),limit,item=>item.meeting_id),get:(organizationId,objectId)=>meeting.getMeeting(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>meeting.getHistory(organizationId,objectId,afterVersion,limit)}],
+      ["conversations",{list:async(organizationId,afterId,limit)=>page(await conversation.listConversations(organizationId,afterId,limit+1),limit,item=>item.conversation_id),get:(organizationId,objectId)=>conversation.getConversation(organizationId,objectId),history:(organizationId,objectId,afterVersion,limit)=>conversation.getHistory(organizationId,objectId,afterVersion,limit)}],
     ]);
   }
 
@@ -242,7 +246,7 @@ export class OnyxApplication {
     const method = request.method === "HEAD" ? "GET" : request.method;
 
     if (method === "GET" && url.pathname === "/healthz") {
-      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting"]}};
+      return {status: 200, body: {status: "ok", contexts: ["mission", "work", "timeline", "reporting-evidence", "organization", "identity-authority", "context", "meeting", "communication"]}};
     }
     if (method === "GET" && url.pathname === "/readyz") {
       if (!this.#database) {
@@ -356,6 +360,7 @@ export class OnyxApplication {
       users: "identity-authority:read",
       "context-links": "context:read",
       meetings: "meeting:read",
+      conversations: "communication:read",
     };
     if (!claims.scope.includes(requiredScope[resource]!)) {
       throw new OnyxError("AUTHORITY_PROOF_INVALID", `${requiredScope[resource]} authority is missing`);
