@@ -155,6 +155,10 @@ Available endpoints:
 - `GET /v1/approvals?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/approvals/{id}?organization_id={id}`
 - `GET /v1/approvals/{id}/history?organization_id={id}&after_version=0&limit=100`
+- `POST /v1/capacity/commands/{CommandType}`
+- `GET /v1/capacity-profiles?organization_id={id}&limit=100&cursor={opaque}`
+- `GET /v1/capacity-profiles/{id}?organization_id={id}`
+- `GET /v1/capacity-profiles/{id}/history?organization_id={id}&after_version=0&limit=100`
 - `POST /v1/mission/commands/{CommandType}`
 - `GET /v1/missions?organization_id={id}&limit=100&cursor={opaque}`
 - `GET /v1/missions/{id}?organization_id={id}`
@@ -210,12 +214,14 @@ The File context owns checksum-bound chunked uploads, immutable versions, access
 
 The Approval context owns reviewer assignment, threshold decisions, delegation, escalation, cancellation, reversal, and reopening. See [Approval context](docs/approval-context.md).
 
+The Capacity context owns resource availability, workload allocations, deterministic balances, snapshots, recalculation, and archival. See [Capacity context](docs/capacity-context.md).
+
 The HTTP adapter exposes every currently executable context. Other bounded contexts remain contract baselines until their payload schemas and architecture decisions are frozen.
 
 ## Contract maturity
 
-The imported v2.0 package contains 294 command/event schemas. All 96 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
+The imported v2.0 package contains 294 command/event schemas. All 102 commands marked `FIELD_COMPLETE` have executable handlers. Contracts marked `NAME_FROZEN_PAYLOAD_OPEN` remain discoverable placeholders until their payloads are completed and implemented.
 
 The Mission context is now lifecycle-complete, including operational halt, restart with lifecycle-epoch fencing, close, and archive transitions.
 
-Organization, Identity/Authority, Context Link, Meeting, Conversation, File, Approval, Mission, Work, Timeline, and Reporting-Evidence are lifecycle-complete. Remaining bounded contexts are implemented next in dependency order.
+Organization, Identity/Authority, Context Link, Meeting, Conversation, File, Approval, Capacity, Mission, Work, Timeline, and Reporting-Evidence are lifecycle-complete. Remaining bounded contexts are implemented next in dependency order.

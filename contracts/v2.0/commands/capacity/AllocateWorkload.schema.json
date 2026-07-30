@@ -11,8 +11,38 @@
           "const": "AllocateWorkload"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capacity_profile_id",
+            "allocation_id",
+            "work_ref",
+            "units",
+            "starts_at",
+            "ends_at"
+          ],
+          "properties": {
+            "capacity_profile_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "allocation_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "work_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "units": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000000
+            },
+            "starts_at": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            },
+            "ends_at": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +52,7 @@
     }
   ],
   "title": "ONYX AllocateWorkload",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C12",
   "x-onyx-topic": "capacity.events"
 }

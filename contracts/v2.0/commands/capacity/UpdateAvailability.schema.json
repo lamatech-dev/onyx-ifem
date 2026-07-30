@@ -11,8 +11,30 @@
           "const": "UpdateAvailability"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capacity_profile_id",
+            "period_start",
+            "period_end",
+            "available_units"
+          ],
+          "properties": {
+            "capacity_profile_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "period_start": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            },
+            "period_end": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            },
+            "available_units": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000000000
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +44,7 @@
     }
   ],
   "title": "ONYX UpdateAvailability",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C12",
   "x-onyx-topic": "capacity.events"
 }

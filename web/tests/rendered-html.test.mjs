@@ -86,6 +86,8 @@ test("keeps product metadata and the local API proxy production-safe", async () 
   for(const command of ["CreateFileAsset","StartUpload","AppendChunk","FinalizeUpload","CreateVersion","GrantFileAccess","RevokeFileAccess","QuarantineFile","ArchiveFile"])assert.match(page,new RegExp(command));
   assert.match(page,/ApprovalPanel/);
   for(const command of ["CreateApproval","AssignApprover","Approve","Reject","RequestChanges","DelegateApproval","EscalateApproval","CancelApproval","ReverseApproval","ReopenApproval"])assert.match(page,new RegExp(command));
+  assert.match(page,/CapacityPanel/);
+  for(const command of ["CreateCapacityProfile","UpdateAvailability","AllocateWorkload","CaptureCapacitySnapshot","RecalculateCapacity","ArchiveCapacityProfile"])assert.match(page,new RegExp(command));
   assert.match(page, /MissionDetail/);
   assert.match(page, /RecordDetail/);
   assert.match(page, /MissionBlueprintRevisionCreated/);

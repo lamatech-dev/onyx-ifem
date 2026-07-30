@@ -19,6 +19,7 @@ import {validateMeetingCommand}from"../src/meeting/validation.ts";
 import{validateConversationCommand}from"../src/conversation/validation.ts";
 import{validateFileCommand}from"../src/file/validation.ts";
 import{validateApprovalCommand}from"../src/approval/validation.ts";
+import{validateCapacityCommand}from"../src/capacity/validation.ts";
 import { contextLinkCommand, conversationCommand, createMissionCommand, createReportCommand, createTaskCommand, createTimelineCommand, identityCommand, meetingCommand, missionCommand, testId } from "./fixtures.ts";
 
 type Validator = (value: unknown) => void;
@@ -42,6 +43,7 @@ describe("strict command envelope validation", () => {
     validateConversationCommand(conversationCommand("CreateConversation",1,{conversation_id:testId(950),title:"Room",creator_id:testId(800)},"communication:create",0));
     validateFileCommand({...conversationCommand("CreateConversation",2,{conversation_id:testId(951),title:"x",creator_id:testId(800)},"communication:create",0),command_type:"CreateFileAsset",target:{aggregate_type:"FileAsset",object_id:testId(951)},payload:{file_id:testId(951),name:"x.txt",media_type:"text/plain",owner_id:testId(800)},authority_proof:{...conversationCommand("CreateConversation",2,{conversation_id:testId(951),title:"x",creator_id:testId(800)},"communication:create",0).authority_proof,scope:["file:create"]}});
     validateApprovalCommand({...conversationCommand("CreateConversation",3,{conversation_id:testId(952),title:"x",creator_id:testId(800)},"communication:create",0),command_type:"CreateApproval",target:{aggregate_type:"Approval",object_id:testId(952)},payload:{approval_id:testId(952),title:"Review",subject_ref:{aggregate_type:"FileAsset",object_id:testId(951)},requester_id:testId(800),required_approvals:1},authority_proof:{...conversationCommand("CreateConversation",3,{conversation_id:testId(952),title:"x",creator_id:testId(800)},"communication:create",0).authority_proof,scope:["approval:create"]}});
+    validateCapacityCommand({...conversationCommand("CreateConversation",4,{conversation_id:testId(953),title:"x",creator_id:testId(800)},"communication:create",0),command_type:"CreateCapacityProfile",target:{aggregate_type:"CapacityProfile",object_id:testId(953)},payload:{capacity_profile_id:testId(953),name:"Lead",resource_ref:{aggregate_type:"User",object_id:testId(800)},unit:"HOURS"},authority_proof:{...conversationCommand("CreateConversation",4,{conversation_id:testId(953),title:"x",creator_id:testId(800)},"communication:create",0).authority_proof,scope:["capacity:create"]}});
   });
 
   it("rejects unknown envelope properties in every executable context", () => {

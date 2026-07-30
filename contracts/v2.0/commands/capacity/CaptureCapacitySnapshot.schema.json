@@ -11,8 +11,24 @@
           "const": "CaptureCapacitySnapshot"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capacity_profile_id",
+            "snapshot_id",
+            "captured_at"
+          ],
+          "properties": {
+            "capacity_profile_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "snapshot_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "captured_at": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UtcInstant"
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +38,7 @@
     }
   ],
   "title": "ONYX CaptureCapacitySnapshot",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C12",
   "x-onyx-topic": "capacity.events"
 }

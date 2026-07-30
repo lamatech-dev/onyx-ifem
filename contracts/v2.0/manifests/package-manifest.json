@@ -1359,84 +1359,84 @@
       "path": "contracts/events/timeline/TimelineArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "command",
       "name": "CreateCapacityProfile",
       "path": "contracts/commands/capacity/CreateCapacityProfile.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "command",
       "name": "UpdateAvailability",
       "path": "contracts/commands/capacity/UpdateAvailability.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "command",
       "name": "AllocateWorkload",
       "path": "contracts/commands/capacity/AllocateWorkload.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "command",
       "name": "CaptureCapacitySnapshot",
       "path": "contracts/commands/capacity/CaptureCapacitySnapshot.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "command",
       "name": "RecalculateCapacity",
       "path": "contracts/commands/capacity/RecalculateCapacity.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "command",
       "name": "ArchiveCapacityProfile",
       "path": "contracts/commands/capacity/ArchiveCapacityProfile.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "event",
       "name": "CapacityProfileCreated",
       "path": "contracts/events/capacity/CapacityProfileCreated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "event",
       "name": "AvailabilityUpdated",
       "path": "contracts/events/capacity/AvailabilityUpdated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "event",
       "name": "WorkloadAllocated",
       "path": "contracts/events/capacity/WorkloadAllocated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "event",
       "name": "CapacitySnapshotCaptured",
       "path": "contracts/events/capacity/CapacitySnapshotCaptured.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "event",
       "name": "CapacityRecalculated",
       "path": "contracts/events/capacity/CapacityRecalculated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C12",
       "kind": "event",
       "name": "CapacityProfileArchived",

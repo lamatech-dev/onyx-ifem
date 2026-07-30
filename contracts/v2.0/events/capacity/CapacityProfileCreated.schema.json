@@ -11,8 +11,35 @@
           "const": "CapacityProfileCreated"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capacity_profile_id",
+            "name",
+            "resource_ref",
+            "unit"
+          ],
+          "properties": {
+            "capacity_profile_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            "resource_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "unit": {
+              "type": "string",
+              "enum": [
+                "HOURS",
+                "POINTS",
+                "PERCENT"
+              ]
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +49,7 @@
     }
   ],
   "title": "ONYX CapacityProfileCreated",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C12",
   "x-onyx-topic": "capacity.events"
 }
