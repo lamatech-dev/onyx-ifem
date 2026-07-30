@@ -1723,119 +1723,119 @@
       "path": "contracts/events/notification/NotificationArchived.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "command",
       "name": "StartSynchronization",
       "path": "contracts/commands/synchronization/StartSynchronization.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "command",
       "name": "OfferOperationBatch",
       "path": "contracts/commands/synchronization/OfferOperationBatch.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "command",
       "name": "AcceptOperationBatch",
       "path": "contracts/commands/synchronization/AcceptOperationBatch.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "command",
       "name": "MergeOperationBatch",
       "path": "contracts/commands/synchronization/MergeOperationBatch.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "command",
       "name": "ResolveConflict",
       "path": "contracts/commands/synchronization/ResolveConflict.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "command",
       "name": "EscalateConflict",
       "path": "contracts/commands/synchronization/EscalateConflict.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "command",
       "name": "AcknowledgeSynchronization",
       "path": "contracts/commands/synchronization/AcknowledgeSynchronization.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "command",
       "name": "CloseSynchronization",
       "path": "contracts/commands/synchronization/CloseSynchronization.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "event",
       "name": "SynchronizationStarted",
       "path": "contracts/events/synchronization/SynchronizationStarted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "event",
       "name": "OperationBatchOffered",
       "path": "contracts/events/synchronization/OperationBatchOffered.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "event",
       "name": "OperationBatchAccepted",
       "path": "contracts/events/synchronization/OperationBatchAccepted.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "event",
       "name": "OperationBatchMerged",
       "path": "contracts/events/synchronization/OperationBatchMerged.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "event",
       "name": "ConflictDetected",
       "path": "contracts/events/synchronization/ConflictDetected.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "event",
       "name": "ConflictResolved",
       "path": "contracts/events/synchronization/ConflictResolved.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "event",
       "name": "ConflictEscalated",
       "path": "contracts/events/synchronization/ConflictEscalated.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "event",
       "name": "SynchronizationAcknowledged",
       "path": "contracts/events/synchronization/SynchronizationAcknowledged.schema.json"
     },
     {
-      "completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+      "completeness": "FIELD_COMPLETE",
       "context": "C16",
       "kind": "event",
       "name": "SynchronizationClosed",

@@ -11,8 +11,39 @@
           "const": "OfferOperationBatch"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "synchronization_id",
+            "batch_id",
+            "operation_ids",
+            "offered_vector_clock"
+          ],
+          "properties": {
+            "synchronization_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "batch_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "operation_ids": {
+              "type": "array",
+              "items": {
+                "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+              },
+              "minItems": 1,
+              "maxItems": 500,
+              "uniqueItems": true
+            },
+            "offered_vector_clock": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "maxProperties": 100
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +53,7 @@
     }
   ],
   "title": "ONYX OfferOperationBatch",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C16",
   "x-onyx-topic": "synchronization.events"
 }

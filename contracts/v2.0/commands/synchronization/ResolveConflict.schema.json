@@ -11,8 +11,35 @@
           "const": "ResolveConflict"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "synchronization_id",
+            "conflict_id",
+            "resolution",
+            "resolved_value"
+          ],
+          "properties": {
+            "synchronization_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "conflict_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "resolution": {
+              "type": "string",
+              "enum": [
+                "KEEP_LOCAL",
+                "KEEP_REMOTE",
+                "CUSTOM"
+              ]
+            },
+            "resolved_value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +49,7 @@
     }
   ],
   "title": "ONYX ResolveConflict",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C16",
   "x-onyx-topic": "synchronization.events"
 }

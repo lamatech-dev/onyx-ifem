@@ -11,8 +11,41 @@
           "const": "SynchronizationStarted"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "synchronization_id",
+            "subject_ref",
+            "source_replica_id",
+            "target_replica_id",
+            "base_vector_clock"
+          ],
+          "properties": {
+            "synchronization_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "subject_ref": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/DomainObjectRef"
+            },
+            "source_replica_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "target_replica_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "base_vector_clock": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "maxProperties": 100
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +55,7 @@
     }
   ],
   "title": "ONYX SynchronizationStarted",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C16",
   "x-onyx-topic": "synchronization.events"
 }

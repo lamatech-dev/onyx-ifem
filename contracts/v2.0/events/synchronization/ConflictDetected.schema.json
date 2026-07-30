@@ -11,8 +11,42 @@
           "const": "ConflictDetected"
         },
         "payload": {
-          "additionalProperties": true,
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "synchronization_id",
+            "batch_id",
+            "conflict_id",
+            "field_path",
+            "local_value",
+            "remote_value"
+          ],
+          "properties": {
+            "synchronization_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "batch_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "conflict_id": {
+              "$ref": "https://contracts.onyx.local/shared/types.schema.json#/$defs/UuidV7"
+            },
+            "field_path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "local_value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "remote_value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            }
+          }
         },
         "schema_version": {
           "const": 1
@@ -22,7 +56,7 @@
     }
   ],
   "title": "ONYX ConflictDetected",
-  "x-onyx-completeness": "NAME_FROZEN_PAYLOAD_OPEN",
+  "x-onyx-completeness": "FIELD_COMPLETE",
   "x-onyx-context": "C16",
   "x-onyx-topic": "synchronization.events"
 }
